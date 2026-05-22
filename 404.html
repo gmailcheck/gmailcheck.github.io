@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+        const basePath = ''; 
+
+        const path = window.location.pathname;
+        const search = window.location.search;
+        const hash = window.location.hash;
+
+        // Ambil path murni tanpa nama repo
+        let cleanPath = path;
+        if (basePath && path.startsWith(basePath)) {
+            cleanPath = path.slice(basePath.length);
+        }
+
+        // Redirect ke index.html sambil membawa route di parameter query "?p="
+        const redirectUrl = window.location.origin + basePath + '/?p=' + encodeURIComponent(cleanPath) + search + hash;
+        window.location.replace(redirectUrl);
+    </script>
+</head>
+<body>
+</body>
+</html>
