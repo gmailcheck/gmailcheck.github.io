@@ -1,0 +1,50 @@
+/* Font Orbitron */
+@font-face {
+    font-family: 'Orbitron';
+    /* Pastikan file Orbitron-VariableFont_wght.ttf sudah ditaruh di folder fonts */
+    src: url('../fonts/Orbitron/Orbitron-VariableFont_wght.ttf') format('truetype');
+    font-weight: 400 900; /* Rentang otomatis dari Regular (400) sampai Black (900) */
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Font Roboto Mono */
+@font-face {
+    font-family: 'RobotoMono';
+    /* Pastikan file RobotoMono-VariableFont_wght.ttf sudah ditaruh di folder fonts */
+    src: url('../fonts/Roboto_Mono/RobotoMono-VariableFont_wght.ttf') format('truetype');
+    font-weight: 100 700; /* Rentang otomatis dari Regular (100) sampai bold (700) */
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'RobotoMono';
+    /* Pastikan file RobotoMono-Italic-VariableFont_wght.ttf sudah ditaruh di folder fonts */
+    src: url('../fonts/Roboto_Mono/RobotoMono-Italic-VariableFont_wght.ttf') format('truetype');
+    font-weight: 100 700; /* Rentang otomatis dari Regular (100) sampai bold (700) */
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Font Pixel */
+@font-face {
+    font-family: 'PixelGame';
+    src: url('../fonts/Pixel/Pixel Game.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PixelPurl';
+    src: url('../fonts/Pixel/PixelPurl.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'ARCADECLASSIC';
+    src: url('../fonts/Pixel/ARCADECLASSIC.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
