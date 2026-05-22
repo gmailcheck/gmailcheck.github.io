@@ -64,10 +64,10 @@ window.menuItems = [
 	},
 	{
 		id: 'documentation',
-		name: 'Documentation',
+		name: 'Docs',
 		icon: 'fas fa-book',
-		pageLabel: 'Documentation',
-		path: '/documentation',
+		pageLabel: 'Docs',
+		path: '/docs',
 		hasSubmenu: false
 	},
 	{
@@ -130,11 +130,11 @@ window.getMenuByPath = function (path) {
 	if (path === '/developer/purchases') return 'dev-purchases';
 
 	// Documentation routes
-	if (path === '/documentation/gmail-checker') return 'doc-gmail-checker';
-	if (path === '/documentation/gmail-dot-tricks') return 'doc-dot-tricks';
-	if (path === '/documentation/name-combiner') return 'doc-name-combiner';
-	if (path === '/documentation/api-key') return 'doc-api-key';
-	if (path === '/documentation/payments') return 'doc-payments';
+	if (path === '/docs/gmail-checker') return 'doc-gmail-checker';
+	if (path === '/docs/gmail-dot-tricks') return 'doc-dot-tricks';
+	if (path === '/docs/name-combiner') return 'doc-name-combiner';
+	if (path === '/docs/api-key') return 'doc-api-key';
+	if (path === '/docs/payments') return 'doc-payments';
 
 	for (let menu of window.menuItems) {
 		if (menu.path === path) return menu.id;
@@ -156,11 +156,11 @@ window.getPathById = function (id) {
 	if (id === 'dev-add') return '/developer/add';
 	if (id === 'dev-purchases') return '/developer/purchases';
 
-	if (id === 'doc-gmail-checker') return '/documentation/gmail-checker';
-	if (id === 'doc-dot-tricks') return '/documentation/gmail-dot-tricks';
-	if (id === 'doc-name-combiner') return '/documentation/name-combiner';
-	if (id === 'doc-api-key') return '/documentation/api-key';
-	if (id === 'doc-payments') return '/documentation/payments';
+	if (id === 'doc-gmail-checker') return '/docs/gmail-checker';
+	if (id === 'doc-dot-tricks') return '/docs/gmail-dot-tricks';
+	if (id === 'doc-name-combiner') return '/docs/name-combiner';
+	if (id === 'doc-api-key') return '/docs/api-key';
+	if (id === 'doc-payments') return '/docs/payments';
 
 	for (let menu of window.menuItems) {
 		if (menu.id === id) return menu.path;

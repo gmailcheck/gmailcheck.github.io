@@ -275,7 +275,9 @@ function initPricing() {
 						'Authorization': `Bearer ${idToken}`
 					},
 					body: JSON.stringify({
-						productId: selectedPlanType
+						productId: selectedPlanType,
+						success_url: `${window.location.origin}${window.BASE_PATH || ''}`,
+						cancel_url: `${window.location.origin}${window.BASE_PATH || ''}`
 					})
 				});
 
