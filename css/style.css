@@ -3366,6 +3366,11 @@ body[data-rds-mode="mobile"] .style-custom-97 {
     width: 100%;
 }
 
+body[data-rds-mode="mobile"] .style-custom-213 {
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
 .style-custom-214 {
     backdrop-filter: blur(10px);
     background: var(--bg-secondary);
