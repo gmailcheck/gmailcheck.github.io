@@ -18,7 +18,10 @@ window.documentationMenuItems = [
 	{ id: 'doc-dot-tricks', name: 'Gmail Dot Tricks', icon: 'fas fa-wand-magic-sparkles', pageLabel: 'Doc: Gmail Dot Tricks' },
 	{ id: 'doc-name-combiner', name: 'Name Combiner', icon: 'fas fa-shuffle', pageLabel: 'Doc: Name Combiner' },
 	{ id: 'doc-api-key', name: 'Developer API Key', icon: 'fas fa-key', pageLabel: 'Doc: Developer API Key' },
-	{ id: 'doc-payments', name: 'Billing & Payments', icon: 'fas fa-credit-card', pageLabel: 'Doc: Billing & Payments' }
+	{ id: 'doc-payments', name: 'Billing & Payments', icon: 'fas fa-credit-card', pageLabel: 'Doc: Billing & Payments' },
+	{ id: 'doc-email-extractor', name: 'Email Extractor', icon: 'fas fa-filter', pageLabel: 'Doc: Email Extractor' },
+	{ id: 'doc-notepad', name: 'Notepad', icon: 'fas fa-notes-medical', pageLabel: 'Doc: Notepad' },
+	{ id: 'doc-history', name: 'History', icon: 'fas fa-clock-rotate-left', pageLabel: 'Doc: Result History' }
 ];
 
 // Data menu (Ditambahkan properti 'path')
@@ -135,6 +138,9 @@ window.getMenuByPath = function (path) {
 	if (path === '/docs/name-combiner') return 'doc-name-combiner';
 	if (path === '/docs/api-key') return 'doc-api-key';
 	if (path === '/docs/payments') return 'doc-payments';
+	if (path === '/docs/email-extractor') return 'doc-email-extractor';
+	if (path === '/docs/notepad') return 'doc-notepad';
+	if (path === '/docs/history') return 'doc-history';
 
 	for (let menu of window.menuItems) {
 		if (menu.path === path) return menu.id;
@@ -161,6 +167,9 @@ window.getPathById = function (id) {
 	if (id === 'doc-name-combiner') return '/docs/name-combiner';
 	if (id === 'doc-api-key') return '/docs/api-key';
 	if (id === 'doc-payments') return '/docs/payments';
+	if (id === 'doc-email-extractor') return '/docs/email-extractor';
+	if (id === 'doc-notepad') return '/docs/notepad';
+	if (id === 'doc-history') return '/docs/history';
 
 	for (let menu of window.menuItems) {
 		if (menu.id === id) return menu.path;
@@ -341,7 +350,10 @@ window.updateDocSubTabs = function (menuId) {
 		'tab-doc-dot-tricks',
 		'tab-doc-name-combiner',
 		'tab-doc-api-key',
-		'tab-doc-payments'
+		'tab-doc-payments',
+		'tab-doc-email-extractor',
+		'tab-doc-notepad',
+		'tab-doc-history'
 	];
 	docPanes.forEach(paneId => {
 		const pane = document.getElementById(paneId);
@@ -371,7 +383,7 @@ window.setActiveMenu = function (menuId, pushState = true) {
 	const devMenuIds = ['dev-keys', 'dev-stats', 'dev-history', 'dev-add', 'dev-purchases'];
 	const isDevMenu = devMenuIds.includes(menuId);
 
-	const docMenuIds = ['doc-gmail-checker', 'doc-dot-tricks', 'doc-name-combiner', 'doc-api-key', 'doc-payments'];
+	const docMenuIds = ['doc-gmail-checker', 'doc-dot-tricks', 'doc-name-combiner', 'doc-api-key', 'doc-payments', 'doc-email-extractor', 'doc-notepad', 'doc-history'];
 	const isDocMenu = docMenuIds.includes(menuId);
 
 	// Check authentication before entering protected pages (documentation is public!)
