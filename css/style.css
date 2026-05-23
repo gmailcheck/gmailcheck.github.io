@@ -78,13 +78,13 @@
 textarea {
     width: 100%;
     height: 100%;
-    background-color: var(--bg-primary);
+    background-color: var(--bg-input);
     color: var(--text-primary);
     padding: 15px;
     resize: none;
     outline: none;
     border: 1px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: 3px;
     font-family: 'RobotoMono', monospace !important;
     font-size: 14px !important;
     line-height: 1.5 !important;
@@ -573,10 +573,7 @@ body {
     height: 100%;
     font-size: 12px;
     overflow: hidden;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 25px;
+    background: var(--bg-primary);
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-md);
 }
