@@ -1361,11 +1361,6 @@ body[data-rds-mode="mobile"] #home-cta-container button {
     max-width: 300px;
 }
 
-body[data-rds-mode="mobile"] .anon-nav {
-    display: none !important;
-    /* Hide header navigation links to fit clean on mobile */
-}
-
 body[data-rds-mode="mobile"] #btn-nav-get-started {
     padding: 6px 14px;
     font-size: 0.8rem;
@@ -2395,6 +2390,11 @@ body[data-rds-mode="mobile"] #page-documentation pre {
     justify-content: center;
     margin-top: 20px;
     width: 100%;
+}
+
+body[data-rds-mode="mobile"] .style-custom-97 {
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .style-custom-98 {
@@ -5132,4 +5132,8 @@ body[data-rds-mode="mobile"] #page-documentation pre {
 body[data-rds-mode="mobile"] .container.doc-active #btn-toggle-sidebar-anon,
 body[data-rds-mode="tablet"] .container.doc-active #btn-toggle-sidebar-anon {
     display: inline-flex !important;
+}
+
+body[data-rds-mode="mobile"] .anon-logo span {
+    display: none !important;
 }
