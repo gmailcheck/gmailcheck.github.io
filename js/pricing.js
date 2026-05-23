@@ -294,7 +294,20 @@ function initPricing() {
 
 					// Update UI to show pending payment state immediately
 					if (window.loadDashboardData) {
-						window.loadDashboardData();
+						window.loadDashboardData(true);
+
+						// Poll profile updates 5 times, once every 1 minute
+						let pollCount = 0;
+						const pollInterval = setInterval(async () => {
+							pollCount++;
+							console.log(`Polling profile update after invoice creation (Attempt ${pollCount}/5)...`);
+							if (window.loadDashboardData) {
+								await window.loadDashboardData(true);
+							}
+							if (pollCount >= 5) {
+								clearInterval(pollInterval);
+							}
+						}, 60000);
 					}
 				} else {
 					throw new Error("No payment link returned by nowpayments.");
