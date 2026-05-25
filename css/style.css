@@ -567,6 +567,7 @@ body {
 .email-input {
     position: relative;
     flex: 1;
+    min-height: 200px;
     display: flex;
     min-width: 0;
     height: 100%;
@@ -1231,6 +1232,7 @@ body[data-rds-mode="mobile"] .content {
 
 /* App containers vertical stacking */
 body[data-rds-mode="mobile"] .app-x55-container {
+    overflow-y: auto;
     flex-direction: column;
     gap: 15px;
 }
@@ -1413,6 +1415,7 @@ body[data-rds-mode="tablet"] .top-bar-auth {
 
 /* App containers vertical stacking with comfortable tablet proportions */
 body[data-rds-mode="tablet"] .app-x55-container {
+    overflow-y: auto;
     flex-direction: column;
     gap: 15px;
 }
