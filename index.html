@@ -1,256 +1,2890 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AHK Account Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+	<title>GMAIL CHECKER</title>
+	<base href="/">
+	<link rel="stylesheet" href="css/fonts.css">
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="fontawesome/css/all.min.css">
+	<script type="module">
+		import { RDS } from "./js/lib/RDS.js";
+		RDS.init({
+			debug: 0,
+			remMode: 'responsive',
+			breakpoints: { mobile: 640, tablet: 1023 },
+			desktop: { baseWidth: 1920, baseHeight: 1080, minScale: 0.3, maxScale: 1.2 },
+			tablet: { baseWidth: 1023, baseHeight: 1280, minScale: 0.2, maxScale: 1.1 },
+			mobile: { baseWidth: 640, baseHeight: 900, minScale: 0.1, maxScale: 1.0 }
+		});
+	</script>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDyvwCnhfr2_IIz5m8_OWwskqrcJrFmyqE",
-            authDomain: "usa-001-a4193.firebaseapp.com",
-            projectId: "usa-001-a4193",
-            storageBucket: "usa-001-a4193.firebasestorage.app",
-            messagingSenderId: "569974903486",
-            appId: "1:569974903486:web:dc272b7aaa123f697d84ef",
-            measurementId: "G-L9QQPEN3QN"
-        };
+	<!-- Firebase SDK Module -->
+	<script type="module">
+		import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+		import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+		const firebaseConfig = {
+			apiKey: "AIzaSyBkzBzDx8Dpz6tyGsJLOO4BKJCsAMQNsRA",
+			authDomain: "asia-001-836e4.firebaseapp.com",
+		};
 
-        const WORKER_URL = "https://pawangrecoil-server.mbahbabat.workers.dev";
+		const app = initializeApp(firebaseConfig);
+		const auth = getAuth(app);
+		const provider = new GoogleAuthProvider();
 
-        // Elemen DOM
-        const loginSection = document.getElementById("login-section");
-        const setPasswordSection = document.getElementById("set-password-section");
-        const dashboardSection = document.getElementById("dashboard-section");
-        const userEmailSpan = document.getElementById("user-email");
-        const hwidSpan = document.getElementById("hwid");
-        const resetHwidBtn = document.getElementById("reset-hwid-btn");
-        const changePasswordBtn = document.getElementById("change-password-btn");
-        const logoutBtn = document.getElementById("logout-btn");
-        const messageDiv = document.getElementById("message");
+		window.firebaseAuth = auth;
+		window.firebaseProvider = provider;
+		window.signInWithPopup = signInWithPopup;
+		window.signOut = signOut;
+		window.onAuthStateChanged = onAuthStateChanged;
 
-        function showMessage(msg, isError = true) {
-            messageDiv.textContent = msg;
-            messageDiv.className = `text-center p-2 rounded ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
-            setTimeout(() => { messageDiv.textContent = ''; messageDiv.className = ''; }, 4000);
-        }
+		// State forwarding with race-condition prevention
+		onAuthStateChanged(auth, (user) => {
+			if (window.updateAuthUI) {
+				window.updateAuthUI(user);
+			} else {
+				window.pendingFirebaseUser = user;
+			}
+		});
+	</script>
 
-        async function callAPI(endpoint, method, body = null, token) {
-            const res = await fetch(`${WORKER_URL}${endpoint}`, {
-                method: method,
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: body ? JSON.stringify(body) : undefined
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Request gagal");
-            return data;
-        }
 
-        async function loadProfile(token) {
-            const profile = await callAPI("/profile", "GET", null, token);
-			document.getElementById("display-username").innerText = profile.username;
-            if (!profile.hasPassword) {
-                // Belum punya password, tampilkan form set password
-                setPasswordSection.classList.remove("hidden");
-                dashboardSection.classList.add("hidden");
-                loginSection.classList.add("hidden");
-                userEmailSpan.textContent = profile.email;
-            } else {
-                // Tampilkan dashboard
-                setPasswordSection.classList.add("hidden");
-                dashboardSection.classList.remove("hidden");
-                loginSection.classList.add("hidden");
-                userEmailSpan.textContent = profile.email;
-                hwidSpan.textContent = profile.hwid ? `🔒 ${profile.hwid}` : "❌ Belum ada HWID (belum pernah login dari AHK)";
-            }
-        }
-
-        // Event: Set / Ganti Password
-        async function setPassword(token, newPassword) {
-            await callAPI("/set-password", "POST", { newPassword }, token);
-            showMessage("Password berhasil disimpan!", false);
-            await loadProfile(token); // refresh ke dashboard
-        }
-
-        // Event: Reset HWID
-        async function resetHwid(token) {
-            await callAPI("/reset-hwid", "POST", null, token);
-            showMessage("HWID berhasil direset. Silakan login dari PC baru.", false);
-            await loadProfile(token);
-        }
-
-        // Handle form set password
-        document.getElementById("save-password-btn").addEventListener("click", async () => {
-            const token = await auth.currentUser?.getIdToken();
-            if (!token) return;
-            const newPass = document.getElementById("new-password").value;
-            const confirmPass = document.getElementById("confirm-password").value;
-            if (newPass.length < 4) {
-                showMessage("Password minimal 4 karakter");
-                return;
-            }
-            if (newPass !== confirmPass) {
-                showMessage("Konfirmasi password tidak cocok");
-                return;
-            }
-            try {
-                await setPassword(token, newPass);
-                document.getElementById("new-password").value = "";
-                document.getElementById("confirm-password").value = "";
-            } catch (err) {
-                showMessage(err.message);
-            }
-        });
-
-        // Ganti password dari dashboard (modal sederhana)
-        changePasswordBtn.addEventListener("click", async () => {
-            const newPass = prompt("Masukkan password baru (minimal 4 karakter):");
-            if (!newPass || newPass.length < 4) {
-                showMessage("Password minimal 4 karakter");
-                return;
-            }
-            const confirm = prompt("Konfirmasi password baru:");
-            if (newPass !== confirm) {
-                showMessage("Konfirmasi tidak cocok");
-                return;
-            }
-            const token = await auth.currentUser?.getIdToken();
-            if (!token) return;
-            try {
-                await setPassword(token, newPass);
-                showMessage("Password berhasil diubah!", false);
-            } catch (err) {
-                showMessage(err.message);
-            }
-        });
-
-        resetHwidBtn.addEventListener("click", async () => {
-            if (!confirm("Reset HWID akan mengizinkan login dari PC lain. Lanjutkan?")) return;
-            const token = await auth.currentUser?.getIdToken();
-            if (!token) return;
-            try {
-                await resetHwid(token);
-            } catch (err) {
-                showMessage(err.message);
-            }
-        });
-
-        logoutBtn.addEventListener("click", async () => {
-            await signOut(auth);
-        });
-
-        // Auth state
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const token = await user.getIdToken();
-                try {
-                    await loadProfile(token);
-                } catch (err) {
-                    showMessage(err.message);
-                    // Jika error "User tidak ditemukan" dll, tetap login? Kita tetap tampilkan set password?
-                    if (err.message.includes("tidak ditemukan") || err.message.includes("password belum diset")) {
-                        setPasswordSection.classList.remove("hidden");
-                        dashboardSection.classList.add("hidden");
-                        loginSection.classList.add("hidden");
-                        userEmailSpan.textContent = user.email;
-                    } else {
-                        // error lain, logout
-                        await signOut(auth);
-                    }
-                }
-            } else {
-                loginSection.classList.remove("hidden");
-                setPasswordSection.classList.add("hidden");
-                dashboardSection.classList.add("hidden");
-            }
-        });
-
-        document.getElementById("google-login-btn").addEventListener("click", async () => {
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (err) {
-                showMessage("Login gagal: " + err.message);
-            }
-        });
-    </script>
+	<script>
+		// Terapkan tema sebelum halaman selesai merender untuk mencegah kedipan (flash)
+		(function () {
+			const savedTheme = localStorage.getItem('app-theme') || 'system';
+			if (savedTheme === 'dark') {
+				document.documentElement.classList.add('dark');
+			} else if (savedTheme === 'light') {
+				document.documentElement.classList.remove('dark');
+			} else {
+				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				if (prefersDark) document.documentElement.classList.add('dark');
+			}
+		})();
+	</script>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8 max-w-2xl">
-        <!-- Login Section -->
-        <div id="login-section" class="bg-white rounded-lg shadow-md p-8 text-center">
-            <h1 class="text-2xl font-bold mb-4">🔐 AHK Account Manager</h1>
-            <p class="mb-4">Login dengan Google untuk mengelola password AHK dan HWID</p>
-            <button id="google-login-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">
-                Login dengan Google
-            </button>
-            <div id="message" class="mt-4"></div>
-        </div>
 
-        <!-- Set Password Section (first time) -->
-        <div id="set-password-section" class="hidden bg-white rounded-lg shadow-md p-8">
-            <h2 class="text-xl font-bold mb-4">Buat Password untuk AHK</h2>
-            <p class="mb-2">Email: <span id="user-email" class="font-mono"></span></p>
-            <div class="mb-4">
-                <label class="block text-gray-700">Password AHK (min 4 karakter)</label>
-                <input type="password" id="new-password" class="w-full border rounded px-3 py-2 mt-1">
-            </div>
-            <div class="mb-4">
-                <label class="block text-gray-700">Konfirmasi Password</label>
-                <input type="password" id="confirm-password" class="w-full border rounded px-3 py-2 mt-1">
-            </div>
-            <button id="save-password-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full">
-                Simpan Password
-            </button>
-            <div class="mt-4 text-center">
-                <button id="logout-btn" class="text-red-600 text-sm">Logout</button>
-            </div>
-        </div>
-
-        <!-- Dashboard Section (sudah punya password) -->
-        <div id="dashboard-section" class="hidden bg-white rounded-lg shadow-md p-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">📊 Dashboard AHK</h2>
-                <button id="logout-btn-dash" class="text-red-600 text-sm">Logout</button>
-            </div>
-            <div class="border-b pb-2 mb-2">
-				<p class="text-gray-500 text-sm">Username (untuk login AHK)</p>
-				<p id="display-username" class="font-medium">-</p>
+<body>
+	<div class="container anonim">
+		<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+		<div class="side-bar" id="side-bar">
+			<div class="side-bar-top" id="side-bar-top">
+				<img src="logo.png" alt="logo"
+					onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23af86fc\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'"
+					class="style-custom-1">
+				<span class="style-custom-2">GMAIL CHECKER</span>
 			</div>
-            <div class="border-b pb-2 mb-4">
-                <p class="text-gray-500 text-sm">HWID Aktif</p>
-                <p id="hwid" class="font-mono">-</p>
-            </div>
-            <div class="flex gap-4">
-                <button id="change-password-btn" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded flex-1">
-                    Ganti Password
-                </button>
-                <button id="reset-hwid-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded flex-1">
-                    Reset HWID
-                </button>
-            </div>
-            <p class="text-xs text-gray-400 mt-4 text-center">Reset HWID = izinkan login dari PC lain (HWID lama dihapus)</p>
-        </div>
-    </div>
-    <script>
-        // karena ada logout button di dashboard juga, perlu sinkron
-        const logoutBtnDash = document.getElementById("logout-btn-dash");
-        if (logoutBtnDash) {
-            logoutBtnDash.addEventListener("click", async () => {
-                const { signOut } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
-                const auth = getAuth();
-                signOut(auth);
-            });
-        }
-    </script>
+			<div class="side-bar-bottom" id="side-bar-bottom">
+				<!-- Menu items akan diisi oleh JavaScript -->
+			</div>
+			<div class="side-bar-footer style-pos-relative">
+				<!-- Profile Popover -->
+				<div class="profile-popover" id="profile-popover">
+					<div class="profile-popover-header">
+						<div class="profile-popover-logo">
+							<img src="logo.png" alt="logo"
+								onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23af86fc\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'">
+							<span>GMAIL CHECKER</span>
+						</div>
+						<button class="profile-popover-close" id="profile-popover-close-btn">
+							<i class="fa-solid fa-times"></i>
+						</button>
+					</div>
+					<div class="profile-popover-user-info">
+						<div class="profile-popover-avatar-wrapper">
+							<img id="profile-popover-avatar-img" class="profile-popover-avatar hide" src=""
+								alt="avatar">
+							<i id="profile-popover-avatar-icon" class="fas fa-user profile-popover-avatar-icon"></i>
+						</div>
+						<div class="profile-popover-details">
+							<span class="profile-popover-name" id="profile-popover-name-display">Loading...</span>
+							<span class="profile-popover-email" id="profile-popover-email-display">Loading...</span>
+						</div>
+						<span class="profile-popover-badge" id="profile-popover-badge-display">FREE</span>
+					</div>
+					<div class="profile-popover-actions">
+						<button class="profile-popover-btn" id="profile-popover-btn-manage">Manage membership</button>
+						<button class="profile-popover-btn" id="profile-popover-btn-switch">Switch account</button>
+						<button class="profile-popover-btn" id="profile-popover-btn-logout">Sign out</button>
+					</div>
+					<div class="profile-popover-footer">
+						<a href="/privacy" class="profile-popover-footer-link">Privacy Policy</a>
+						<span>·</span>
+						<a href="/terms" class="profile-popover-footer-link">Terms of Service</a>
+					</div>
+				</div>
+
+				<!-- Pending Payment Notification Banner -->
+				<div id="sidebar-pending-payment-notif" class="hide style-custom-4"
+					onclick="window.setActiveMenu('pricing', true)">
+					<i class="fa-solid fa-spinner fa-spin style-custom-5"></i>
+					<span class="style-custom-6">PENDING
+						SUBSCRIPTION</span>
+				</div>
+				<div id="sidebar-pending-api-notif" class="hide style-custom-7"
+					onclick="window.setActiveMenu('dev-purchases', true)">
+					<i class="fa-solid fa-spinner fa-spin style-custom-8"></i>
+					<span class="style-custom-9">PENDING
+						API KEY</span>
+				</div>
+
+				<div class="menu-item style-mb-5" id="sidebar-developer-btn">
+					<i class="fas fa-key"></i>
+					<span>Get API Key</span>
+				</div>
+				<div class="menu-item" id="sidebar-settings-btn">
+					<i class="fas fa-cog"></i>
+					<span>Settings</span>
+				</div>
+				<div class="user-profile-card style-cursor-pointer" id="user-profile-card-trigger">
+					<div class="avatar-circle style-custom-12" id="user-avatar-btn">
+						<i class="fas fa-user" id="user-avatar-icon"></i>
+						<img id="user-avatar-img" class="hide style-custom-13">
+					</div>
+					<div class="user-details">
+						<span class="user-email" id="user-email-display" title="">Loading...</span>
+					</div>
+					<span class="user-badge" id="user-badge-display">FREE</span>
+					<button id="btn-logout" title="Logout" class="style-custom-14">
+						<i class="fa-solid fa-right-from-bracket"></i>
+					</button>
+				</div>
+			</div>
+			<!-- Settings Panel (Context Popup Menu) -->
+			<div class="settings-panel" id="settings-panel">
+				<div class="settings-panel-content">
+					<!-- Theme Button with Hover Popover -->
+					<div class="settings-panel-item" id="theme-panel-item">
+						<i class="item-icon fas fa-palette"></i>
+						<span>Theme</span>
+						<i class="chevron fas fa-chevron-right"></i>
+
+						<!-- Floating Popover -->
+						<div class="theme-popover" id="theme-popover">
+							<div class="theme-popover-item" data-theme="light">
+								<i class="radio-icon fas fa-circle"></i>
+								<i class="theme-icon fas fa-sun"></i>
+								<span>Light</span>
+							</div>
+							<div class="theme-popover-item" data-theme="dark">
+								<i class="radio-icon far fa-circle"></i>
+								<i class="theme-icon fas fa-moon"></i>
+								<span>Dark</span>
+							</div>
+							<div class="theme-popover-item" data-theme="system">
+								<i class="radio-icon far fa-circle"></i>
+								<i class="theme-icon fas fa-laptop"></i>
+								<span>System</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="settings-panel-item style-display-none" id="setting1-panel-item">
+						<i class="item-icon fas fa-key"></i>
+						<span>Manage API Keys</span>
+					</div>
+
+					<div class="settings-panel-item" id="setting2-panel-item">
+						<i class="item-icon fas fa-sliders-h"></i>
+						<span>Setting 2</span>
+					</div>
+
+					<div class="settings-panel-divider"></div>
+				</div>
+			</div>
+		</div>
+		<div class="main">
+			<div class="top-bar style-pos-relative" id="top-bar">
+				<!-- Notification Container -->
+				<div id="notification-container" class="style-custom-16">
+				</div>
+				<!-- Anonymous Top Bar -->
+				<div class="top-bar-anon style-custom-17" id="top-bar-anon-view">
+					<!-- Toggle Sidebar Button (visible on Doc pages in mobile/tablet) -->
+					<button id="btn-toggle-sidebar-anon" class="btn-toggle-sidebar">
+						<i class="fa-solid fa-bars"></i>
+					</button>
+					<div class="anon-logo" id="anon-logo-btn">
+						<img src="logo.png" alt="logo"
+							onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'40\' height=\'40\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23af86fc\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'">
+						<span>GMAIL CHECKER</span>
+					</div>
+					<div class="anon-nav">
+						<a href="/pricing" class="anon-nav-link" id="anon-link-pricing">Pricing</a>
+						<a href="/docs" class="anon-nav-link" id="anon-link-doc">Docs</a>
+					</div>
+					<button class="btn btn-primary style-custom-18" id="btn-nav-get-started">
+						Get Started <i class="fa-solid fa-arrow-right style-ml-8"></i>
+					</button>
+				</div>
+				<div class="top-bar-auth hide style-custom-17" id="top-bar-auth-view">
+					<!-- Toggle Sidebar Button -->
+					<button id="btn-toggle-sidebar" class="btn-toggle-sidebar">
+						<i class="fa-solid fa-bars"></i>
+					</button>
+					<!-- Left side: Clickable Logo that displays Home page -->
+					<div class="anon-logo style-cursor-pointer" id="auth-logo-btn">
+						<img src="logo.png" alt="logo"
+							onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23af86fc\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'"
+							class="style-custom-20">
+						<span class="style-custom-21">GMAIL CHECKER</span>
+					</div>
+					<!-- Right side: space for notification area -->
+					<div id="top-bar-notification-container" class="style-custom-22"></div>
+					<!-- Rightmost: Back to App Button (visible when on Home page and authenticated) -->
+					<button class="btn btn-primary style-custom-23" id="btn-back-to-app">
+						<i class="fa-solid fa-gauge style-mr-8"></i> Open Dashboard
+					</button>
+				</div>
+			</div>
+			<div class="page-name" id="page-name">
+				<span id="current-page-label">Dashboard</span>
+			</div>
+			<div class="content" id="content">
+
+				<!-- Page Home -->
+				<div id="page-home" class="page-content hide">
+					<div class="home-wrapper style-custom-25">
+
+						<!-- 1. Hero Section -->
+						<div class="home-hero style-custom-26">
+							<div class="style-custom-27">
+								🚀 Version 2.0 Live
+							</div>
+							<h1 class="style-custom-28">
+								UPGRADE YOUR <span class="style-custom-29">WORKFLOW</span>
+							</h1>
+							<p class="style-custom-30">
+								Your ultimate premium suite for bulk Gmail checking, automated dot trick variations
+								generation, and fast name combiner permutations.
+							</p>
+							<div id="home-cta-container" class="style-custom-31">
+								<button class="btn btn-primary style-custom-32" id="btn-home-get-started">
+									Get Started Free <i class="fa-solid fa-arrow-right style-ml-8"></i>
+								</button>
+								<button class="btn btn-primary style-custom-33" id="btn-home-open-dashboard">
+									Open Dashboard <i class="fa-solid fa-arrow-right-to-bracket style-ml-8"></i>
+								</button>
+							</div>
+						</div>
+
+						<!-- 2. Stats Row -->
+						<div class="stats-grid style-custom-34">
+							<div class="dashboard-header-card style-custom-35">
+								<span class="style-custom-36">10M+</span>
+								<span class="style-custom-37">Emails
+									Checked</span>
+							</div>
+							<div class="dashboard-header-card style-custom-35">
+								<span class="style-custom-38">99.9%</span>
+								<span class="style-custom-37">Server
+									Uptime</span>
+							</div>
+							<div class="dashboard-header-card style-custom-35">
+								<span class="style-custom-39">&lt;
+									100ms</span>
+								<span class="style-custom-37">API
+									Latency</span>
+							</div>
+						</div>
+
+						<!-- 3. Core Features Section -->
+						<div class="style-custom-40">
+							<div class="style-custom-41">
+								<h2 class="font-keren style-custom-42">
+									Explore Our App Suite</h2>
+								<p class="style-custom-43">
+									Equipped with high-performance tools for ultimate efficiency</p>
+							</div>
+
+							<div class="features-grid style-custom-44">
+								<!-- App 1 Card -->
+								<div class="dashboard-header-card style-custom-45">
+									<div class="style-custom-46">
+										<i class="fa-solid fa-shield-halved"></i>
+									</div>
+									<h3 class="font-keren style-custom-47">
+										Bulk Gmail Checker</h3>
+									<p class="style-custom-48">
+										Verify massive lists of Gmail accounts instantly in real-time. Detect active
+										mailboxes, disabled states, and unregistered addresses without browser overhead.
+									</p>
+								</div>
+								<!-- App 2 Card -->
+								<div class="dashboard-header-card style-custom-45">
+									<div class="style-custom-49">
+										<i class="fa-solid fa-wand-magic-sparkles"></i>
+									</div>
+									<h3 class="font-keren style-custom-47">
+										Dot Tricks Generator</h3>
+									<p class="style-custom-48">
+										Instantly generate all possible unique variations of a Gmail username. Leverages
+										high-speed Web Workers for zero lag or browser locks.
+									</p>
+								</div>
+								<!-- App 3 Card -->
+								<div class="dashboard-header-card style-custom-45">
+									<div class="style-custom-50">
+										<i class="fa-solid fa-shuffle"></i>
+									</div>
+									<h3 class="font-keren style-custom-47">
+										Name Combiner</h3>
+									<p class="style-custom-48">
+										Perform high-volume string permutations across first names, last names, and
+										separators.
+										Designed for mass prospecting list creation.
+									</p>
+								</div>
+								<!-- App 4 Card -->
+								<div class="dashboard-header-card style-custom-45">
+									<div class="style-custom-46">
+										<i class="fa-solid fa-notes-medical"></i>
+									</div>
+									<h3 class="font-keren style-custom-47">
+										Notepad</h3>
+									<p class="style-custom-48">
+										A premium offline notepad to store email lists, credentials, or custom drafts.
+										Features automatic debounced auto-saving and full multi-note organization.
+									</p>
+								</div>
+								<!-- App 5 Card -->
+								<div class="dashboard-header-card style-custom-45">
+									<div class="style-custom-49">
+										<i class="fa-solid fa-filter"></i>
+									</div>
+									<h3 class="font-keren style-custom-47">
+										Email Extractor & Deduplicator</h3>
+									<p class="style-custom-48">
+										Extract clean, unique email addresses from HTML source code, raw text, or CSV
+										logs.
+										Instantly sorts, formats, and filters Gmail and other domain extensions.
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<!-- 4. FAQ Section -->
+						<div class="style-custom-51">
+							<div class="style-custom-41">
+								<h2 class="font-keren style-custom-42">
+									Frequently Asked Questions</h2>
+								<p class="style-custom-43">
+									Got questions? We've got answers.</p>
+							</div>
+
+							<div class="faq-container style-custom-52">
+								<!-- FAQ Item 1 -->
+								<div class="faq-item style-custom-53">
+									<div class="faq-question style-custom-54" onclick="window.toggleFaq(this)">
+										<span>Is this verification system safe for bulk checking?</span>
+										<i class="fa-solid fa-chevron-down style-custom-55"></i>
+									</div>
+									<div class="faq-answer style-custom-56">
+										<div class="style-custom-57">
+											Yes, absolutely. Our backend uses a decentralized network of fast
+											edge-workers that communicate directly with Gmail servers. There is no risk
+											of email blacklisting or IP locking.
+										</div>
+									</div>
+								</div>
+								<!-- FAQ Item 2 -->
+								<div class="faq-item style-custom-53">
+									<div class="faq-question style-custom-54" onclick="window.toggleFaq(this)">
+										<span>How does the Gmail Dot Trick work?</span>
+										<i class="fa-solid fa-chevron-down style-custom-55"></i>
+									</div>
+									<div class="faq-answer style-custom-56">
+										<div class="style-custom-57">
+											Google ignores dots (.) in usernames. Meaning, any email variation like
+											<code>m.y.n.a.m.e@gmail.com</code> will automatically deliver to
+											<code>myname@gmail.com</code>. This allows you to generate massive unique
+											identifiers for registrations.
+										</div>
+									</div>
+								</div>
+								<!-- FAQ Item 3 -->
+								<div class="faq-item style-custom-53">
+									<div class="faq-question style-custom-54" onclick="window.toggleFaq(this)">
+										<span>Do you provide Developer API integration?</span>
+										<i class="fa-solid fa-chevron-down style-custom-55"></i>
+									</div>
+									<div class="faq-answer style-custom-56">
+										<div class="style-custom-57">
+											Yes, we offer direct checking endpoints (like <code>/check1</code>) for
+											developer keys. You can whitelist up to 3 domains or IPs and make
+											programmatic calls from your Python, Node.js, PHP or cURL applications.
+										</div>
+									</div>
+								</div>
+								<!-- FAQ Item 4 -->
+								<div class="faq-item style-custom-53">
+									<div class="faq-question style-custom-54" onclick="window.toggleFaq(this)">
+										<span>Which cryptocurrencies are supported for payment?</span>
+										<i class="fa-solid fa-chevron-down style-custom-55"></i>
+									</div>
+									<div class="faq-answer style-custom-56">
+										<div class="style-custom-57">
+											Through NOWPayments integration, we support all major cryptocurrencies
+											including Bitcoin (BTC), Ethereum (ETH), Litecoin (LTC), USDT (TRC-20), Tron
+											(TRX), and Ripple (XRP).
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+					</div>
+				</div>
+
+				<!-- Page Login -->
+				<div id="page-login" class="page-content hide">
+					<div class="login-page-container style-custom-58">
+						<div class="login-card style-custom-59">
+							<div class="login-logo style-custom-60" onclick="window.setActiveMenu('home')">
+								<img src="logo.png" alt="logo"
+									onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23af86fc\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'"
+									class="style-custom-61">
+								<span class="style-custom-62">GMAIL CHECKER</span>
+							</div>
+							<div class="style-custom-63">
+								<h2 class="style-custom-64">
+									Sign in to continue</h2>
+								<p class="style-custom-65">
+									Access your premium suite of developer and productivity tools.</p>
+							</div>
+							<button class="btn btn-primary style-custom-66" id="btn-login-google">
+								<i class="fa-brands fa-google style-fs-125rem"></i> Sign in with Google
+							</button>
+							<div class="style-custom-68">
+								By continuing, you agree to our <a href="/terms"
+									class="anon-nav-link style-custom-69">Terms</a>
+								and <a href="/privacy" class="anon-nav-link style-custom-69">Privacy
+									Policy</a>.
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page Terms of Service -->
+				<div id="page-terms" class="page-content hide">
+					<div class="terms-container style-custom-70">
+						<div class="dashboard-header-card style-custom-71">
+							<div class="style-custom-72">
+								<div class="style-custom-73">
+									<i class="fa-solid fa-file-contract"></i>
+								</div>
+								<div>
+									<h1 class="font-keren style-custom-74">
+										Terms of Service</h1>
+									<p class="style-custom-75">
+										Last updated: May 23, 2026</p>
+								</div>
+							</div>
+
+							<div class="style-custom-76">
+								<p>Welcome to <strong>GMAIL CHECKER</strong>. By accessing our platform, bulk Gmail
+									checking application, dot trick variations generator, name combiner, and Developer
+									API services, you agree to comply with and be bound by the following terms and
+									conditions.</p>
+
+								<h3 class="font-keren style-custom-77">
+									1. Acceptance of Terms</h3>
+								<p>By using this website, you acknowledge that you have read, understood, and agree to
+									be bound by these Terms of Service. If you do not agree, please do not use our
+									services.</p>
+
+								<h3 class="font-keren style-custom-77">
+									2. Permitted Use</h3>
+								<p>Our bulk email checker is designed strictly for verification of list hygiene and
+									prospecting data accuracy. You represent that you possess proper authorization for
+									all verified lists and agree not to use our tool for programmatic spamming or email
+									abuse operations.</p>
+
+								<h3 class="font-keren style-custom-77">
+									3. Accounts and VIP Access</h3>
+								<p>Access to VIP subscription tiers is provided for a single user per account.
+									Programmatic access to our verification endpoints requires a Developer API Key,
+									which must be secured and not shared or leaked to unauthorized third parties.</p>
+
+								<h3 class="font-keren style-custom-77">
+									4. Payment and Refunds</h3>
+								<p>All subscription plans and Developer API Key purchases are securely routed and
+									processed in cryptocurrency through NOWPayments. Due to the digital nature of the
+									services and the direct utilization of blockchain networks, all payments are final
+									and non-refundable.</p>
+							</div>
+
+							<div class="style-custom-78">
+								<button class="btn btn-primary style-custom-79"
+									onclick="window.setActiveMenu('home', true)">
+									<i class="fa-solid fa-arrow-left style-mr-8"></i> Back to Home
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page Privacy Policy -->
+				<div id="page-privacy" class="page-content hide">
+					<div class="privacy-container style-custom-70">
+						<div class="dashboard-header-card style-custom-71">
+							<div class="style-custom-72">
+								<div class="style-custom-73">
+									<i class="fa-solid fa-user-shield"></i>
+								</div>
+								<div>
+									<h1 class="font-keren style-custom-74">
+										Privacy Policy</h1>
+									<p class="style-custom-75">
+										Last updated: May 23, 2026</p>
+								</div>
+							</div>
+
+							<div class="style-custom-76">
+								<p>At <strong>GMAIL CHECKER</strong>, accessible from our platform, one of our main
+									priorities is the privacy of our visitors and users. This Privacy Policy document
+									contains types of information that is collected and recorded by us and how we use
+									it.</p>
+
+								<h3 class="font-keren style-custom-77">
+									1. Data Security & Storage</h3>
+								<p>We employ enterprise-grade security structures to protect all data. All uploaded
+									email verification lists are processed temporarily in-memory by our edge-workers and
+									are never persisted to a database or shared with external third-party companies.</p>
+
+								<h3 class="font-keren style-custom-77">
+									2. Information We Collect</h3>
+								<p>When you register using Google Authentication, we collect basic profile identifiers
+									including your email address and display name. This details is utilized strictly to
+									manage subscription parameters, API quotas, and support ticket routing.</p>
+
+								<h3 class="font-keren style-custom-77">
+									3. Third-Party Payments</h3>
+								<p>All payments are securely handled in cryptocurrency by NOWPayments. The only details
+									shared with them is the specific invoice amount and transaction ID. We do not store
+									or collect financial wallets or credentials on our servers.</p>
+
+								<h3 class="font-keren style-custom-77">
+									4. Cookie Policies</h3>
+								<p>Like any other modern application, we use basic storage cookies to store user
+									preference states, themes, and current session security tokens. These are strictly
+									functional and do not track you outside of this domain.</p>
+							</div>
+
+							<div class="style-custom-78">
+								<button class="btn btn-primary style-custom-79"
+									onclick="window.setActiveMenu('home', true)">
+									<i class="fa-solid fa-arrow-left style-mr-8"></i> Back to Home
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+
+				<!-- Page Pricing -->
+				<div id="page-pricing" class="page-content hide">
+
+					<!-- PENDING PAYMENT UI -->
+					<div id="pending-payment-container" class="hide style-custom-80">
+						<h1 class="font-keren style-custom-81">
+							<i class="fa-solid fa-clock-rotate-left"></i> Payment Pending
+						</h1>
+						<p class="style-custom-82">
+							We are currently waiting for the network confirmation of your latest invoice. <br>Please
+							complete the payment or cancel it if you wish to start a new purchase.
+						</p>
+
+						<div class="style-custom-83">
+							<div class="style-custom-84">
+								<span class="style-custom-85">Invoice ID</span>
+								<strong id="pending-invoice-id-display" class="style-custom-86">...</strong>
+							</div>
+							<div class="style-custom-84">
+								<span class="style-custom-85">Plan Type</span>
+								<strong id="pending-invoice-plan-display" class="style-custom-87">PREMIUM</strong>
+							</div>
+							<div class="style-custom-88">
+								<span class="style-custom-85">Status</span>
+								<span class="style-custom-89"><i class="fa-solid fa-spinner fa-spin"></i> Awaiting
+									Payment</span>
+							</div>
+						</div>
+
+						<div class="style-custom-90">
+							<button id="btn-pending-cancel" class="btn style-custom-91">
+								<i class="fa-solid fa-trash"></i> Cancel Invoice
+							</button>
+							<button id="btn-pending-pay" class="btn btn-primary style-custom-92">
+								<i class="fa-solid fa-wallet"></i> Pay Now
+							</button>
+						</div>
+					</div>
+
+					<div class="pricing-container style-custom-93" id="pricing-plans-container">
+
+						<!-- Header -->
+						<div class="style-custom-94">
+							<h1 class="font-keren style-custom-95">Choose
+								Your
+								Plan</h1>
+							<p class="style-custom-96">
+								Choose the plan that best suits your needs and get access to all our premium features.
+							</p>
+						</div>
+
+						<!-- Pricing Cards Grid -->
+						<div class="style-custom-97">
+
+							<!-- FREE PLAN -->
+							<div class="pricing-card style-custom-98">
+								<div class="style-custom-99">
+									<span class="style-custom-100">Starter
+										Plan</span>
+									<h2 class="font-keren style-custom-101">
+										FREE</h2>
+									<div class="style-custom-102">
+										<span class="style-custom-103">$0</span>
+										<span class="style-custom-85">/ lifetime</span>
+									</div>
+									<div class="style-custom-104">
+									</div>
+									<ul class="style-custom-105">
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-107"></i> 10,000 Gmail
+											Gmail Checks /
+											Day
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-107"></i>Lifetime Access
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-107"></i>Free Access All
+											Apps
+										</li>
+										<li class="style-custom-108">
+											<i class="fa-solid fa-circle-xmark style-custom-109"></i> Priority Support
+										</li>
+									</ul>
+								</div>
+								<button class="btn style-custom-110" disabled>Active Plan</button>
+							</div>
+
+							<!-- PREMIUM MONTHLY PLAN (vip_1m) -->
+							<div class="pricing-card style-custom-111">
+								<div class="style-custom-99">
+									<span class="style-custom-112">Internal
+										SaaS</span>
+									<h2 class="font-keren style-custom-113">
+										VIP 1 MONTH</h2>
+									<div class="style-custom-102">
+										<span id="display-price-vip_1m" class="style-custom-103">$2.99</span>
+										<span class="style-custom-85">/ month</span>
+									</div>
+									<div class="style-custom-114">
+									</div>
+									<ul class="style-custom-105">
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-115"></i> <strong>100,000
+												Gmail Checks /
+												Day</strong>
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-115"></i> <strong>30 days
+												access</strong>
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-115"></i> Free Access All
+											Apps
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-115"></i> Priority Support
+										</li>
+									</ul>
+								</div>
+								<button class="btn btn-primary style-custom-116" id="btn-upgrade-vip_1m">Subscribe
+									Monthly</button>
+							</div>
+
+							<!-- PREMIUM 3 MONTHS PLAN (vip_3m) -->
+							<div class="pricing-card style-custom-117">
+								<div class="style-custom-99">
+									<span class="style-custom-118">Quarterly
+										Plan</span>
+									<h2 class="font-keren style-custom-113">
+										VIP 3 MONTHS</h2>
+									<div class="style-custom-102">
+										<span id="display-price-vip_3m" class="style-custom-103">$5.99</span>
+										<span class="style-custom-85">/ 3 months</span>
+									</div>
+									<span id="display-saving-vip_3m" class="style-custom-119"></span>
+									<div class="style-custom-120">
+									</div>
+									<ul class="style-custom-105">
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-121"></i> <strong>100,000
+												Gmail Checks /
+												Day</strong>
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-121"></i> <strong>90 days
+												access</strong>
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-121"></i> Free Access All
+											Apps
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-121"></i> Priority Support
+										</li>
+									</ul>
+								</div>
+								<button class="btn btn-primary style-custom-122" id="btn-upgrade-vip_3m">Subscribe
+									3 Months</button>
+							</div>
+
+							<!-- PREMIUM 6 MONTHS PLAN (vip_6m) -->
+							<div class="pricing-card style-custom-123">
+								<div class="style-custom-99">
+									<span class="style-custom-124">Semi-Annual</span>
+									<h2 class="font-keren style-custom-113">
+										VIP 6 MONTHS</h2>
+									<div class="style-custom-102">
+										<span id="display-price-vip_6m" class="style-custom-103">$12.99</span>
+										<span class="style-custom-85">/ 6 months</span>
+									</div>
+									<span id="display-saving-vip_6m" class="style-custom-119"></span>
+									<div class="style-custom-125">
+									</div>
+									<ul class="style-custom-105">
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-126"></i> <strong>100,000
+												Gmail Checks /
+												Day</strong>
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-126"></i> <strong>180 days
+												access</strong>
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-126"></i> Free Access All
+											Apps
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-126"></i> Priority Support
+										</li>
+									</ul>
+								</div>
+								<button class="btn btn-primary style-custom-127" id="btn-upgrade-vip_6m">Subscribe
+									6 Months</button>
+							</div>
+
+							<!-- PREMIUM ANNUAL PLAN (vip_1y) -->
+							<div class="pricing-card style-custom-128">
+
+								<!-- Popular Badge -->
+								<div class="style-custom-129">
+									BEST VALUE</div>
+
+								<div class="style-custom-99">
+									<span class="style-custom-130">Internal
+										SaaS</span>
+									<h2 class="font-keren style-custom-113">
+										VIP 1 YEAR</h2>
+
+									<div class="style-custom-102">
+										<span id="display-price-vip_1y" class="style-custom-103">$39.99</span>
+										<span class="style-custom-85">/ year</span>
+									</div>
+									<span id="display-saving-vip_1y" class="style-custom-119"></span>
+
+									<div class="style-custom-131">
+									</div>
+									<ul class="style-custom-105">
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-132"></i> <strong>100,000
+												Gmail Checks /
+												Day</strong>
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-132"></i> <strong>365 days
+												access</strong>
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-132"></i> Free Access All
+											Apps
+										</li>
+										<li class="style-custom-106">
+											<i class="fa-solid fa-circle-check style-custom-132"></i> Priority Support
+										</li>
+									</ul>
+								</div>
+								<button class="btn btn-primary style-custom-133" id="btn-upgrade-vip_1y">Subscribe
+									Annual</button>
+							</div>
+
+						</div>
+
+					</div>
+				</div>
+
+
+				<!-- VIP CHECKOUT MODAL -->
+				<div id="checkout-modal" class="modal-overlay hide style-custom-134">
+					<div class="checkout-card style-custom-135">
+
+						<!-- Close Button -->
+						<button id="checkout-close-btn" class="style-custom-136"><i
+								class="fa-solid fa-xmark"></i></button>
+
+						<!-- Modal Title -->
+						<div class="style-custom-137">
+							<h3 class="font-keren style-custom-138" id="checkout-plan-name">VIP 1 MONTH</h3>
+							<p id="checkout-plan-desc" class="style-custom-139">Unlimited Checks/Day + Fast Checking
+								Servers</p>
+						</div>
+
+						<!-- Price Display Row -->
+						<div class="style-custom-140">
+							<span class="style-custom-141">Total Due:</span>
+							<span class="font-keren style-custom-142" id="checkout-plan-price">$24.99</span>
+						</div>
+
+						<!-- NOWPAYMENTS DETAILS (Crypto Payment Only) -->
+						<div id="payment-form-nowpayments" class="style-custom-143">
+							<div class="style-custom-144">
+								<i class="fa-solid fa-coins style-custom-145"></i>
+								<span class="style-custom-146">Pay
+									Securely With Crypto</span>
+								<p class="style-custom-147">
+									An invoice will be created using the NOWPayments platform. You can pay using
+									Bitcoin, Ethereum, USDT, Litecoin, etc.
+								</p>
+							</div>
+							<button class="btn btn-primary style-custom-148" id="btn-create-crypto-invoice">
+								Create NOWPayments Invoice <i
+									class="fa-solid fa-arrow-up-right-from-square style-custom-149"></i>
+							</button>
+						</div>
+
+					</div>
+				</div>
+
+				<!-- Page Dashboard -->
+				<div id="page-dashboard" class="page-content hide">
+					<div class="dashboard-wrapper style-custom-150">
+
+						<!-- Dashboard Top Panel (Glass Card) -->
+						<div class="dashboard-header-card style-custom-151">
+							<div class="style-custom-152">
+								<div class="style-custom-153">
+									<i class="fa-solid fa-user-shield"></i>
+								</div>
+								<div class="style-custom-137">
+									<h2 class="font-keren style-custom-154">
+										User Console</h2>
+									<span id="db-user-email" class="style-custom-155">loading...</span>
+								</div>
+							</div>
+							<div class="style-custom-156">
+								<div class="style-custom-157">
+									<span class="style-custom-158">Current
+										Tier</span>
+									<span id="db-user-badge" class="font-keren style-custom-159">FREE</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- API Usage Quick Stats (Glass Card Grid) -->
+						<div class="style-custom-160">
+
+							<!-- Active Session Key stats -->
+							<div class="style-custom-161">
+								<div class="style-custom-88">
+									<span class="style-custom-162"><i class="fa-solid fa-chart-line style-mr-8"></i>
+										Quota</span>
+									<span id="db-quota-reset-text" class="style-custom-163">Resets in 24 hours</span>
+								</div>
+
+								<!-- Quota Bar -->
+								<div class="style-custom-63">
+									<div class="style-custom-164">
+										<span>Usage Progress:</span>
+										<strong id="db-quota-usage-label">0 / 0 Requests</strong>
+									</div>
+									<div class="style-custom-165">
+										<div id="db-quota-bar" class="style-custom-166">
+										</div>
+									</div>
+								</div>
+
+								<!-- Stats Row -->
+								<div class="style-custom-167">
+									<div class="style-custom-168">
+										<span class="style-custom-169">Remaining
+											Checks</span>
+										<strong id="db-remaining-requests" class="style-custom-170">0</strong>
+									</div>
+									<div class="style-custom-171">
+										<span class="style-custom-169">Active Period</span>
+										<strong id="db-subscription-expiry" class="style-custom-172">Not
+											Subscribed</strong>
+									</div>
+									<div class="style-custom-173">
+										<span class="style-custom-169">Reset Timer</span>
+										<strong id="db-reset-countdown" class="style-custom-174">00:00:00</strong>
+									</div>
+								</div>
+							</div>
+
+							<!-- Active key in use preview (Hidden to keep raw key hidden from dashboard) -->
+							<div class="style-custom-175">
+								<div class="style-custom-176">
+									<span class="style-custom-162"><i class="fa-solid fa-key style-mr-8"></i> Active Key
+										in
+										Use</span>
+									<p class="style-custom-177">
+										This is the API Key currently applied to your Bulk Gmail Checker session.
+									</p>
+								</div>
+								<div class="style-custom-178">
+									<input type="password" id="db-active-key-display" value="••••••••••••••••" readonly
+										autocomplete="off" class="style-custom-179">
+									<button id="btn-db-reveal-key" title="Reveal Key" class="style-custom-180"><i
+											class="fa-solid fa-eye"></i></button>
+									<button id="btn-db-copy-key" title="Copy Key" class="style-custom-180"><i
+											class="fa-solid fa-copy"></i></button>
+								</div>
+							</div>
+
+						</div>
+
+						<!-- VIP Subscription History Panel -->
+						<div class="style-custom-181">
+							<div class="style-custom-88">
+								<h3 class="font-keren style-custom-182">
+									<i class="fa-solid fa-gem style-custom-183"></i>
+									VIP Subscription History
+								</h3>
+							</div>
+
+							<!-- Subscriptions Container List -->
+							<div id="db-vip-payments-list" class="style-custom-186">
+								<div class="style-custom-187">
+									<i class="fa-solid fa-spinner fa-spin style-mr-8"></i> Loading your
+									subscription records...
+								</div>
+							</div>
+
+							<div id="db-vip-info-list" class="style-custom-188">
+								No subscription history found.
+							</div>
+
+							<div class="style-custom-189">
+								<button id="btn-dashboard-go-pricing-sub" class="btn btn-primary style-custom-190"
+									onclick="window.setActiveMenu('pricing', true)">
+									<i class="fa-solid fa-tags style-mr-8"></i>Get More VIP Keys
+								</button>
+							</div>
+						</div>
+
+					</div>
+				</div>
+
+				<!-- Page Setting 1 (Manage API Keys) -->
+				<div id="page-setting1" class="page-content hide">
+					<div class="setting1-wrapper style-custom-150">
+
+						<!-- Tab Navigation Pill (Hidden but kept in DOM to prevent JS binding errors) -->
+						<div class="style-custom-191">
+							<button id="btn-tab-keys" class="period-btn active style-custom-192">
+								<i class="fa-solid fa-key style-mr-8"></i> My API Keys
+							</button>
+							<button id="btn-tab-history" class="period-btn style-custom-193">
+								<i class="fa-solid fa-clock-rotate-left style-mr-8"></i> Usage History
+							</button>
+						</div>
+
+						<!-- 1. DEVELOPER PANE: MANAGE KEYS -->
+						<div id="tab-dev-keys" class="dev-pane style-custom-194">
+							<!-- Owned API Keys List (Table Grid) -->
+							<div class="style-custom-195">
+								<div class="style-custom-88">
+									<h3 class="font-keren style-custom-182">
+										My Registered API Keys</h3>
+									<button id="btn-refresh-keys-list" title="Refresh List" class="style-custom-196"><i
+											class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+								</div>
+
+								<!-- Keys Table -->
+								<div class="style-custom-197">
+									<table class="style-custom-198">
+										<thead>
+											<tr class="style-custom-199">
+												<th class="style-padding-1210">API Key</th>
+												<th class="style-padding-1210">Type</th>
+												<th class="style-padding-1210">Created At</th>
+												<th class="style-padding-1210">Expires At</th>
+												<th class="style-custom-201">Status</th>
+												<th class="style-custom-201">Authorized IPs</th>
+												<th class="style-custom-201">Authorized Domains
+												</th>
+											</tr>
+										</thead>
+										<tbody id="db-keys-table-body">
+											<tr>
+												<td colspan="7" class="style-custom-202">
+													<i class="fa-solid fa-circle-notch fa-spin style-mr-8"></i> Loading
+													your API keys...
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+
+						<!-- 2. DEVELOPER PANE: API STATS & DOCUMENTATION -->
+						<div id="tab-dev-stats" class="dev-pane hide style-custom-194">
+							<div class="style-custom-167">
+								<h3 class="font-keren style-custom-182">
+									<i class="fa-solid fa-chart-line style-custom-203"></i>
+									My API Usage Statistics
+								</h3>
+							</div>
+
+							<!-- Dynamic Stats Cards Grid -->
+							<div id="dev-stats-keys-container" class="style-custom-204">
+								<div class="style-custom-205">
+									<i class="fa-solid fa-circle-notch fa-spin style-mr-8"></i> Loading
+									statistics for each of your API keys...
+								</div>
+							</div>
+						</div>
+
+						<!-- 3. DEVELOPER PANE: USAGE LOGS HISTORY -->
+						<div id="tab-dev-history" class="dev-pane hide style-custom-206">
+							<div class="style-custom-195">
+								<div class="style-custom-167">
+									<h3 class="font-keren style-custom-182">
+										Verification Activity Logs</h3>
+									<div class="style-custom-207">
+										<button id="btn-db-copy-history" class="btn style-custom-208"><i
+												class="fa-solid fa-copy style-mr-5"></i> Copy
+											History</button>
+										<button id="btn-db-download-history" class="btn style-custom-208"><i
+												class="fa-solid fa-download style-mr-5"></i> Download
+											CSV</button>
+									</div>
+								</div>
+
+								<!-- Logs Table -->
+								<div class="style-custom-197">
+									<table class="style-custom-210">
+										<thead>
+											<tr class="style-custom-199">
+												<th class="style-padding-1210">Timestamp</th>
+												<th class="style-padding-1210">API Key Prefix</th>
+												<th class="style-padding-1210">Emails Checked</th>
+												<th class="style-padding-1210">Result Matches</th>
+												<th class="style-custom-211">Speed Server</th>
+											</tr>
+										</thead>
+										<tbody id="db-history-table-body">
+											<tr>
+												<td colspan="5" class="style-custom-202">
+													No activity logs found for this account. Your checks will appear
+													here in real-time.
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+
+						<!-- 4. DEVELOPER PANE: ADD / PASTE NEW KEY -->
+						<div id="tab-dev-add" class="dev-pane hide style-custom-212">
+							<div class="style-custom-213">
+
+								<!-- API 100K CARD -->
+								<div class="pricing-card style-custom-214">
+									<div class="style-custom-215">
+										<span class="style-custom-216">Developer
+											API</span>
+										<h2 class="font-keren style-custom-138">
+											100K API KEY</h2>
+										<div class="style-custom-102">
+											<span id="display-price-api_100k" class="style-custom-217">$5.00</span>
+											<span class="style-custom-163">/ month</span>
+										</div>
+										<div class="style-custom-218">
+										</div>
+										<ul class="style-custom-219">
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i>
+												<strong>100,000
+													Requests / Day</strong>
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Authorized IP
+												Access (Max 3)
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Authorized
+												Domain
+												Access (Max 3)
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Direct checker
+												endpoint
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Priority
+												support
+											</li>
+										</ul>
+									</div>
+									<button class="btn btn-primary style-custom-222" id="btn-upgrade-api_100k">Buy
+										100K API Key</button>
+								</div>
+
+								<!-- API 500K CARD -->
+								<div class="pricing-card style-custom-223">
+									<div class="style-custom-215">
+										<span class="style-custom-224">Developer
+											API</span>
+										<h2 class="font-keren style-custom-138">
+											500K API KEY</h2>
+										<div class="style-custom-102">
+											<span id="display-price-api_500k" class="style-custom-217">$10.00</span>
+											<span class="style-custom-163">/ month</span>
+										</div>
+										<div class="style-custom-225">
+										</div>
+										<ul class="style-custom-219">
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i>
+												<strong>500,000
+													Requests / Day</strong>
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i> Authorized IP
+												Access (Max 3)
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i> Authorized
+												Domain
+												Access (Max 3)
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i> Direct checker
+												endpoint
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i> Priority
+												support
+											</li>
+										</ul>
+									</div>
+									<button class="btn btn-primary style-custom-227" id="btn-upgrade-api_500k">Buy
+										500K API Key</button>
+								</div>
+
+								<!-- API 1M CARD -->
+								<div class="pricing-card style-custom-228">
+									<div class="style-custom-215">
+										<span class="style-custom-229">Developer
+											API</span>
+										<h2 class="font-keren style-custom-138">
+											1M API KEY</h2>
+										<div class="style-custom-102">
+											<span id="display-price-api_1m" class="style-custom-217">$15.00</span>
+											<span class="style-custom-163">/ month</span>
+										</div>
+										<div class="style-custom-230">
+										</div>
+										<ul class="style-custom-219">
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-231"></i>
+												<strong>1,000,000
+													Requests / Day</strong>
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-231"></i> Authorized IP
+												Access (Max 3)
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-231"></i> Authorized
+												Domain
+												Access (Max 3)
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-231"></i> Direct checker
+												endpoint
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-231"></i> Priority
+												support
+											</li>
+										</ul>
+									</div>
+									<button class="btn btn-primary style-custom-232" id="btn-upgrade-api_1m">Buy
+										1M API Key</button>
+								</div>
+
+							</div>
+						</div>
+
+						<!-- 5. DEVELOPER PANE: PURCHASE HISTORY & INVOICES -->
+						<div id="tab-dev-purchases" class="dev-pane hide style-custom-194">
+
+							<!-- PENDING PAYMENT UI FOR API KEY -->
+							<div id="dev-pending-payment-container" class="hide style-custom-233">
+								<h3 class="font-keren style-custom-234"><i
+										class="fa-solid fa-clock-rotate-left style-mr-8"></i> API Key
+									Payment Pending</h3>
+								<p class="style-custom-235">
+									You have a pending API Key purchase. Please complete or cancel the payment to buy
+									more.</p>
+
+								<div class="style-custom-236">
+									<div class="style-custom-237">
+										<span class="style-custom-163">ID:</span> <strong id="dev-pending-invoice-id"
+											class="style-font-family-robotomono">...</strong>
+									</div>
+									<div class="style-custom-239"><span class="style-custom-163">Product:</span> <strong
+											id="dev-pending-invoice-plan" class="style-color-00f0ff">...</strong></div>
+								</div>
+
+								<div class="style-custom-241">
+									<button id="btn-dev-pending-cancel" class="btn style-custom-242"><i
+											class="fa-solid fa-trash"></i> Cancel</button>
+									<button id="btn-dev-pending-pay" class="btn btn-primary style-custom-243"><i
+											class="fa-solid fa-wallet"></i> Pay Now</button>
+								</div>
+							</div>
+
+							<div id="dev-pricing-plans-container">
+								<!-- Info Panel -->
+								<div class="style-custom-244">
+									<div class="style-custom-88">
+										<h3 class="font-keren style-custom-182"><i
+												class="fa-solid fa-key style-custom-245"></i>
+											API Keys & Quota Purchases</h3>
+										<span class="style-custom-184">Status:
+											Real-time</span>
+									</div>
+
+									<p class="style-custom-185">
+										Purchase additional API request quotas for your external applications.
+									</p>
+
+									<!-- Invoices Container List -->
+									<div id="dev-api-payments-list" class="style-custom-186">
+										<div class="style-custom-187">
+											<i class="fa-solid fa-spinner fa-spin style-mr-8"></i>
+											Loading
+											your purchase records...
+										</div>
+									</div>
+
+									<div id="dev-api-info-list" class="style-custom-188">
+										No API key purchase history found.
+									</div>
+
+									<div class="style-custom-189">
+										<button id="btn-dev-buy-api" class="btn btn-primary style-custom-246">
+											<i class="fa-solid fa-cart-shopping style-mr-8"></i>Buy More
+											Quota
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- WHITELIST MODAL (Authorized IPs + Authorized Domains) -->
+				<div id="ip-whitelist-modal" class="modal-overlay hide style-custom-247">
+					<div id="whitelist-modal-card" class="style-custom-248">
+
+						<!-- Close -->
+						<button id="ip-modal-close-btn" class="style-custom-249">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+
+						<!-- Modal Header -->
+						<div class="style-custom-250">
+							<div class="style-custom-251">
+								<div class="style-custom-252">
+									<i class="fa-solid fa-shield-halved style-custom-253"></i>
+								</div>
+								<div>
+									<h3 class="font-keren style-custom-254">Access Control
+									</h3>
+									<p id="ip-modal-key-label" class="style-custom-255">
+										VIP Key: ...</p>
+								</div>
+							</div>
+							<p class="style-custom-256">
+								<i class="fa-solid fa-circle-info style-custom-257"></i>
+								Restrict API access to specific IPs or domains. If any whitelist is set, only matching
+								requests are allowed. Max <strong>3 entries</strong> each.
+							</p>
+							<!-- Tabs -->
+							<div class="style-custom-258">
+								<button id="wl-tab-ip" class="style-custom-259">
+									<i class="fa-solid fa-network-wired style-mr-6"></i>Authorized IPs
+								</button>
+								<button id="wl-tab-domain" class="style-custom-261">
+									<i class="fa-solid fa-globe style-mr-6"></i>Authorized Domains
+								</button>
+							</div>
+						</div>
+
+						<!-- Scrollable Body -->
+						<div class="style-custom-262">
+
+							<!-- PANEL: AUTHORIZED IPs -->
+							<div id="wl-panel-ip" class="style-custom-263">
+								<div class="style-custom-88">
+									<span class="style-custom-264">WHITELISTED
+										IPs</span>
+									<span id="ip-modal-count-badge" class="style-custom-265">0
+										/ 3</span>
+								</div>
+								<div id="ip-modal-list" class="style-custom-266"></div>
+								<div class="style-border-top-1solidvarborder-color"></div>
+								<div class="style-custom-176">
+									<span class="style-custom-264">ADD
+										NEW IP</span>
+									<div class="style-custom-268">
+										<input type="text" id="ip-modal-input" placeholder="e.g. 203.0.113.42"
+											autocomplete="off" class="style-custom-269">
+										<button id="btn-ip-modal-add" class="style-custom-270">
+											<i class="fa-solid fa-plus style-mr-5"></i>Add
+										</button>
+									</div>
+									<button id="btn-ip-modal-detect" class="style-custom-271">
+										<i class="fa-solid fa-location-crosshairs style-color-af86fc"></i>Use my
+										current IP
+									</button>
+								</div>
+								<button id="btn-ip-modal-clear-all" class="style-custom-273">
+									<i class="fa-solid fa-trash-can"></i> Clear All IPs (Disable IP Restriction)
+								</button>
+							</div>
+
+							<!-- PANEL: AUTHORIZED DOMAINS -->
+							<div id="wl-panel-domain" class="style-custom-274">
+								<div class="style-custom-88">
+									<span class="style-custom-264">WHITELISTED
+										DOMAINS</span>
+									<span id="domain-modal-count-badge" class="style-custom-275">0
+										/ 3</span>
+								</div>
+								<div id="domain-modal-list" class="style-custom-266"></div>
+								<div class="style-border-top-1solidvarborder-color"></div>
+								<div class="style-custom-176">
+									<span class="style-custom-264">ADD
+										NEW DOMAIN</span>
+									<div class="style-custom-268">
+										<input type="text" id="domain-modal-input" placeholder="e.g. myapp.com"
+											autocomplete="off" class="style-custom-269">
+										<button id="btn-domain-modal-add" class="style-custom-276">
+											<i class="fa-solid fa-plus style-mr-5"></i>Add
+										</button>
+									</div>
+									<p class="style-custom-277">
+										<i class="fa-solid fa-lightbulb style-custom-278"></i>
+										Enter hostname (e.g. <code class="style-custom-279">myapp.com</code>)
+										or full URL. Subdomains are treated separately.
+									</p>
+								</div>
+								<button id="btn-domain-modal-clear-all" class="style-custom-273">
+									<i class="fa-solid fa-trash-can"></i> Clear All Domains (Disable Domain Restriction)
+								</button>
+							</div>
+
+						</div><!-- end scrollable body -->
+					</div>
+				</div>
+				<!-- END WHITELIST MODAL -->
+
+				<!-- Page App 1 -->
+				<div id="page-app1" class="page-content hide">
+					<div class="app-container">
+						<!-- Input Area -->
+						<p class="app-instruction">
+							Enter valid Gmail addresses to verify their live status.
+						</p>
+						<div class="app-x55-container">
+							<div class="email-input" id="email-input-container-app1">
+								<div id="line-numbers-app1" class="line-numbers">1</div>
+								<textarea id="gmail-checker-input"
+									placeholder="example1@gmail.com&#10;example2@gmail.com&#10;example3@gmail.com"
+									spellcheck="false"></textarea>
+								<div class="invalid-list-box hide" id="invalid-list-app1"></div>
+							</div>
+
+							<!-- Bulk Results Dashboard (Hidden initially) -->
+							<div class="results-container hide" id="results-container-app1">
+								<div class="results-header style-custom-280">
+									<button class="btn style-custom-281" id="btn-back-app1">
+										<i class="fa-solid fa-arrow-left"></i> Back / Reset
+									</button>
+									<div class="filter-button-group style-custom-282">
+										<button class="btn filter-btn active style-custom-283" id="filter-all-app1"
+											data-filter="all">All <span id="count-all-app1">(0)</span></button>
+										<button class="btn filter-btn style-custom-283" id="filter-live-app1"
+											data-filter="live">Live <span id="count-live-app1"
+												class="style-color-66ffd9">(0)</span></button>
+										<button class="btn filter-btn hide style-custom-283" id="filter-ver-app1"
+											data-filter="verify">Ver <span id="count-ver-app1"
+												class="style-color-ffd700">(0)</span></button>
+										<button class="btn filter-btn hide style-custom-283" id="filter-disabled-app1"
+											data-filter="disabled">Disabled <span id="count-disabled-app1"
+												class="style-color-ff6347">(0)</span></button>
+										<button class="btn filter-btn hide style-custom-283"
+											id="filter-unregistered-app1" data-filter="unregistered">Unregistered <span
+												id="count-unregistered-app1"
+												class="style-color-00f0ff">(0)</span></button>
+										<button class="btn filter-btn style-custom-283" id="filter-bad-app1"
+											data-filter="bad">Bad <span id="count-bad-app1"
+												class="style-color-ff6666">(0)</span></button>
+										<button class="btn filter-btn style-custom-283" id="filter-failed-app1"
+											data-filter="failed">Failed <span id="count-failed-app1"
+												class="style-color-ff4d4d">(0)</span></button>
+									</div>
+								</div>
+
+								<div class="tasks-list" id="tasks-list-app1">
+									<!-- Dynamically populated email verification results -->
+								</div>
+							</div>
+
+							<!-- Controls Sidebar -->
+							<div class="controls">
+								<div class="control-title">
+									<i class="fa-solid fa-shield-halved style-color-af86fc"></i> Gmail Checker
+								</div>
+								<p class="style-custom-289">
+									Verify active Gmail status, live, disabled, unregistered, and bad status.
+								</p>
+
+								<div id="select-server-container-app1">
+									<p class="style-custom-290">
+										<i class="fa-solid fa-server style-mr-4"></i> Select Server:
+									</p>
+
+									<select id="select-server-app1" class="btn style-custom-292">
+										<option value="fastServer1" selected>Fast 1</option>
+										<option value="fastServer2">Fast 2</option>
+										<option value="server1">Advanced 1</option>
+										<option value="server2">Advanced 2</option>
+									</select>
+								</div>
+
+								<button class="btn hide style-custom-293" id="btn-fix-app1">
+									<i class="fa-solid fa-screwdriver-wrench"></i> Quick Fix Issues
+								</button>
+								<button class="btn btn-primary style-mb-5" id="btn-execute-app1">
+									<i class="fa-solid fa-play"></i> Execute Verification
+								</button>
+								<button class="btn style-custom-294" id="btn-stop-app1">
+									<i class="fa-solid fa-stop"></i> Stop Verification
+								</button>
+								<button class="btn style-mb-5" id="btn-add-domain-app1">
+									<i class="fa-solid fa-square-plus"></i> Add @gmail.com
+								</button>
+								<button class="btn style-custom-295" id="btn-clear-app1">
+									<i class="fa-solid fa-trash-can"></i> Clear Input
+								</button>
+								<button class="btn hide style-mb-5" id="btn-copy-app1">
+									<i class="fa-solid fa-copy"></i> Copy Active Results
+								</button>
+								<button class="btn hide style-mb-5" id="btn-download-app1">
+									<i class="fa-solid fa-download"></i> Download All (TXT)
+								</button>
+								<button class="btn hide style-custom-296" id="btn-download-all-app1">
+									<i class="fa-solid fa-file-zipper"></i> Download All (ZIP)
+								</button>
+
+								<div class="style-custom-297">
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-envelope style-mr-4"></i> Input:</span>
+										<span id="stats-input-app1" class="style-custom-299">0
+											email(s)</span>
+									</div>
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-circle-check style-custom-300"></i> Live:</span>
+										<span id="stats-live-app1" class="style-custom-301">0</span>
+									</div>
+									<div class="stat-row-detailed-app1 hide style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-circle-question style-custom-302"></i> Ver:</span>
+										<span id="stats-ver-app1" class="style-custom-303">0</span>
+									</div>
+									<div class="stat-row-detailed-app1 hide style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-circle-minus style-custom-304"></i> Disabled:</span>
+										<span id="stats-disabled-app1" class="style-custom-305">0</span>
+									</div>
+									<div class="stat-row-detailed-app1 hide style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-user-xmark style-custom-278"></i>
+											Unregistered:</span>
+										<span id="stats-unregistered-app1" class="style-custom-306">0</span>
+									</div>
+									<div id="sidebar-bad-row-app1" class="style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-circle-xmark style-custom-307"></i> Bad:</span>
+										<span id="stats-bad-app1" class="style-custom-308">0</span>
+									</div>
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-circle-exclamation style-custom-309"></i>
+											Failed:</span>
+										<span id="stats-failed-app1" class="style-custom-310">0</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page App 2 -->
+				<div id="page-app2" class="page-content hide">
+					<div class="app-container">
+						<p class="app-instruction">
+							Enter valid Gmail addresses to generate all possible dot variations.
+						</p>
+						<div class="app-x55-container">
+							<!-- Input Area -->
+							<div class="email-input" id="email-input-container-app2">
+								<div id="line-numbers-app2" class="line-numbers">1</div>
+								<textarea id="gmail-dot-trick-input"
+									placeholder="example1@gmail.com&#10;example2@gmail.com&#10;example3@gmail.com"
+									spellcheck="false"></textarea>
+								<div class="invalid-list-box hide" id="invalid-list-app2"></div>
+							</div>
+
+							<!-- Bulk Results Dashboard (Hidden initially) -->
+							<div class="results-container hide" id="results-container-app2">
+								<div class="results-header">
+									<button class="btn style-custom-281" id="btn-back-app2">
+										<i class="fa-solid fa-arrow-left"></i> Back / Reset
+									</button>
+									<div class="style-custom-311">
+										<i class="fa-solid fa-gauge-high style-color-af86fc"></i> Bulk Dashboard
+									</div>
+								</div>
+
+								<div class="tasks-list" id="tasks-list-app2">
+									<!-- Dynamically populated per-email cards -->
+								</div>
+							</div>
+
+							<!-- Controls Sidebar -->
+							<div class="controls">
+								<div class="control-title">
+									<i class="fa-solid fa-wand-magic-sparkles style-color-af86fc"></i> Gmail Dot
+									Tricks
+								</div>
+								<p class="style-custom-289">
+									Bulk Gmail Dot Tricks generation, fast and secure.
+								</p>
+
+								<div id="select-mode-container-app2">
+									<p class="style-custom-290">
+										<i class="fa-solid fa-sliders style-mr-4"></i> Generation Mode:
+									</p>
+
+									<select id="select-mode-app2" class="btn style-custom-292">
+										<option value="fast" selected>Fast Mode - No Limit</option>
+										<option value="balance">Balance Mode - Max 2M</option>
+										<option value="slow">Slow Mode - Max 250K</option>
+									</select>
+								</div>
+
+								<button class="btn hide style-custom-293" id="btn-fix-app2">
+									<i class="fa-solid fa-screwdriver-wrench"></i> Quick Fix Issues
+								</button>
+								<button class="btn btn-primary style-mb-5" id="btn-generate-app2">
+									<i class="fa-solid fa-play"></i> Generate Variations
+								</button>
+								<button class="btn style-mb-5" id="btn-add-domain-app2">
+									<i class="fa-solid fa-square-plus"></i> Add @gmail.com
+								</button>
+								<button class="btn style-custom-295" id="btn-clear-app2">
+									<i class="fa-solid fa-trash-can"></i> Clear Input
+								</button>
+								<button class="btn hide style-mb-5" id="btn-copy-app2">
+									<i class="fa-solid fa-copy"></i> Copy All Results
+								</button>
+								<button class="btn hide style-mb-5" id="btn-download-app2">
+									<i class="fa-solid fa-download"></i> Download All (TXT)
+								</button>
+								<button class="btn hide style-custom-296" id="btn-download-all-app2">
+									<i class="fa-solid fa-file-zipper"></i> Download All (ZIP)
+								</button>
+
+								<div class="style-custom-297">
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-envelope style-mr-4"></i> Input:</span>
+										<span id="stats-input-app2" class="style-custom-299">0
+											email(s)</span>
+									</div>
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-list style-mr-4"></i> Output:</span>
+										<span id="stats-output-app2" class="style-custom-312">0
+											variation(s)</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page App 3 -->
+				<div id="page-app3" class="page-content hide">
+					<div class="app-container">
+						<!-- Input Area -->
+						<p class="app-instruction">
+							Enter at least 3 unique names to generate random permutations.
+						</p>
+						<div class="app-x55-container">
+							<div class="email-input" id="email-input-container-app3">
+								<div id="line-numbers-app3" class="line-numbers">1</div>
+								<textarea id="name-combiner-input"
+									placeholder="Steve Anthony Elon Musk William Henry Ricardo Jhon Trump Mohammed Bill Gates Obama Kim Jhon Andrew"
+									spellcheck="false"></textarea>
+							</div>
+
+							<!-- Bulk Results Dashboard (Hidden initially) -->
+							<div class="results-container hide" id="results-container-app3">
+								<div class="results-header">
+									<button class="btn style-custom-281" id="btn-back-app3">
+										<i class="fa-solid fa-arrow-left"></i> Back / Reset
+									</button>
+									<div class="style-custom-311">
+										<i class="fa-solid fa-gauge-high style-color-af86fc"></i> Permutation
+										Dashboard
+									</div>
+								</div>
+
+								<div class="tasks-list" id="tasks-list-app3">
+									<!-- Dynamically populated permutation card -->
+								</div>
+							</div>
+
+							<!-- Controls Sidebar -->
+							<div class="controls">
+								<div class="control-title">
+									<i class="fa-solid fa-shuffle style-color-af86fc"></i> Name Combiner
+								</div>
+								<p class="style-custom-289">
+									Bulk Name Combiner & Permutator, fast and secure.
+								</p>
+
+								<div class="style-custom-290">
+									<i class="fa-solid fa-sliders style-mr-4"></i> Generation Mode:
+								</div>
+								<select id="select-mode-app3" class="btn style-custom-292">
+									<option value="fast" selected>Fast Mode - No Limit</option>
+									<option value="balance">Balance Mode - Max 1M</option>
+									<option value="slow">Slow Mode - Max 100K</option>
+								</select>
+
+								<button class="btn hide style-custom-293" id="btn-fix-app3">
+									<i class="fa-solid fa-screwdriver-wrench"></i> Quick Fix Issues
+								</button>
+								<button class="btn btn-primary style-mb-5" id="btn-generate-app3">
+									<i class="fa-solid fa-play"></i> Generate Variations
+								</button>
+								<button class="btn style-custom-295" id="btn-clear-app3">
+									<i class="fa-solid fa-trash-can"></i> Clear Input
+								</button>
+								<button class="btn hide style-mb-5" id="btn-copy-app3">
+									<i class="fa-solid fa-copy"></i> Copy All Results
+								</button>
+								<button class="btn hide style-mb-5" id="btn-download-app3">
+									<i class="fa-solid fa-download"></i> Download All (TXT)
+								</button>
+								<button class="btn hide style-custom-296" id="btn-download-all-app3">
+									<i class="fa-solid fa-file-zipper"></i> Download All (ZIP)
+								</button>
+
+								<div class="style-custom-297">
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-user-tag style-mr-4"></i> Input:</span>
+										<span id="stats-input-app3" class="style-custom-299">0
+											name(s)</span>
+									</div>
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted"><i
+												class="fa-solid fa-list style-mr-4"></i> Output:</span>
+										<span id="stats-output-app3" class="style-custom-312">0
+											variation(s)</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page App 4 (Notepad) -->
+				<div id="page-app4" class="page-content hide">
+					<div class="app-container">
+						<p class="app-instruction">
+							Paste any raw text, HTML logs, or CSV data. The tool will instantly extract valid
+							emails,
+							deduplicate, and clean them.
+						</p>
+						<div class="app-x55-container">
+
+							<!-- Left Side: Raw Input Viewport -->
+							<div class="email-input" id="email-input-container-app5">
+								<div id="line-numbers-app5" class="line-numbers">1</div>
+								<textarea id="email-extractor-input"
+									placeholder="Paste raw text, source code, or mixed lists here..."
+									spellcheck="false"></textarea>
+							</div>
+
+							<!-- Middle/Right Side: Extracted Results Viewport (Initially hidden, revealed on run) -->
+							<div class="results-container hide style-custom-313" id="results-container-app5">
+								<span class="style-custom-314">
+									<i class="fa-solid fa-circle-check"></i> CLEAN EXTRACTED LIST
+								</span>
+								<div class="style-custom-315">
+									<div id="line-numbers-app5-results" class="line-numbers">1</div>
+									<textarea id="email-extractor-output" readonly
+										placeholder="Extracted emails will appear here..." spellcheck="false"
+										class="style-custom-316"></textarea>
+								</div>
+							</div>
+
+							<!-- Controls Sidebar -->
+							<div class="controls">
+								<div class="control-title">
+									<i class="fa-solid fa-filter style-color-af86fc"></i> Email Extractor
+								</div>
+								<p class="style-custom-289">
+									Extract valid email addresses from messy raw text, remove duplicates, sort and
+									filter them instantly.
+								</p>
+
+								<!-- Filter Settings -->
+								<div class="style-custom-176">
+									<!-- Domain Filter dropdown -->
+									<div>
+										<p class="style-custom-290">
+											<i class="fa-solid fa-globe style-mr-4"></i> Domain
+											Filter:
+										</p>
+										<select id="extractor-domain-filter" class="btn style-custom-317">
+											<option value="all" selected>All Domains</option>
+											<option value="gmail">Gmail Only (@gmail.com)</option>
+											<option value="nongmail">Non-Gmail Only</option>
+											<option value="custom">Custom Domain...</option>
+										</select>
+									</div>
+
+									<!-- Custom Domain Input (Hidden by default) -->
+									<div id="custom-domain-filter-container" class="hide style-mt-5">
+										<input type="text" id="extractor-custom-domain" placeholder="e.g. outlook.com"
+											class="style-custom-319">
+									</div>
+
+									<!-- Sorting mode dropdown -->
+									<div>
+										<p class="style-custom-290">
+											<i class="fa-solid fa-sort style-mr-4"></i> Sorting
+											Options:
+										</p>
+										<select id="extractor-sort-option" class="btn style-custom-317">
+											<option value="none" selected>Default (Unsorted)</option>
+											<option value="asc">Alphabetical A - Z</option>
+											<option value="desc">Alphabetical Z - A</option>
+											<option value="shuffle">Random Shuffle</option>
+										</select>
+									</div>
+
+									<!-- Output format dropdown -->
+									<div>
+										<p class="style-custom-290">
+											<i class="fa-solid fa-list-ol style-mr-4"></i> Output
+											Format:
+										</p>
+										<select id="extractor-output-format" class="btn style-custom-317">
+											<option value="newline" selected>One email per line</option>
+											<option value="comma">Comma-separated (,)</option>
+											<option value="semicolon">Semicolon-separated (;)</option>
+										</select>
+									</div>
+								</div>
+
+								<!-- Action CTA Buttons -->
+								<div class="style-custom-320">
+									<button class="btn btn-primary" id="btn-extractor-run">
+										<i class="fa-solid fa-wand-magic-sparkles"></i> Extract & Clean
+									</button>
+									<button class="btn hide" id="btn-extractor-copy">
+										<i class="fa-solid fa-copy"></i> Copy Extracted
+									</button>
+									<button class="btn hide" id="btn-extractor-download">
+										<i class="fa-solid fa-download"></i> Download (TXT)
+									</button>
+									<button class="btn style-custom-321" id="btn-extractor-clear">
+										<i class="fa-solid fa-trash-can"></i> Clear Input
+									</button>
+								</div>
+
+								<!-- Extracted Stats panel -->
+								<div class="style-custom-322">
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted">Extracted (Total):</span>
+										<span id="stats-extractor-total" class="style-custom-299">0</span>
+									</div>
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted">Unique Emails:</span>
+										<span id="stats-extractor-unique" class="style-custom-306">0</span>
+									</div>
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted">Gmail Count:</span>
+										<span id="stats-extractor-gmail" class="style-custom-312">0</span>
+									</div>
+									<div class="style-custom-88">
+										<span class="style-color-vartext-muted">Other Domains:</span>
+										<span id="stats-extractor-other" class="style-custom-323">0</span>
+									</div>
+								</div>
+
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page App 5 (Email Extractor & Deduplicator) -->
+				<div id="page-app5" class="page-content hide">
+					<div class="app-container">
+						<p class="app-instruction">
+							Welcome to the <b>Notepad</b> tool. Use this space for quick note-taking, writing drafts,
+							or storing text snippets. All your notes are saved locally in your browser, ensuring your
+							data stays private and secure.
+						</p>
+						<div class="app-x55-container">
+
+							<!-- Notepad Editor Viewport -->
+							<div class="style-custom-324">
+
+								<!-- Editor Header/Actions toolbar -->
+								<div class="style-custom-325">
+									<!-- Title input & Save indicator -->
+									<div class="style-custom-326">
+										<input type="text" id="notepad-active-title" placeholder="Untitled Note"
+											autocomplete="off" class="style-custom-327">
+										<span id="notepad-save-status" class="style-custom-328">New Note</span>
+									</div>
+
+									<!-- Toolbar buttons -->
+									<div class="style-custom-268">
+										<button class="btn style-custom-329" id="btn-notepad-save"
+											title="Save changes to database">
+											<i class="fa-solid fa-floppy-disk style-color-00cc44"></i> Save
+										</button>
+										<button class="btn style-custom-330" id="btn-notepad-copy"
+											title="Copy to Clipboard">
+											<i class="fa-solid fa-copy style-color-af86fc"></i> Copy
+										</button>
+										<button class="btn style-custom-330" id="btn-notepad-download"
+											title="Download as .txt">
+											<i class="fa-solid fa-download style-color-00f0ff"></i> Download
+										</button>
+										<button class="btn style-custom-331" id="btn-notepad-delete"
+											title="Delete Note">
+											<i class="fa-solid fa-trash-can"></i> Delete
+										</button>
+									</div>
+								</div>
+
+								<!-- Editor Textarea Area -->
+								<div class="email-input style-custom-332" id="email-input-container-app4">
+									<div id="line-numbers-app4" class="line-numbers">1</div>
+									<textarea id="notepad-active-content" placeholder="Start typing your notes here..."
+										spellcheck="false"></textarea>
+								</div>
+
+								<!-- Bottom stats -->
+								<div class="style-custom-333">
+									<span id="notepad-word-char-count">0 words | 0 characters</span>
+									<span id="notepad-last-updated">Last saved: Never</span>
+								</div>
+
+							</div>
+
+							<!-- Notepad Sidebar (Notes List) -->
+							<div class="controls style-custom-334">
+								<div class="control-title style-mb-0">
+									<i class="fa-solid fa-notes-medical style-color-af86fc"></i> Notes Library
+								</div>
+
+								<p class="style-custom-185">
+									Quick drafts & listings stored completely offline in your browser.
+								</p>
+
+								<button class="btn btn-primary style-custom-336" id="btn-notepad-new">
+									<i class="fa-solid fa-plus"></i> Create New Note
+								</button>
+
+								<!-- Search Bar -->
+								<div class="style-custom-337">
+									<input type="text" id="notepad-search" placeholder="Search notes..."
+										class="style-custom-338">
+									<i class="fa-solid fa-magnifying-glass style-custom-339"></i>
+								</div>
+
+								<!-- Notes List container -->
+								<div id="notes-list-container" class="style-custom-340">
+									<!-- Dynamically populated list of notes -->
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+
+				<!-- Page Setting 1 -->
+				<div id="page-setting1" class="page-content hide">
+					<div class="settings-container">
+						<h2>âš™ï¸ Setting 1</h2>
+						<p>Halaman pengaturan Kategori 1.</p>
+						<div class="dashboard-card">
+							<strong>ðŸ› ï¸ Manajemen Data</strong>
+							<p>Ini adalah dummy view untuk Kategori Pengaturan 2.</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page Setting 2 -->
+				<div id="page-setting2" class="page-content hide">
+					<div class="settings-container">
+						<h2>âš™ï¸ Setting 2</h2>
+						<p>Halaman pengaturan Kategori 2.</p>
+						<div class="dashboard-card">
+							<strong>ðŸ› ï¸ Manajemen Data</strong>
+							<p>Ini adalah dummy view untuk Kategori Pengaturan 2.</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page Documentation -->
+				<div id="page-documentation" class="page-content hide">
+					<div class="doc-wrapper style-custom-341">
+
+						<!-- Tab Gmail Checker -->
+						<div id="tab-doc-gmail-checker" class="doc-pane-tab">
+							<div class="dashboard-header-card style-custom-342">
+								<div class="style-custom-156">
+									<div class="style-custom-73">
+										<i class="fa-solid fa-shield-halved"></i>
+									</div>
+									<div>
+										<h2 class="font-keren style-custom-343">
+											Gmail Checker Guide</h2>
+										<p class="style-custom-75">
+											How to use the Bulk Gmail Checker tool</p>
+									</div>
+								</div>
+
+								<div class="style-custom-344">
+									<p><strong>Purpose:</strong> Verify large lists of Gmail addresses to see if
+										they
+										are active, disabled, or unregistered.</p>
+
+									<h4 class="font-keren style-custom-345">
+										How to
+										Use:</h4>
+									<ol class="style-custom-346">
+										<li>Navigate to the <strong>Apps > Gmail Checker</strong> menu.</li>
+										<li>Paste your email list into the input box (supports thousands of lines
+											instantly without lag).</li>
+										<li>Select your desired speed/accuracy mode (e.g., Fast Check vs Deep
+											Check).
+										</li>
+										<li>Click <strong>Start Checking</strong>.</li>
+										<li>The results will populate in real-time using virtual scrolling. You can
+											filter results by Live, Disabled, or Unregistered, and easily copy the
+											filtered results to your clipboard.</li>
+									</ol>
+								</div>
+							</div>
+						</div>
+
+						<!-- Tab Gmail Dot Tricks -->
+						<div id="tab-doc-dot-tricks" class="doc-pane-tab hide">
+							<div class="dashboard-header-card style-custom-342">
+								<div class="style-custom-156">
+									<div class="style-custom-73">
+										<i class="fa-solid fa-wand-magic-sparkles"></i>
+									</div>
+									<div>
+										<h2 class="font-keren style-custom-343">
+											Gmail Dot Tricks</h2>
+										<p class="style-custom-75">
+											Learn about Gmail Dot Tricks variation generator</p>
+									</div>
+								</div>
+
+								<div class="style-custom-344">
+									<p><strong>Purpose:</strong> Generate unique email aliases by inserting dots
+										into
+										your existing Gmail address. Google ignores dots in usernames, meaning all
+										generated variations will route to your single main inbox.</p>
+
+									<h4 class="font-keren style-custom-345">
+										How to
+										Use:</h4>
+									<ol class="style-custom-346">
+										<li>Navigate to the <strong>Apps > Dot Trick</strong> menu.</li>
+										<li>Enter your base Gmail address (e.g., <code>myname@gmail.com</code>).
+										</li>
+										<li>Click <strong>Generate</strong>.</li>
+										<li>The system will use a Fisher-Yates chunking algorithm via Web Workers to
+											instantly output all possible dot permutations without crashing your
+											browser.</li>
+									</ol>
+								</div>
+							</div>
+						</div>
+
+						<!-- Tab Name Combiner -->
+						<div id="tab-doc-name-combiner" class="doc-pane-tab hide">
+							<div class="dashboard-header-card style-custom-342">
+								<div class="style-custom-156">
+									<div class="style-custom-73">
+										<i class="fa-solid fa-shuffle"></i>
+									</div>
+									<div>
+										<h2 class="font-keren style-custom-343">
+											Name Combiner</h2>
+										<p class="style-custom-75">
+											Mix and match names to generate usernames</p>
+									</div>
+								</div>
+
+								<div class="style-custom-344">
+									<p><strong>Purpose:</strong> Mix and match lists of first names, last names, and
+										numbers to generate massive lists of potential usernames or email prefixes.
+									</p>
+
+									<h4 class="font-keren style-custom-345">
+										How to
+										Use:</h4>
+									<ol class="style-custom-346">
+										<li>Navigate to the <strong>Apps > Name Combiner</strong> menu.</li>
+										<li>Input your lists in the provided columns (Column A for First Names,
+											Column B
+											for Last Names, etc.).</li>
+										<li>Choose your separator (dot, underscore, none).</li>
+										<li>Click <strong>Combine</strong>. The engine will cross-reference and
+											permute
+											the lists, outputting the results into a clean, copyable format.</li>
+									</ol>
+								</div>
+							</div>
+						</div>
+
+						<!-- Tab Developer API Key -->
+						<div id="tab-doc-api-key" class="doc-pane-tab hide">
+							<div class="dashboard-header-card style-custom-342">
+								<div class="style-custom-156">
+									<div class="style-custom-73">
+										<i class="fa-solid fa-key"></i>
+									</div>
+									<div>
+										<h2 class="font-keren style-custom-343">
+											Developer API Key</h2>
+										<p class="style-custom-75">
+											Integrate email verification in your applications</p>
+									</div>
+								</div>
+
+								<div class="style-custom-344">
+									<p>Our verification endpoints allow you to integrate high-speed email checking
+										directly into your production servers, SaaS applications, or local scripts.
+									</p>
+
+									<div class="style-custom-347">
+										<h4 class="font-keren style-custom-348">API
+											Endpoint Overview</h4>
+										<ul class="style-custom-349">
+											<li><strong>Base URL:</strong>
+												<code>https://gmail-checker.blacksoftchild.workers.dev</code>
+											</li>
+											<li><strong>Advanced Gmail Check 1 Endpoint:</strong> <code>/check1</code>
+											</li>
+											<li><strong>Advanced Gmail Check 2 Endpoint:</strong> <code>/check2</code>
+											</li>
+											<li><strong>Fast Gmail Check 1 Endpoint:</strong> <code>/fastcheck1</code>
+											</li>
+											<li><strong>Fast Gmail Check 2 Endpoint:</strong> <code>/fastcheck2</code>
+											</li>
+											<li><strong>Method:</strong> <code>POST</code></li>
+											<li><strong>Headers:</strong>
+												<ul class="style-custom-350">
+													<li><code>Content-Type: application/json</code></li>
+													<li><code>Authorization: Bearer YOUR_API_KEY</code></li>
+												</ul>
+											</li>
+										</ul>
+									</div>
+
+									<div class="code-examples-section style-mt-15">
+										<h4 class="font-keren style-custom-352">
+											Code
+											Integration Examples</h4>
+
+										<!-- Lang Selector Buttons -->
+										<div class="style-custom-353">
+											<button class="btn style-custom-354" id="btn-doc-curl"
+												onclick="window.toggleDocTab('curl')">cURL</button>
+											<button class="btn style-custom-355" id="btn-doc-python"
+												onclick="window.toggleDocTab('python')">Python</button>
+											<button class="btn style-custom-355" id="btn-doc-nodejs"
+												onclick="window.toggleDocTab('nodejs')">Node.js</button>
+											<button class="btn style-custom-355" id="btn-doc-php"
+												onclick="window.toggleDocTab('php')">PHP</button>
+										</div>
+
+										<!-- Pane cURL -->
+										<div id="pane-doc-curl" class="doc-pane style-pos-relative">
+											<button class="btn btn-copy-doc style-custom-356"
+												onclick="window.copyDocCode('pane-doc-curl')">
+												<i class="fa-solid fa-copy"></i> Copy
+											</button>
+											<pre class="style-custom-357">
+
+# Check Google (Gmail) Account Status
+curl -X POST "https://gmail-checker.blacksoftchild.workers.dev/check1" \
+	-H "Authorization: Bearer YOUR_API_KEY" \
+	-H "Content-Type: application/json" \
+	-d '{
+		"mail": [
+			"example1@gmail.com",
+			"example2@gmail.com",
+			"example3@gmail.com"
+		]
+}'
+
+# Get API statistics
+curl "https://gmail-validation.mbahbabat.workers.dev/stats?key=YOUR_API_KEY"
+										</div>
+
+										<!-- Pane Python -->
+										<div id="pane-doc-python" class="doc-pane hide style-pos-relative">
+											<button class="btn btn-copy-doc style-custom-356" onclick="window.copyDocCode('pane-doc-python')">
+												<i class="fa-solid fa-copy"></i> Copy
+											</button>
+											<pre class="style-custom-357">
+import requests
+
+API_KEY = 'your_api_key_here'
+SERVER_URL = 'https://gmail-checker.blacksoftchild.workers.dev'
+
+def validate_emails(emails):
+	headers = {
+		'Authorization': f'Bearer {API_KEY}',
+		'Content-Type': 'application/json'
+	}
+		
+	data = {
+		'mail': emails
+	}
+		
+	response = requests.post(f'{SERVER_URL}/check1', headers=headers, json=data)
+	response.raise_for_status()
+	return response.json()
+
+def get_api_stats():
+	response = requests.get(f'{SERVER_URL}/stats?key={API_KEY}')
+	response.raise_for_status()
+	return response.json()
+
+# Example Usage
+emails = ['test1@gmail.com', 'test2@gmail.com', 'test3@gmail.com']
+try:
+	results = validate_emails(emails)
+	print('Validation results:', results)
+except requests.exceptions.RequestException as e:
+print('Error:', e)</pre>
+										</div>
+
+										<!-- Pane Node.js -->
+										<div id="pane-doc-nodejs" class="doc-pane hide style-pos-relative">
+											<button class="btn btn-copy-doc style-custom-356"
+												onclick="window.copyDocCode('pane-doc-nodejs')">
+												<i class="fa-solid fa-copy"></i> Copy
+											</button>
+											<pre class="style-custom-357">
+const API_KEY = 'your_api_key_here';
+const SERVER_URL = 'https://gmail-checker.blacksoftchild.workers.dev';
+
+// Check Google (Gmail) Account Status
+async function validateEmails(emails) {
+	try {
+		const response = await fetch(`${SERVER_URL}/check1`, {
+			method: 'POST',
+			headers: {
+				'Authorization': `Bearer ${API_KEY}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				mail: emails
+			})
+		});
+		
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+		
+		const data = await response.json();
+		return data;
+	} catch (error) {
+		console.error('Validation error:', error);
+		throw error;
+	}
+}
+
+// Get API statistics
+async function getApiStats() {
+	try {
+		const response = await fetch(`${SERVER_URL}/stats?key=${API_KEY}`);
+		
+		if (!response.ok) {
+		  throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+		
+		const data = await response.json();
+		return data;
+	} catch (error) {
+		console.error('Stats error:', error);
+		throw error;
+	}
+}
+
+// Example Usage
+const emails = ['test1@gmail.com', 'test2@gmail.com', 'test3@gmail.com'];
+validateEmails(emails)
+	.then(results => console.log('Validation results:', results))
+	.catch(error => console.error('Error:', error));</pre>
+										</div>
+
+										<!-- Pane PHP -->
+										<div id="pane-doc-php" class="doc-pane hide style-pos-relative">
+											<button class="btn btn-copy-doc style-custom-356"
+												onclick="window.copyDocCode('pane-doc-php')">
+												<i class="fa-solid fa-copy"></i> Copy
+											</button>
+											<pre class="style-custom-357">
+$api_key = 'your_api_key_here';
+$server_url = 'https://gmail-checker.blacksoftchild.workers.dev';
+
+// Check Google (Gmail) Account Status
+function validateEmails($emails) {
+	global $api_key, $server_url;
+	$data = json_encode(['mail' => $emails]);
+		
+	$ch = curl_init("$server_url/check1");
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, [
+		"Authorization: Bearer $api_key",
+		"Content-Type: application/json"
+	]);
+		
+	$response = curl_exec($ch);
+	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	curl_close($ch);
+		
+	if ($http_code !== 200) {
+		throw new Exception("HTTP $http_code: $response");
+	}
+		
+	return json_decode($response, true);
+}
+
+// Get API Statistics
+function getApiStats() {
+	global $api_key, $server_url;
+		
+	$ch = curl_init("$server_url/stats?key=$api_key");
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		
+	$response = curl_exec($ch);
+	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	curl_close($ch);
+		
+	if ($http_code !== 200) {
+		throw new Exception("HTTP $http_code: $response");
+	}
+		
+	return json_decode($response, true);
+}
+
+// Usage example
+$emails = ['test1@gmail.com', 'test2@gmail.com', 'test3@gmail.com'];
+try {
+	$results = validateEmails($emails);
+	echo 'Validation results: ' . print_r($results, true);
+} catch (Exception $e) {
+	echo 'Error: ' . $e->getMessage();
+}</pre>
+										</div>
+
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Tab Billing & Payments -->
+						<div id="tab-doc-payments" class="doc-pane-tab hide">
+							<div class="dashboard-header-card style-custom-342">
+								<div class="style-custom-156">
+									<div class="style-custom-73">
+										<i class="fa-solid fa-credit-card"></i>
+									</div>
+									<div>
+										<h2 class="font-keren style-custom-343">
+											Billing & Payments Guide</h2>
+										<p class="style-custom-75">
+											Learn how VIP tiers, API quotas, and invoice systems work</p>
+									</div>
+								</div>
+
+								<div class="style-custom-344">
+									<p>Our application offers flexible and secure payment plans for both end-users
+										(VIP
+										Memberships) and automated developers (Developer API Quotas).</p>
+
+									<div class="style-custom-358">
+										<!-- Box 1: VIP -->
+										<div class="style-custom-359">
+											<span class="style-custom-360"><i class="fa-solid fa-crown style-mr-6"></i>
+												VIP
+												Membership</span>
+											<p class="style-custom-361">
+												Unlocks higher volume direct checking options on our
+												high-performance
+												dedicated servers through the browser interface (App 1, 2, and 3).
+											</p>
+											<ul class="style-custom-362">
+												<li><strong>Free Plan:</strong> Max 10K emails limit.</li>
+												<li><strong>VIP Plan:</strong> Max 100K emails limit + Fast servers.
+												</li>
+											</ul>
+										</div>
+										<!-- Box 2: API -->
+										<div class="style-custom-359">
+											<span class="style-custom-363"><i class="fa-solid fa-key style-mr-6"></i>
+												Developer
+												API Keys</span>
+											<p class="style-custom-361">
+												Perfect for external programmatic access. Quotas are decoupled
+												entirely
+												from your personal browser subscription plan.</p>
+											<ul class="style-custom-362">
+												<li><strong>500K Daily Quota:</strong> $10.00 / month.</li>
+												<li><strong>1M Daily Quota:</strong> $15.00 / month.</li>
+											</ul>
+										</div>
+									</div>
+
+									<h4 class="font-keren style-custom-364"><i
+											class="fa-solid fa-wallet style-custom-257"></i>
+										Supported Payment Options</h4>
+									<p>All payments are securely processed through the <strong>NOWPayments</strong>
+										platform using decentralized cryptocurrencies. This guarantees absolute
+										privacy,
+										instant delivery, and global accessibility.</p>
+									<ul class="style-custom-365">
+										<li><strong>Supported Currencies:</strong> Bitcoin (BTC), Ethereum (ETH),
+											USDT
+											(TRC-20/ERC-20), Litecoin (LTC), Ripple (XRP), Tron (TRX), and many
+											more.
+										</li>
+										<li><strong>Processing Time:</strong> Invoices are automatically verified
+											within
+											<strong>1 - 10 minutes</strong> after blockchain confirmation.
+										</li>
+									</ul>
+
+									<div class="style-custom-366">
+										<i class="fa-solid fa-circle-exclamation style-custom-367"></i>
+										<div>
+											<strong class="style-custom-368">Invoice
+												Auto-Claim Routing:</strong>
+											<p class="style-custom-369">
+												The backend employs a stateful auto-routing mechanism. If a user
+												pays
+												for a subscription invoice, their subscription status is immediately
+												upgraded to VIP. If they pay for an API key invoice, the backend
+												generates and whitelists their programmatic Developer API Key
+												instantly
+												without overwriting or affecting their VIP tier status.</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Tab Email Extractor -->
+						<div id="tab-doc-email-extractor" class="doc-pane-tab hide">
+							<div class="dashboard-header-card style-custom-342">
+								<div class="style-custom-156">
+									<div class="style-custom-73">
+										<i class="fa-solid fa-filter"></i>
+									</div>
+									<div>
+										<h2 class="font-keren style-custom-343">
+											Email Extractor & Deduplicator</h2>
+										<p class="style-custom-75">
+											Complete guide to using the Email Extractor tool</p>
+									</div>
+								</div>
+
+								<div class="style-custom-344">
+									<p><strong>Purpose:</strong> Extract valid email addresses from raw text, HTML
+										source code, CSVs, or mixed logs instantly, and deduplicate them automatically
+										to yield clean lists.</p>
+
+									<h4 class="font-keren style-custom-345">Key Features:</h4>
+									<ul class="style-custom-349" style="margin-left: 20px; margin-bottom: 15px;">
+										<li><strong>Smart Extraction:</strong> Automatically detects and captures all
+											valid email formats from messy inputs.</li>
+										<li><strong>Flexible Domain Filters:</strong> Isolate Gmail only, non-Gmail
+											only, or target custom domain extensions.</li>
+										<li><strong>Sorting Options:</strong> Order results alphabetically (A-Z or Z-A)
+											or use a random shuffle.</li>
+										<li><strong>Custom Output Formats:</strong> Arrange output as one email per
+											line, comma-separated, or semicolon-separated.</li>
+									</ul>
+
+									<h4 class="font-keren style-custom-345">How to Use:</h4>
+									<ol class="style-custom-346">
+										<li>Navigate to the <strong>Apps > Email Extractor</strong> menu.</li>
+										<li>Paste your raw text or source code into the left input container labeled
+											<em>Raw Input Viewport</em>.
+										</li>
+										<li>Specify your filter, sorting, and output format preferences on the right
+											controls sidebar.</li>
+										<li>Click the <strong>Extract & Clean</strong> button.</li>
+										<li>The clean, extracted list will appear in real-time in the right-hand panel.
+											Monitor statistics at the bottom, and copy or download the results as a text
+											(.txt) file.</li>
+									</ol>
+								</div>
+							</div>
+						</div>
+
+						<!-- Tab Notepad -->
+						<div id="tab-doc-notepad" class="doc-pane-tab hide">
+							<div class="dashboard-header-card style-custom-342">
+								<div class="style-custom-156">
+									<div class="style-custom-73">
+										<i class="fa-solid fa-notes-medical"></i>
+									</div>
+									<div>
+										<h2 class="font-keren style-custom-343">
+											Glassmorphic Notepad</h2>
+										<p class="style-custom-75">
+											Write drafts and manage local notes securely</p>
+									</div>
+								</div>
+
+								<div class="style-custom-344">
+									<p><strong>Purpose:</strong> A premium text editor that provides a beautiful
+										glassmorphic environment to store email lists, credentials, or write custom
+										notes.</p>
+
+									<div class="style-custom-366"
+										style="border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.03); margin: 15px 0; padding: 15px; border-radius: 12px; display: flex; gap: 12px; align-items: flex-start;">
+										<i class="fa-solid fa-shield-halved style-custom-367"
+											style="color: #00f0ff; font-size: 1.2rem;"></i>
+										<div>
+											<strong class="style-custom-368"
+												style="color: #00f0ff; font-family: 'Orbitron', monospace; display: block; margin-bottom: 5px;">100%
+												PRIVACY & LOCAL OFFLINE STORAGE (CLOUD-FREE)</strong>
+											<p class="style-custom-369"
+												style="margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--text-secondary);">
+												All notes you create are stored entirely in your browser's local
+												database using <strong>IndexedDB (NotepadDB)</strong>.
+												<strong>Your notes are NEVER uploaded, sent, or saved to our
+													servers.</strong> This guarantees absolute offline privacy, secure
+												from data breaches, cloud sniffing, or server downtime. Deleting a note
+												in the interface purges it permanently from your local device without
+												leaving any digital trace.
+											</p>
+										</div>
+									</div>
+
+									<h4 class="font-keren style-custom-345">Key Features:</h4>
+									<ul class="style-custom-349" style="margin-left: 20px; margin-bottom: 15px;">
+										<li><strong>IndexedDB Offline:</strong> High-performance offline storage with no
+											limits on log size, accessible instantly at any time.</li>
+										<li><strong>Manual Save Control:</strong> Ensuring you are in full control of
+											modifications with status indicators like "Unsaved Changes" and "Saved".
+										</li>
+										<li><strong>Notes Library:</strong> Sidebar notes manager with dynamic titles
+											and an instant library search bar.</li>
+										<li><strong>Line Numbers Sync:</strong> Professional layout featuring automated
+											real-time line numbers synchronized with scroll actions.</li>
+										<li><strong>Easy Export:</strong> One-click download as plain text (.txt) or
+											copy content directly to your clipboard.</li>
+									</ul>
+
+									<h4 class="font-keren style-custom-345">How to Use:</h4>
+									<ol class="style-custom-346">
+										<li>Navigate to the <strong>Apps > Notepad</strong> menu.</li>
+										<li>Click the <strong>Create New Note</strong> button to start a fresh draft. A
+											sample welcome note will auto-populate on your first run.</li>
+										<li>Enter a custom title and write your notes in the main text editor viewport.
+										</li>
+										<li>While typing, the save indicator displays <strong>Unsaved Changes</strong>.
+											Click the <strong>Save Changes</strong> button (or the disk icon) to save to
+											IndexedDB.</li>
+										<li>Use the Notes Library search bar on the right to navigate between different
+											files, or click <strong>Delete</strong> to wipe a note permanently from your
+											local system.</li>
+									</ol>
+								</div>
+							</div>
+						</div>
+
+						<!-- Tab History -->
+						<div id="tab-doc-history" class="doc-pane-tab hide">
+							<div class="dashboard-header-card style-custom-342">
+								<div class="style-custom-156">
+									<div class="style-custom-73">
+										<i class="fa-solid fa-clock-rotate-left"></i>
+									</div>
+									<div>
+										<h2 class="font-keren style-custom-343">
+											Result History</h2>
+										<p class="style-custom-75">
+											Review previous checking and generator runs locally</p>
+									</div>
+								</div>
+
+								<div class="style-custom-344">
+									<p><strong>Purpose:</strong> Access previously verified email lists (Gmail Checker),
+										dot trick variations (Gmail Dot Tricks), name combinations (Name Combiner), and
+										email extractions (Email Extractor) securely.</p>
+
+									<div class="style-custom-366"
+										style="border: 1px solid rgba(0, 240, 255, 0.2); background: rgba(0, 240, 255, 0.03); margin: 15px 0; padding: 15px; border-radius: 12px; display: flex; gap: 12px; align-items: flex-start;">
+										<i class="fa-solid fa-shield-halved style-custom-367"
+											style="color: #00f0ff; font-size: 1.2rem;"></i>
+										<div>
+											<strong class="style-custom-368"
+												style="color: #00f0ff; font-family: 'Orbitron', monospace; display: block; margin-bottom: 5px;">100%
+												OFFLINE LOGS & TOTAL CONFIDENTIALITY (SERVER-FREE)</strong>
+											<p class="style-custom-369"
+												style="margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--text-secondary);">
+												Just like Notepad, all log files and results are logged locally in your
+												browser using <strong>IndexedDB (HistoryDB)</strong>.
+												<strong>Your lists and results are NEVER uploaded to our
+													servers.</strong> This guarantees that your sensitive list files
+												remain confidential. If you want to clear your local traces, you can
+												selectively delete single history entries or wipe the entire database
+												completely.
+											</p>
+										</div>
+									</div>
+
+									<h4 class="font-keren style-custom-345">Key Features:</h4>
+									<ul class="style-custom-349" style="margin-left: 20px; margin-bottom: 15px;">
+										<li><strong>Automatic Local Logging:</strong> Results are automatically saved to
+											your browser database after every successful check or extraction run.</li>
+										<li><strong>Precise Timestamp Titles:</strong> Records are logged using a
+											human-readable date-time format: <code>YYYY-MM-DD-HH-mm-ss</code>.</li>
+										<li><strong>Advanced Search & Filters:</strong> Narrow down list entries by app
+											category or perform fuzzy queries inside titles and email lists.</li>
+										<li><strong>Monospace Detail View:</strong> Inspect previously compiled lists
+											directly inside a dedicated, scrollable monospace card without leaving the
+											page.</li>
+										<li><strong>Emergency Wipe:</strong> Clear the entire offline database with the
+											<em>Clear All History</em> button with double confirmations.
+										</li>
+									</ul>
+
+									<h4 class="font-keren style-custom-345">How to Use:</h4>
+									<ol class="style-custom-346">
+										<li>Navigate to the <strong>History</strong> menu in the sidebar.</li>
+										<li>Use the search input or category pills to locate a specific check or run.
+										</li>
+										<li>Click <strong>View Details</strong> below any record card to inspect the
+											output lists directly inside a beautiful monospace viewer.</li>
+										<li>Click <strong>Copy</strong> to copy the data back to your clipboard, or
+											<strong>Download</strong> to save it as a text (.txt) file.
+										</li>
+										<li>To delete a single card, click the red trash icon. To wipe all logs, click
+											the <strong>Clear All History</strong> button on the left sidebar.</li>
+									</ol>
+								</div>
+							</div>
+						</div>
+
+					</div>
+				</div>
+
+				<!-- Page History -->
+				<div id="page-history" class="page-content hide">
+					<div class="style-custom-150">
+						<!-- Header -->
+						<div class="style-custom-63">
+							<h1 class="font-keren style-custom-370">
+								<i class="fa-solid fa-clock-rotate-left style-color-af86fc"
+									style="margin-right: 8px;"></i>Result History
+							</h1>
+							<p class="style-custom-371">
+								View, search, copy, or download previous check and generation results across all your
+								apps. Stored securely offline in your browser.
+							</p>
+						</div>
+
+						<div class="style-custom-372">
+							<!-- Left: History Search & Filtering -->
+							<div class="style-custom-373" style="flex: 1.2;">
+								<h3 class="font-keren style-custom-374">
+									<i class="fa-solid fa-filter style-color-af86fc"></i> Filters & Controls
+								</h3>
+
+								<div class="style-custom-99">
+									<!-- Search Input -->
+									<div class="style-custom-375">
+										<label class="style-custom-376">Search History</label>
+										<input type="text" id="history-search"
+											placeholder="Search inside titles or results..." class="style-custom-377">
+									</div>
+
+									<!-- Category Filters Tab Pills -->
+									<div class="style-custom-375">
+										<label class="style-custom-376">App Category</label>
+										<div class="history-tabs-container"
+											style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px;">
+											<button class="btn btn-filter-pill active" data-category="all">All
+												Apps</button>
+											<button class="btn btn-filter-pill" data-category="app1">Gmail
+												Checker</button>
+											<button class="btn btn-filter-pill" data-category="app2">Gmail Dot
+												Tricks</button>
+											<button class="btn btn-filter-pill" data-category="app3">Name
+												Combiner</button>
+											<button class="btn btn-filter-pill" data-category="app4">Email
+												Extractor</button>
+										</div>
+									</div>
+
+									<!-- Action Controls -->
+									<div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+										<button class="btn btn-danger-custom" id="btn-clear-all-history"
+											style="background: rgba(255, 77, 77, 0.15); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.3); border-radius: 12px; padding: 10px 18px; font-weight: bold; cursor: pointer; transition: all 0.2s ease;">
+											<i class="fa-solid fa-trash-can" style="margin-right: 6px;"></i> Clear All
+											History
+										</button>
+									</div>
+								</div>
+							</div>
+
+							<!-- Right: History List Viewer -->
+							<div class="style-custom-387" style="flex: 1.8;">
+								<div class="style-custom-88">
+									<h3 class="font-keren style-custom-374">
+										<i class="fa-solid fa-list-ul style-color-af86fc"></i> History Entries
+									</h3>
+									<button class="btn style-custom-388" id="btn-refresh-history">
+										<i class="fa-solid fa-rotate"></i> Refresh
+									</button>
+								</div>
+
+								<!-- History entries list container -->
+								<div id="history-list-container" class="style-custom-389"
+									style="max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+									<!-- Dynamically populated or empty state -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Page Support Tickets -->
+				<div id="page-support" class="page-content hide">
+					<div class="style-custom-150">
+						<!-- Header -->
+						<div class="style-custom-63">
+							<h1 class="font-keren style-custom-370">
+								Support Tickets</h1>
+							<p class="style-custom-371">
+								Need assistance or have questions? Open a support ticket here. Our expert team is
+								ready
+								to help 24/7.</p>
+						</div>
+
+						<div class="style-custom-372">
+							<!-- Left: Create Ticket Form (Glass Card) -->
+							<div class="style-custom-373">
+								<h3 class="font-keren style-custom-374">
+									<i class="fa-solid fa-circle-plus style-color-af86fc"></i> Create New
+									Ticket
+								</h3>
+
+								<div class="style-custom-99">
+									<!-- Subject -->
+									<div class="style-custom-375">
+										<label class="style-custom-376">Subject</label>
+										<input type="text" id="support-subject"
+											placeholder="Enter a descriptive subject..." class="style-custom-377">
+									</div>
+
+									<!-- Category & Priority Row -->
+									<div class="style-custom-378">
+										<!-- Category -->
+										<div class="style-custom-379">
+											<label class="style-custom-376">Category</label>
+											<select id="support-category" class="btn style-custom-380">
+												<option value="general">General Inquiry</option>
+												<option value="billing">Billing & Payments</option>
+												<option value="bug">Bug Report</option>
+												<option value="feature">Feature Request</option>
+											</select>
+										</div>
+
+										<!-- Priority -->
+										<div class="style-custom-381">
+											<label class="style-custom-376">Priority</label>
+											<select id="support-priority" class="btn style-custom-380">
+												<option value="low">Low</option>
+												<option value="medium" selected>Medium</option>
+												<option value="high">High</option>
+												<option value="vip" id="support-priority-vip-opt">ðŸ‘‘ VIP Priority
+													(VIP
+													Only)</option>
+											</select>
+										</div>
+									</div>
+
+									<!-- Message -->
+									<div class="style-custom-375">
+										<label class="style-custom-376">Description
+											/ Message</label>
+										<textarea id="support-message"
+											placeholder="Describe your issue or question in detail..."
+											class="style-custom-382"></textarea>
+									</div>
+
+									<!-- Image Attachments -->
+									<div class="style-custom-375">
+										<label class="style-custom-376">Attach
+											Images (Max 5)</label>
+										<div class="style-custom-383">
+											<input type="file" id="support-images-input" accept="image/*" multiple
+												class="style-display-none">
+											<button class="btn style-custom-384" id="btn-trigger-support-images"
+												type="button">
+												<i class="fa-solid fa-paperclip style-color-af86fc"></i> Add
+												Images
+											</button>
+											<span id="support-images-count-label" class="style-custom-184">No
+												files chosen</span>
+										</div>
+										<div id="support-images-preview-container" class="style-custom-385">
+										</div>
+									</div>
+								</div>
+
+								<button class="btn btn-primary style-custom-386" id="btn-submit-ticket">
+									<i class="fa-solid fa-paper-plane style-mr-6"></i> Submit Ticket
+								</button>
+							</div>
+
+							<!-- Right: Your Active Tickets (Glass Card) -->
+							<div class="style-custom-387">
+								<div class="style-custom-88">
+									<h3 class="font-keren style-custom-374">
+										<i class="fa-solid fa-list-check style-color-af86fc"></i> Your Support
+										Tickets
+									</h3>
+									<button class="btn style-custom-388" id="btn-refresh-tickets">
+										<i class="fa-solid fa-rotate"></i> Refresh
+									</button>
+								</div>
+
+								<!-- Ticket list container -->
+								<div id="tickets-list-container" class="style-custom-389">
+									<!-- Dynamically populated or empty state -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- TICKET DETAILED POPUP MODAL -->
+				<div id="ticket-modal" class="modal-overlay hide style-custom-134">
+					<div class="style-custom-390">
+						<button id="ticket-modal-close-btn" class="style-custom-136">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+
+						<div class="style-custom-391">
+							<div class="style-custom-383">
+								<span id="ticket-modal-id" class="style-custom-392">#TCK-12345</span>
+								<span id="ticket-modal-status-badge" class="style-custom-393">OPEN</span>
+							</div>
+							<h3 class="font-keren style-custom-394" id="ticket-modal-subject">Gmail
+								checking
+								limits query</h3>
+							<span id="ticket-modal-meta" class="style-custom-395">Category:
+								General | Priority: Medium | Date: 2026-05-20</span>
+						</div>
+
+						<div id="ticket-modal-chat-history" class="style-custom-396">
+							<!-- Messages go here -->
+						</div>
+
+						<div id="ticket-modal-reply-container" class="style-custom-397">
+							<!-- Reply image attachments preview -->
+							<div id="ticket-modal-reply-images-preview" class="style-custom-282"></div>
+
+							<div class="style-custom-398">
+								<input type="file" id="ticket-modal-reply-images-input" accept="image/*" multiple
+									class="style-display-none">
+								<button class="btn style-custom-399" id="btn-trigger-reply-images" type="button">
+									<i class="fa-solid fa-paperclip style-custom-253"></i>
+								</button>
+								<input type="text" id="ticket-modal-reply-input"
+									placeholder="Type your reply message here..." class="style-custom-400">
+								<button class="btn btn-primary style-custom-401" id="btn-submit-ticket-reply">
+									Send
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script type="module" src="js/main.js"></script>
 </body>
+
 </html>
