@@ -83,8 +83,7 @@ textarea {
     padding: 15px;
     resize: none;
     outline: none;
-    border: 1px solid var(--border-color);
-    border-radius: 3px;
+    border: none;
     font-family: 'RobotoMono', monospace !important;
     font-size: 14px !important;
     line-height: 1.5 !important;
@@ -576,6 +575,8 @@ body {
     background: var(--bg-primary);
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-input);
+    border-radius: 3px;
 }
 
 .line-numbers {
@@ -590,6 +591,8 @@ body {
     font-family: 'RobotoMono', monospace !important;
     font-size: 14px !important;
     line-height: 1.5 !important;
+    background-color: var(--bg-input);
+    border-right: 1px solid var(--border-color);
 }
 
 .controls {
@@ -1229,15 +1232,12 @@ body[data-rds-mode="mobile"] .content {
 /* App containers vertical stacking */
 body[data-rds-mode="mobile"] .app-x55-container {
     flex-direction: column;
-    height: auto;
-    overflow: visible;
     gap: 15px;
 }
 
 body[data-rds-mode="mobile"] .email-input {
-    height: 240px;
-    flex: none;
     width: 100%;
+    padding-bottom: 10px;
 }
 
 body[data-rds-mode="mobile"] .controls {
@@ -1414,15 +1414,12 @@ body[data-rds-mode="tablet"] .top-bar-auth {
 /* App containers vertical stacking with comfortable tablet proportions */
 body[data-rds-mode="tablet"] .app-x55-container {
     flex-direction: column;
-    height: auto;
-    overflow: visible;
     gap: 15px;
 }
 
 body[data-rds-mode="tablet"] .email-input {
-    height: 280px;
-    flex: none;
     width: 100%;
+    padding-bottom: 10px;
 }
 
 body[data-rds-mode="tablet"] .controls {
@@ -4020,6 +4017,11 @@ body[data-rds-mode="mobile"] .style-custom-213 {
     font-size: 0.8rem;
     line-height: 1.4;
     margin-bottom: 12px;
+}
+
+[data-rds-mode="mobile"] .style-custom-289,
+[data-rds-mode="tablet"] .style-custom-289 {
+    display: none !important;
 }
 
 .style-custom-290 {
