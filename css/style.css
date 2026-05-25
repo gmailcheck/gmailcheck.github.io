@@ -454,6 +454,10 @@ body {
     box-sizing: border-box;
 }
 
+.anon-logo {
+    flex: 1;
+}
+
 /* Global Notification system */
 .notification-bar {
     display: flex;
@@ -1221,10 +1225,6 @@ body[data-rds-mode="mobile"] #top-bar-notification-container {
     display: none !important;
 }
 
-body[data-rds-mode="mobile"] .top-bar-auth {
-    justify-content: flex-start;
-}
-
 /* Content padding and structure */
 body[data-rds-mode="mobile"] .content {
     padding: 15px 12px;
@@ -1395,10 +1395,6 @@ body[data-rds-mode="tablet"] .main {
 
 body[data-rds-mode="tablet"] #top-bar-notification-container {
     display: none !important;
-}
-
-body[data-rds-mode="tablet"] .top-bar-auth {
-    justify-content: flex-start;
 }
 
 /* App containers vertical stacking with comfortable tablet proportions */
@@ -5125,5 +5121,11 @@ body[data-rds-mode="tablet"] .container.doc-active #btn-toggle-sidebar-anon {
 }
 
 body[data-rds-mode="mobile"] .anon-logo span {
+    display: none !important;
+}
+
+/* Hide hamburger on Home page only (router adds .home-active to .container) */
+body[data-rds-mode="mobile"] .container.home-active #btn-toggle-sidebar,
+body[data-rds-mode="tablet"] .container.home-active #btn-toggle-sidebar {
     display: none !important;
 }
