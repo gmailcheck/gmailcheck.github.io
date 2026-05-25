@@ -865,7 +865,7 @@ async function loadOwnedKeysList(idToken) {
 		const keys = await res.json();
 		tableBody.innerHTML = '';
 
-		const developerKeys = keys.filter(k => k.type === 'api_key');
+		const developerKeys = keys.filter(k => k.type === 'api_key' || k.type === 'free');
 
 		if (developerKeys.length === 0) {
 			tableBody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: var(--text-muted);">No Developer API keys found. Purchase an API Key package to generate one.</td></tr>`;
@@ -977,7 +977,7 @@ async function renderDevStatsCards(keys) {
 	const container = document.getElementById('dev-stats-keys-container');
 	if (!container) return;
 
-	const devKeys = keys ? keys.filter(k => k.type === 'api_key') : [];
+	const devKeys = keys ? keys.filter(k => k.type === 'api_key' || k.type === 'free') : [];
 
 	if (!devKeys || devKeys.length === 0) {
 		container.innerHTML = `
