@@ -144,7 +144,7 @@ function getRelativeTimeString(timestamp) {
 }
 
 function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, 
+    return str.replace(/[&<>'"]/g,
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
 }
@@ -191,7 +191,7 @@ async function selectNote(id) {
     await refreshNotesList();
 }
 
-// Create a New Note
+// Create a New Note (internal use / sidebar)
 async function createNewNote() {
     const notes = await getAllNotes();
     const nextNum = notes.length + 1;
@@ -208,6 +208,34 @@ async function createNewNote() {
     }
 }
 
+// Clear the notepad editor — New Note intent without saving yet
+async function clearNotepad() {
+    activeNoteId = null;
+
+    const titleInput = document.getElementById('notepad-active-title');
+    const contentInput = document.getElementById('notepad-active-content');
+    const lastSavedDisplay = document.getElementById('notepad-last-updated');
+    const status = document.getElementById('notepad-save-status');
+
+    if (titleInput) titleInput.value = '';
+    if (contentInput) {
+        contentInput.value = '';
+        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'email-input-container-app4');
+    }
+    if (lastSavedDisplay) lastSavedDisplay.textContent = 'Last saved: Never';
+    if (status) {
+        status.textContent = '● New Note';
+        status.style.color = '#af86fc';
+    }
+
+    updateStats();
+    await refreshNotesList(); // Deselect active note in sidebar
+
+    if (window.showAppNotification) {
+        window.showAppNotification('success', 'Notepad cleared. Type your note and click <strong>Save</strong> to create it.');
+    }
+}
+
 // Mark current active note as modified / unsaved
 function markAsUnsaved() {
     const status = document.getElementById('notepad-save-status');
@@ -217,29 +245,36 @@ function markAsUnsaved() {
     }
 }
 
-// Manually Save the Active Note to IndexedDB
+// Manually Save the Active Note — creates new note if none active, updates existing otherwise
 async function saveActiveNote() {
-    if (!activeNoteId) {
-        if (window.showAppNotification) window.showAppNotification('warning', 'No active note to save.');
-        return;
-    }
-
     const titleVal = document.getElementById('notepad-active-title').value.trim() || 'Untitled Note';
     const contentVal = document.getElementById('notepad-active-content').value;
 
-    const note = {
-        id: activeNoteId,
-        title: titleVal,
-        content: contentVal,
-        updatedAt: Date.now()
-    };
+    let noteToSave;
+    if (!activeNoteId) {
+        // No active note yet (user clicked "New" then typed) — create a brand-new entry
+        noteToSave = {
+            title: titleVal,
+            content: contentVal,
+            updatedAt: Date.now()
+        };
+    } else {
+        // Update existing note
+        noteToSave = {
+            id: activeNoteId,
+            title: titleVal,
+            content: contentVal,
+            updatedAt: Date.now()
+        };
+    }
 
-    await saveNoteToDB(note);
+    const savedId = await saveNoteToDB(noteToSave);
+    if (!activeNoteId) activeNoteId = savedId; // Capture new note ID after first save
 
     const status = document.getElementById('notepad-save-status');
     if (status) {
         status.textContent = '✓ Saved';
-        status.style.color = '#00ff88'; // Clean bright green success!
+        status.style.color = '#00ff88';
         setTimeout(() => {
             if (status && status.textContent === '✓ Saved') {
                 status.style.color = 'var(--text-muted)';
@@ -255,7 +290,7 @@ async function saveActiveNote() {
     await refreshNotesList();
 
     if (window.showAppNotification) {
-        window.showAppNotification('success', `Success! Note <strong>"${titleVal}"</strong> saved offline successfully.`);
+        window.showAppNotification('success', `Note <strong>"${titleVal}"</strong> saved offline successfully.`);
     }
 }
 
@@ -331,10 +366,10 @@ function updateStats() {
 async function initNotepad() {
     try {
         await initDB();
-        
-        // Register Event Listeners
+
+        // #btn-notepad-new: clears editor only — save creates the actual note
         const btnNew = document.getElementById('btn-notepad-new');
-        if (btnNew) btnNew.addEventListener('click', createNewNote);
+        if (btnNew) btnNew.addEventListener('click', clearNotepad);
 
         const btnDelete = document.getElementById('btn-notepad-delete');
         if (btnDelete) btnDelete.addEventListener('click', deleteActiveNote);
@@ -376,15 +411,6 @@ async function initNotepad() {
         const notes = await getAllNotes();
         if (notes.length > 0) {
             await selectNote(notes[0].id);
-        } else {
-            // Auto-create a sample welcome note
-            const sampleNote = {
-                title: 'Welcome Note',
-                content: 'Welcome to your premium offline Notepad!\n\nThis utility stores all draft lists, credentials, or custom notes right in your browser database (IndexedDB).\n\nKey features:\n- ⚡ Premium Offline-First database.\n- 💾 Safe deliberate Manual-Saving.\n- 📝 Real-time line numbers synchronizer.\n- 📂 Organization with search filtering.\n- 📥 Text file downloader (.txt).\n\nEnjoy editing!',
-                updatedAt: Date.now()
-            };
-            const id = await saveNoteToDB(sampleNote);
-            await selectNote(id);
         }
 
     } catch (e) {

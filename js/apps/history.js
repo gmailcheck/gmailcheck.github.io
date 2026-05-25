@@ -195,13 +195,13 @@ window.loadHistoryList = async function () {
     filtered.forEach(entry => {
         const card = document.createElement('div');
         card.className = `history-item-card ${entry.appId}`;
-        
+
         // Humanize display count
         const displayLabel = entry.count.toLocaleString() + ' ' + (entry.typeLabel || 'emails');
 
         card.innerHTML = `
             <div class="history-card-header">
-                <div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
                     <span class="history-badge ${entry.appId}">${entry.appName}</span>
                     <div class="history-title" style="margin-top: 8px;">
                         <i class="fa-regular fa-calendar-check" style="margin-right: 6px; color: var(--text-muted);"></i>${entry.title}

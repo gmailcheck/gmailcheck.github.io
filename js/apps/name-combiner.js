@@ -405,6 +405,8 @@
 			});
 
 			// Enable global sidebar action buttons
+			btnGenerate.classList.add('hide');
+			btnClear.classList.add('hide');
 			btnCopy.classList.remove('hide');
 			btnDownload.classList.remove('hide');
 
@@ -435,6 +437,8 @@
 		btnCopy.classList.add('hide');
 		btnDownload.classList.add('hide');
 		btnDownloadAll.classList.add('hide');
+		btnGenerate.classList.remove('hide');
+		btnClear.classList.remove('hide');
 
 		window.clearAppNotification();
 		textarea.dispatchEvent(new Event('input'));

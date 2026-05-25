@@ -247,7 +247,7 @@ window.loadDashboardData = async function (force = false) {
 
 			// Update Badges dynamically based on roles and keys
 			const badge = document.getElementById('db-user-badge');
-			
+
 			let tier = 'FREE';
 			if (profile.role === 'admin') {
 				tier = 'ADMIN';
@@ -289,15 +289,15 @@ window.loadDashboardData = async function (force = false) {
 				const vipKey = keys && keys.find(k => k.type === 'vip');
 				if (vipKey) {
 					if (vipKey.expiresAt === 'lifetime') {
-						subExpiryDisplay.textContent = 'Lifetime Access';
-						subExpiryDisplay.style.color = '#af86fc';
+						subExpiryDisplay.textContent = 'Lifetime';
+						subExpiryDisplay.style.color = '#379e56ff';
 					} else {
 						const expDate = new Date(vipKey.expiresAt);
 						subExpiryDisplay.textContent = expDate.toLocaleDateString();
 						if (expDate <= new Date()) {
 							subExpiryDisplay.style.color = '#ff6666';
 						} else {
-							subExpiryDisplay.style.color = '#66ffd9';
+							subExpiryDisplay.style.color = '#379e56ff';
 						}
 					}
 				} else {
@@ -308,8 +308,8 @@ window.loadDashboardData = async function (force = false) {
 						subExpiryDisplay.textContent = 'Trial Period';
 						subExpiryDisplay.style.color = '#00f0ff';
 					} else {
-						subExpiryDisplay.textContent = 'Not Subscribed';
-						subExpiryDisplay.style.color = 'var(--text-muted)';
+						subExpiryDisplay.textContent = 'Lifetime';
+						subExpiryDisplay.style.color = '#379e56ff';
 					}
 				}
 			}
@@ -325,7 +325,7 @@ window.loadDashboardData = async function (force = false) {
 			}
 
 			const historyEntries = Object.entries(history);
-			
+
 			// Separate histories
 			const subscriptionHistory = historyEntries.filter(([id, data]) => !data.product_type || data.product_type === 'subscription');
 			const apiKeyHistory = historyEntries.filter(([id, data]) => data.product_type === 'api_key');
@@ -835,7 +835,7 @@ window.loadDashboardData = async function (force = false) {
 				}
 			}
 		} // closes if (profileRes.ok)
-		
+
 		// 4. Load owned keys list (refreshed after profile loads)
 		await loadOwnedKeysList(idToken);
 
@@ -847,50 +847,50 @@ window.loadDashboardData = async function (force = false) {
 	}
 };
 
-	// LOAD ALL KEYS ASSOCIATED WITH ACCOUNT
-	async function loadOwnedKeysList(idToken) {
-		const tableBody = document.getElementById('db-keys-table-body');
-		if (!tableBody) return [];
+// LOAD ALL KEYS ASSOCIATED WITH ACCOUNT
+async function loadOwnedKeysList(idToken) {
+	const tableBody = document.getElementById('db-keys-table-body');
+	if (!tableBody) return [];
 
-		try {
-			const res = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/get-all-keys`, {
-				method: 'GET',
-				headers: {
-					'Authorization': `Bearer ${idToken}`
-				}
-			});
-
-			if (!res.ok) throw new Error("Failed to get keys list");
-
-			const keys = await res.json();
-			tableBody.innerHTML = '';
-
-			const developerKeys = keys.filter(k => k.type === 'api_key');
-
-			if (developerKeys.length === 0) {
-				tableBody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: var(--text-muted);">No Developer API keys found. Purchase an API Key package to generate one.</td></tr>`;
-				
-				// Render the stats cards deck dynamically
-				if (typeof renderDevStatsCards === 'function') {
-					await renderDevStatsCards(keys);
-				}
-				return keys;
+	try {
+		const res = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/get-all-keys`, {
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${idToken}`
 			}
+		});
 
-			developerKeys.forEach(k => {
-				const isKeyActive = window.APIKEY === k.key;
-				const isExpired = k.expiresAt !== 'lifetime' && new Date(k.expiresAt) <= new Date();
+		if (!res.ok) throw new Error("Failed to get keys list");
 
-				// Format expiry
-				const expiresStr = k.expiresAt === 'lifetime' ? 'Lifetime' : new Date(k.expiresAt).toLocaleDateString();
-				const createdStr = k.createdAt ? new Date(k.createdAt).toLocaleDateString() : 'N/A';
+		const keys = await res.json();
+		tableBody.innerHTML = '';
 
-				const row = document.createElement('tr');
-				row.style.borderBottom = '1px solid var(--border-color)';
-				row.style.fontSize = '0.9rem';
-				row.style.color = 'var(--text-primary)';
+		const developerKeys = keys.filter(k => k.type === 'api_key');
 
-				row.innerHTML = `
+		if (developerKeys.length === 0) {
+			tableBody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: var(--text-muted);">No Developer API keys found. Purchase an API Key package to generate one.</td></tr>`;
+
+			// Render the stats cards deck dynamically
+			if (typeof renderDevStatsCards === 'function') {
+				await renderDevStatsCards(keys);
+			}
+			return keys;
+		}
+
+		developerKeys.forEach(k => {
+			const isKeyActive = window.APIKEY === k.key;
+			const isExpired = k.expiresAt !== 'lifetime' && new Date(k.expiresAt) <= new Date();
+
+			// Format expiry
+			const expiresStr = k.expiresAt === 'lifetime' ? 'Lifetime' : new Date(k.expiresAt).toLocaleDateString();
+			const createdStr = k.createdAt ? new Date(k.createdAt).toLocaleDateString() : 'N/A';
+
+			const row = document.createElement('tr');
+			row.style.borderBottom = '1px solid var(--border-color)';
+			row.style.fontSize = '0.9rem';
+			row.style.color = 'var(--text-primary)';
+
+			row.innerHTML = `
 				<td style="padding: 15px 10px; font-family: 'RobotoMono'; font-weight: bold; display: flex; align-items: center; gap: 8px;">
 					<span class="db-key-value" data-full-key="${k.key}">${k.key.slice(0, 12)}...</span>
 					<button class="btn-copy-tbl" data-key="${k.key}" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; font-size: 0.8rem;" title="Copy Full Key"><i class="fa-solid fa-copy"></i></button>
@@ -914,135 +914,135 @@ window.loadDashboardData = async function (force = false) {
 				</td>
 			`;
 
-				tableBody.appendChild(row);
-			});
+			tableBody.appendChild(row);
+		});
 
-			// Bind actions in table
-			document.querySelectorAll('.btn-copy-tbl').forEach(btn => {
-				btn.addEventListener('click', (e) => {
-					e.stopPropagation();
-					const keyVal = btn.getAttribute('data-key');
-					navigator.clipboard.writeText(keyVal).then(() => {
-						window.showAppNotification('success', 'ðŸ“‹ <strong>Key copied</strong> to clipboard!');
-					});
+		// Bind actions in table
+		document.querySelectorAll('.btn-copy-tbl').forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const keyVal = btn.getAttribute('data-key');
+				navigator.clipboard.writeText(keyVal).then(() => {
+					window.showAppNotification('success', 'ðŸ“‹ <strong>Key copied</strong> to clipboard!');
 				});
 			});
+		});
 
-			document.querySelectorAll('.btn-wl-manage').forEach(btn => {
-				btn.addEventListener('click', (e) => {
-					e.stopPropagation();
-					const keyVal = btn.getAttribute('data-key');
-					const tab = btn.getAttribute('data-tab') || 'ip';
-					openWhitelistModal(keyVal, tab);
-				});
+		document.querySelectorAll('.btn-wl-manage').forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const keyVal = btn.getAttribute('data-key');
+				const tab = btn.getAttribute('data-tab') || 'ip';
+				openWhitelistModal(keyVal, tab);
 			});
+		});
 
-			document.querySelectorAll('.btn-apply-key-tbl').forEach(btn => {
-				btn.addEventListener('click', (e) => {
-					e.stopPropagation();
-					const keyVal = btn.getAttribute('data-key');
-					const keyType = btn.getAttribute('data-type');
+		document.querySelectorAll('.btn-apply-key-tbl').forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const keyVal = btn.getAttribute('data-key');
+				const keyType = btn.getAttribute('data-type');
 
-					// Set active key
-					localStorage.setItem('gmailChecker_apiData', JSON.stringify({
-						apiKey: keyVal,
-						type: keyType,
-						timestamp: Date.now()
-					}));
-					window.APIKEY = keyVal;
+				// Set active key
+				localStorage.setItem('gmailChecker_apiData', JSON.stringify({
+					apiKey: keyVal,
+					type: keyType,
+					timestamp: Date.now()
+				}));
+				window.APIKEY = keyVal;
 
-					window.showAppNotification('success', 'âš¡ <strong>Active API Key updated!</strong> Statistics re-calibrating...');
+				window.showAppNotification('success', 'âš¡ <strong>Active API Key updated!</strong> Statistics re-calibrating...');
 
-					// Refresh Dashboard
-					window.loadDashboardData();
-				});
+				// Refresh Dashboard
+				window.loadDashboardData();
 			});
+		});
 
-			// Render the stats cards deck dynamically
-			if (typeof renderDevStatsCards === 'function') {
-				await renderDevStatsCards(keys);
-			}
-
-			return keys;
-		} catch (e) {
-			console.error(e);
-			tableBody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: #ff6666;">Error loading API keys list: ${e.message}</td></tr>`;
+		// Render the stats cards deck dynamically
+		if (typeof renderDevStatsCards === 'function') {
+			await renderDevStatsCards(keys);
 		}
+
+		return keys;
+	} catch (e) {
+		console.error(e);
+		tableBody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: #ff6666;">Error loading API keys list: ${e.message}</td></tr>`;
 	}
+}
 
-	let devCountdownInterval = null;
+let devCountdownInterval = null;
 
-	// RENDER BEAUTIFUL DYNAMIC STATS CARDS FOR EACH OWNED KEY
-	async function renderDevStatsCards(keys) {
-		const container = document.getElementById('dev-stats-keys-container');
-		if (!container) return;
+// RENDER BEAUTIFUL DYNAMIC STATS CARDS FOR EACH OWNED KEY
+async function renderDevStatsCards(keys) {
+	const container = document.getElementById('dev-stats-keys-container');
+	if (!container) return;
 
-		const devKeys = keys ? keys.filter(k => k.type === 'api_key') : [];
+	const devKeys = keys ? keys.filter(k => k.type === 'api_key') : [];
 
-		if (!devKeys || devKeys.length === 0) {
-			container.innerHTML = `
+	if (!devKeys || devKeys.length === 0) {
+		container.innerHTML = `
 			<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px;">
 				No API keys registered to compile stats.
 			</div>
 		`;
-			return;
-		}
+		return;
+	}
 
-		container.innerHTML = `
+	container.innerHTML = `
 		<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px;">
 			<i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 8px;"></i> Fetching live quota details for all keys...
 		</div>
 	`;
 
-		try {
-			// Fetch stats sequentially to prevent rate limits or flickering
-			const keysWithStats = [];
-			for (const k of devKeys) {
-				try {
-					const statsRes = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/stats?key=${k.key}`);
-					if (statsRes.ok) {
-						const stats = await statsRes.json();
-						keysWithStats.push({ keyData: k, stats });
-					} else {
-						keysWithStats.push({ keyData: k, stats: null });
-					}
-				} catch (e) {
-					console.error(`Error loading key stats for ${k.key}:`, e);
+	try {
+		// Fetch stats sequentially to prevent rate limits or flickering
+		const keysWithStats = [];
+		for (const k of devKeys) {
+			try {
+				const statsRes = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/stats?key=${k.key}`);
+				if (statsRes.ok) {
+					const stats = await statsRes.json();
+					keysWithStats.push({ keyData: k, stats });
+				} else {
 					keysWithStats.push({ keyData: k, stats: null });
 				}
-				// Small delay between requests to avoid rate limits
-				await new Promise(r => setTimeout(r, 150));
+			} catch (e) {
+				console.error(`Error loading key stats for ${k.key}:`, e);
+				keysWithStats.push({ keyData: k, stats: null });
 			}
-			container.innerHTML = '';
+			// Small delay between requests to avoid rate limits
+			await new Promise(r => setTimeout(r, 150));
+		}
+		container.innerHTML = '';
 
-			keysWithStats.forEach(({ keyData, stats }) => {
-				const card = document.createElement('div');
-				card.className = 'pricing-card'; // Reuses premium glassmorphism styling
-				card.style.flex = '1';
-				card.style.minWidth = '320px';
-				card.style.background = 'var(--bg-secondary)';
-				card.style.border = keyData.type === 'vip' ? '1px solid rgba(175, 134, 252, 0.3)' : '1px solid var(--border-color)';
-				card.style.borderRadius = '20px';
-				card.style.padding = '25px';
-				card.style.display = 'flex';
-				card.style.flexDirection = 'column';
-				card.style.gap = '20px';
-				card.style.boxShadow = 'var(--shadow-md)';
-				card.style.position = 'relative';
-				card.style.overflow = 'hidden';
+		keysWithStats.forEach(({ keyData, stats }) => {
+			const card = document.createElement('div');
+			card.className = 'pricing-card'; // Reuses premium glassmorphism styling
+			card.style.flex = '1';
+			card.style.minWidth = '320px';
+			card.style.background = 'var(--bg-secondary)';
+			card.style.border = keyData.type === 'vip' ? '1px solid rgba(175, 134, 252, 0.3)' : '1px solid var(--border-color)';
+			card.style.borderRadius = '20px';
+			card.style.padding = '25px';
+			card.style.display = 'flex';
+			card.style.flexDirection = 'column';
+			card.style.gap = '20px';
+			card.style.boxShadow = 'var(--shadow-md)';
+			card.style.position = 'relative';
+			card.style.overflow = 'hidden';
 
-				if (keyData.type === 'vip') {
-					card.innerHTML += `
+			if (keyData.type === 'vip') {
+				card.innerHTML += `
 					<div style="position: absolute; top: 12px; right: -25px; background: #af86fc; color: #121212; font-size: 0.6rem; font-weight: bold; font-family: 'Orbitron', monospace; padding: 2px 25px; transform: rotate(45deg); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
 						VIP
 					</div>
 				`;
-				}
+			}
 
-				const keyDisplayLabel = `${keyData.key.slice(0, 10)}...`;
+			const keyDisplayLabel = `${keyData.key.slice(0, 10)}...`;
 
-				if (!stats) {
-					card.innerHTML += `
+			if (!stats) {
+				card.innerHTML += `
 					<div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
 						<span style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted); font-family: 'Orbitron', monospace; letter-spacing: 1px;">
 							${keyData.type.toUpperCase()} KEY
@@ -1053,14 +1053,14 @@ window.loadDashboardData = async function (force = false) {
 						<p style="font-size: 0.8rem; color: #ff6666; margin: 0;">Failed to retrieve active quota stats.</p>
 					</div>
 				`;
-					container.appendChild(card);
-					return;
-				}
+				container.appendChild(card);
+				return;
+			}
 
-				const pct = (stats.requestsUsed / stats.maxRequests) * 100;
-				const barColor = keyData.type === 'vip' ? 'linear-gradient(90deg, #af86fc 0%, #7e53c9 100%)' : 'linear-gradient(90deg, #00f0ff 0%, #0072ff 100%)';
+			const pct = (stats.requestsUsed / stats.maxRequests) * 100;
+			const barColor = keyData.type === 'vip' ? 'linear-gradient(90deg, #af86fc 0%, #7e53c9 100%)' : 'linear-gradient(90deg, #00f0ff 0%, #0072ff 100%)';
 
-				card.innerHTML += `
+			card.innerHTML += `
 				<div style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
 					<!-- Key Info Header -->
 					<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -1110,58 +1110,58 @@ window.loadDashboardData = async function (force = false) {
 				</div>
 			`;
 
-				container.appendChild(card);
-			});
+			container.appendChild(card);
+		});
 
-			// Start unified countdowns for all dynamic timer tags
-			updateAllDevCountdowns();
-		} catch (err) {
-			console.error("Failed rendering dev stats deck:", err);
-			container.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #ff6666;">Error displaying statistics: ${err.message}</div>`;
-		}
+		// Start unified countdowns for all dynamic timer tags
+		updateAllDevCountdowns();
+	} catch (err) {
+		console.error("Failed rendering dev stats deck:", err);
+		container.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #ff6666;">Error displaying statistics: ${err.message}</div>`;
 	}
+}
 
-	// UNIFIED TIMER COUNTDOWN UPDATE FOR DECK
-	function updateAllDevCountdowns() {
-		if (devCountdownInterval) clearInterval(devCountdownInterval);
+// UNIFIED TIMER COUNTDOWN UPDATE FOR DECK
+function updateAllDevCountdowns() {
+	if (devCountdownInterval) clearInterval(devCountdownInterval);
 
-		const updateTimers = () => {
-			const timerElements = document.querySelectorAll('.dev-reset-countdown-timer');
-			if (timerElements.length === 0) {
-				clearInterval(devCountdownInterval);
+	const updateTimers = () => {
+		const timerElements = document.querySelectorAll('.dev-reset-countdown-timer');
+		if (timerElements.length === 0) {
+			clearInterval(devCountdownInterval);
+			return;
+		}
+
+		timerElements.forEach((el) => {
+			const resetTimeStr = el.getAttribute('data-reset-time');
+			if (!resetTimeStr) return;
+
+			const resetTime = parseInt(resetTimeStr, 10);
+			let sec = Math.floor((resetTime - Date.now()) / 1000);
+
+			if (sec <= 0) {
+				el.textContent = '00:00:00';
 				return;
 			}
 
-			timerElements.forEach((el) => {
-				const resetTimeStr = el.getAttribute('data-reset-time');
-				if (!resetTimeStr) return;
+			let h = Math.floor(sec / 3600);
+			let m = Math.floor((sec % 3600) / 60);
+			let s = sec % 60;
+			el.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+		});
+	};
 
-				const resetTime = parseInt(resetTimeStr, 10);
-				let sec = Math.floor((resetTime - Date.now()) / 1000);
+	updateTimers();
+	devCountdownInterval = setInterval(updateTimers, 1000);
+}
 
-				if (sec <= 0) {
-					el.textContent = '00:00:00';
-					return;
-				}
+// OPTIONAL: LOAD LOGS HISTORY FROM REALTIME DATABASE LOGS INDEX
+async function loadUsageHistory() {
+	const tableBody = document.getElementById('db-history-table-body');
+	if (!tableBody) return;
 
-				let h = Math.floor(sec / 3600);
-				let m = Math.floor((sec % 3600) / 60);
-				let s = sec % 60;
-				el.textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-			});
-		};
-
-		updateTimers();
-		devCountdownInterval = setInterval(updateTimers, 1000);
-	}
-
-	// OPTIONAL: LOAD LOGS HISTORY FROM REALTIME DATABASE LOGS INDEX
-	async function loadUsageHistory() {
-		const tableBody = document.getElementById('db-history-table-body');
-		if (!tableBody) return;
-
-		// Populate beautiful structured simulation history log entries that feel extremely high fidelity!
-		tableBody.innerHTML = `
+	// Populate beautiful structured simulation history log entries that feel extremely high fidelity!
+	tableBody.innerHTML = `
 		<tr style="border-bottom: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-primary);">
 			<td style="padding: 15px 10px; color: var(--text-secondary);">${new Date().toLocaleString()}</td>
 			<td style="padding: 15px 10px; font-family: 'RobotoMono'; font-weight: bold;">${(window.APIKEY || 'FREE_KEY').slice(0, 8)}...</td>
@@ -1178,250 +1178,250 @@ window.loadDashboardData = async function (force = false) {
 		</tr>
 	`;
 
-		// Download/copy triggers
-		const copyHistoryBtn = document.getElementById('btn-db-copy-history');
-		if (copyHistoryBtn) {
-			copyHistoryBtn.addEventListener('click', () => {
-				const text = `Timestamp,APIKeyPrefix,EmailsChecked,ResultsMatches,Server\n${new Date().toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},150,89 Live / 12 Disabled / 4 Failed,Advanced 1\n${new Date(Date.now() - 3600000).toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},10,10 Live,Fast 1`;
-				navigator.clipboard.writeText(text).then(() => {
-					window.showAppNotification('success', 'ðŸ“‹ <strong>Logs history copied</strong> to clipboard!');
-				});
+	// Download/copy triggers
+	const copyHistoryBtn = document.getElementById('btn-db-copy-history');
+	if (copyHistoryBtn) {
+		copyHistoryBtn.addEventListener('click', () => {
+			const text = `Timestamp,APIKeyPrefix,EmailsChecked,ResultsMatches,Server\n${new Date().toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},150,89 Live / 12 Disabled / 4 Failed,Advanced 1\n${new Date(Date.now() - 3600000).toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},10,10 Live,Fast 1`;
+			navigator.clipboard.writeText(text).then(() => {
+				window.showAppNotification('success', 'ðŸ“‹ <strong>Logs history copied</strong> to clipboard!');
 			});
-		}
-
-		const downloadHistoryBtn = document.getElementById('btn-db-download-history');
-		if (downloadHistoryBtn) {
-			downloadHistoryBtn.addEventListener('click', () => {
-				const text = `Timestamp,APIKeyPrefix,EmailsChecked,ResultsMatches,Server\n${new Date().toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},150,89 Live / 12 Disabled / 4 Failed,Advanced 1\n${new Date(Date.now() - 3600000).toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},10,10 Live,Fast 1`;
-				const blob = new Blob([text], { type: 'text/csv' });
-				const url = URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = `gc_usage_history_${Date.now()}.csv`;
-				document.body.appendChild(a);
-				a.click();
-				document.body.removeChild(a);
-				URL.revokeObjectURL(url);
-			});
-		}
-	}
-
-	// =============================================================
-	// WHITELIST MODAL - Authorized IPs + Authorized Domains
-	// =============================================================
-
-	const GC_API = 'https://gmail-checker.blacksoftchild.workers.dev';
-	let _wlCurrentKey = null;
-
-	async function openWhitelistModal(apiKey, tab) {
-		tab = tab || 'ip';
-		_wlCurrentKey = apiKey;
-		const modal = document.getElementById('ip-whitelist-modal');
-		if (!modal) return;
-		const keyLabel = document.getElementById('ip-modal-key-label');
-		if (keyLabel) keyLabel.textContent = 'VIP Key: ' + apiKey.slice(0, 14) + '...';
-		modal.classList.remove('hide');
-		switchWlTab(tab);
-		refreshWhitelistData(apiKey);
-	}
-
-	function switchWlTab(tab) {
-		const panelIp = document.getElementById('wl-panel-ip');
-		const panelDomain = document.getElementById('wl-panel-domain');
-		const tabIpBtn = document.getElementById('wl-tab-ip');
-		const tabDomBtn = document.getElementById('wl-tab-domain');
-		if (!panelIp || !panelDomain) return;
-		if (tab === 'ip') {
-			panelIp.style.display = 'flex';
-			panelDomain.style.display = 'none';
-			if (tabIpBtn) { tabIpBtn.style.background = 'linear-gradient(135deg,#af86fc,#7e53c9)'; tabIpBtn.style.color = 'white'; tabIpBtn.style.fontWeight = 'bold'; }
-			if (tabDomBtn) { tabDomBtn.style.background = 'transparent'; tabDomBtn.style.color = 'var(--text-muted)'; tabDomBtn.style.fontWeight = 'normal'; }
-		} else {
-			panelIp.style.display = 'none';
-			panelDomain.style.display = 'flex';
-			if (tabDomBtn) { tabDomBtn.style.background = 'linear-gradient(135deg,#00f0ff,#0095c8)'; tabDomBtn.style.color = '#000'; tabDomBtn.style.fontWeight = 'bold'; }
-			if (tabIpBtn) { tabIpBtn.style.background = 'transparent'; tabIpBtn.style.color = 'var(--text-muted)'; tabIpBtn.style.fontWeight = 'normal'; }
-		}
-	}
-
-	async function refreshWhitelistData(apiKey) {
-		try {
-			const user = window.firebaseAuth && window.firebaseAuth.currentUser;
-			if (!user) return;
-			const token = await user.getIdToken();
-			const ipRes = await fetch(GC_API + '/get-ip-whitelist?key=' + encodeURIComponent(apiKey), {
-				headers: { 'Authorization': 'Bearer ' + token }
-			});
-			if (ipRes.ok) { const d = await ipRes.json(); renderIPList(d.allowedIPs || [], d.max || 3); }
-			const domRes = await fetch(GC_API + '/get-domain-whitelist?key=' + encodeURIComponent(apiKey), {
-				headers: { 'Authorization': 'Bearer ' + token }
-			});
-			if (domRes.ok) { const d = await domRes.json(); renderDomainList(d.allowedDomains || [], d.max || 3); }
-		} catch (e) { console.error('refreshWhitelistData:', e); }
-	}
-
-	function renderIPList(ips, max) {
-		const list = document.getElementById('ip-modal-list');
-		const badge = document.getElementById('ip-modal-count-badge');
-		if (!list) return;
-		if (badge) badge.textContent = ips.length + ' / ' + max;
-		if (ips.length === 0) {
-			list.innerHTML = '<div style="padding:14px;background:var(--bg-primary);border:1px dashed var(--border-color);border-radius:10px;text-align:center;color:var(--text-muted);font-size:0.8rem">No IPs whitelisted \u2014 all IPs allowed</div>';
-			return;
-		}
-		list.innerHTML = ips.map(function (ip) {
-			return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-network-wired" style="color:#af86fc"></i><span style="font-family:monospace;font-size:0.85rem;color:var(--text-sharp)">' + ip + '</span></div><button class="btn-wl-remove-ip" data-ip="' + ip + '" style="background:none;border:none;color:#ff6666;cursor:pointer;padding:2px 6px" title="Remove"><i class="fa-solid fa-trash-can"></i></button></div>';
-		}).join('');
-		list.querySelectorAll('.btn-wl-remove-ip').forEach(function (btn) {
-			btn.addEventListener('click', function () { removeIP(btn.getAttribute('data-ip')); });
 		});
 	}
 
-	function renderDomainList(domains, max) {
-		const list = document.getElementById('domain-modal-list');
-		const badge = document.getElementById('domain-modal-count-badge');
-		if (!list) return;
-		if (badge) badge.textContent = domains.length + ' / ' + max;
-		if (domains.length === 0) {
-			list.innerHTML = '<div style="padding:14px;background:var(--bg-primary);border:1px dashed var(--border-color);border-radius:10px;text-align:center;color:var(--text-muted);font-size:0.8rem">No domains whitelisted \u2014 all origins allowed</div>';
-			return;
-		}
-		list.innerHTML = domains.map(function (d) {
-			return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-globe" style="color:#00f0ff"></i><span style="font-family:monospace;font-size:0.85rem;color:var(--text-sharp)">' + d + '</span></div><button class="btn-wl-remove-domain" data-domain="' + d + '" style="background:none;border:none;color:#ff6666;cursor:pointer;padding:2px 6px" title="Remove"><i class="fa-solid fa-trash-can"></i></button></div>';
-		}).join('');
-		list.querySelectorAll('.btn-wl-remove-domain').forEach(function (btn) {
-			btn.addEventListener('click', function () { removeDomain(btn.getAttribute('data-domain')); });
+	const downloadHistoryBtn = document.getElementById('btn-db-download-history');
+	if (downloadHistoryBtn) {
+		downloadHistoryBtn.addEventListener('click', () => {
+			const text = `Timestamp,APIKeyPrefix,EmailsChecked,ResultsMatches,Server\n${new Date().toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},150,89 Live / 12 Disabled / 4 Failed,Advanced 1\n${new Date(Date.now() - 3600000).toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},10,10 Live,Fast 1`;
+			const blob = new Blob([text], { type: 'text/csv' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `gc_usage_history_${Date.now()}.csv`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
 		});
 	}
+}
 
-	async function _wlPost(endpoint, body) {
+// =============================================================
+// WHITELIST MODAL - Authorized IPs + Authorized Domains
+// =============================================================
+
+const GC_API = 'https://gmail-checker.blacksoftchild.workers.dev';
+let _wlCurrentKey = null;
+
+async function openWhitelistModal(apiKey, tab) {
+	tab = tab || 'ip';
+	_wlCurrentKey = apiKey;
+	const modal = document.getElementById('ip-whitelist-modal');
+	if (!modal) return;
+	const keyLabel = document.getElementById('ip-modal-key-label');
+	if (keyLabel) keyLabel.textContent = 'VIP Key: ' + apiKey.slice(0, 14) + '...';
+	modal.classList.remove('hide');
+	switchWlTab(tab);
+	refreshWhitelistData(apiKey);
+}
+
+function switchWlTab(tab) {
+	const panelIp = document.getElementById('wl-panel-ip');
+	const panelDomain = document.getElementById('wl-panel-domain');
+	const tabIpBtn = document.getElementById('wl-tab-ip');
+	const tabDomBtn = document.getElementById('wl-tab-domain');
+	if (!panelIp || !panelDomain) return;
+	if (tab === 'ip') {
+		panelIp.style.display = 'flex';
+		panelDomain.style.display = 'none';
+		if (tabIpBtn) { tabIpBtn.style.background = 'linear-gradient(135deg,#af86fc,#7e53c9)'; tabIpBtn.style.color = 'white'; tabIpBtn.style.fontWeight = 'bold'; }
+		if (tabDomBtn) { tabDomBtn.style.background = 'transparent'; tabDomBtn.style.color = 'var(--text-muted)'; tabDomBtn.style.fontWeight = 'normal'; }
+	} else {
+		panelIp.style.display = 'none';
+		panelDomain.style.display = 'flex';
+		if (tabDomBtn) { tabDomBtn.style.background = 'linear-gradient(135deg,#00f0ff,#0095c8)'; tabDomBtn.style.color = '#000'; tabDomBtn.style.fontWeight = 'bold'; }
+		if (tabIpBtn) { tabIpBtn.style.background = 'transparent'; tabIpBtn.style.color = 'var(--text-muted)'; tabIpBtn.style.fontWeight = 'normal'; }
+	}
+}
+
+async function refreshWhitelistData(apiKey) {
+	try {
 		const user = window.firebaseAuth && window.firebaseAuth.currentUser;
-		if (!user) { window.showAppNotification('error', 'Not logged in!'); return null; }
+		if (!user) return;
 		const token = await user.getIdToken();
-		return fetch(GC_API + endpoint, {
-			method: 'POST',
-			headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-			body: JSON.stringify(body)
+		const ipRes = await fetch(GC_API + '/get-ip-whitelist?key=' + encodeURIComponent(apiKey), {
+			headers: { 'Authorization': 'Bearer ' + token }
 		});
-	}
-
-	async function addIP() {
-		const input = document.getElementById('ip-modal-input');
-		const ip = input ? input.value.trim() : '';
-		if (!ip) { window.showAppNotification('warning', 'Please enter an IP address!'); return; }
-		const res = await _wlPost('/bind-ip', { apiKey: _wlCurrentKey, ip: ip });
-		if (!res) return;
-		const data = await res.json();
-		if (res.ok && data.success) {
-			window.showAppNotification('success', '<strong>' + ip + '</strong> added to Authorized IPs!');
-			if (input) input.value = '';
-			refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
-		} else { window.showAppNotification('error', data.error || data.message || 'Failed to add IP'); }
-	}
-
-	async function removeIP(ip) {
-		const res = await _wlPost('/unbind-ip', { apiKey: _wlCurrentKey, ip: ip });
-		if (!res) return;
-		const data = await res.json();
-		if (res.ok && data.success) {
-			window.showAppNotification('success', 'IP <strong>' + ip + '</strong> removed.');
-			refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
-		} else { window.showAppNotification('error', data.error || 'Failed to remove IP'); }
-	}
-
-	async function clearAllIPs() {
-		const res = await _wlPost('/unbind-ip', { apiKey: _wlCurrentKey });
-		if (!res) return;
-		const data = await res.json();
-		if (res.ok && data.success) {
-			window.showAppNotification('success', 'All IPs cleared. IP restriction disabled.');
-			refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
-		} else { window.showAppNotification('error', data.error || 'Failed to clear IPs'); }
-	}
-
-	async function detectMyIP() {
-		const btn = document.getElementById('btn-ip-modal-detect');
-		const orig = btn ? btn.innerHTML : '';
-		try {
-			if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Detecting...';
-			const r = await fetch('https://api.ipify.org?format=json');
-			const d = await r.json();
-			const input = document.getElementById('ip-modal-input');
-			if (input && d.ip) input.value = d.ip;
-			if (btn) btn.innerHTML = orig;
-		} catch (e) {
-			if (btn) btn.innerHTML = orig;
-			window.showAppNotification('error', 'Could not detect IP. Please enter manually.');
-		}
-	}
-
-	async function addDomain() {
-		const input = document.getElementById('domain-modal-input');
-		const domain = input ? input.value.trim() : '';
-		if (!domain) { window.showAppNotification('warning', 'Please enter a domain!'); return; }
-		const res = await _wlPost('/bind-domain', { apiKey: _wlCurrentKey, domain: domain });
-		if (!res) return;
-		const data = await res.json();
-		if (res.ok && data.success) {
-			const added = (data.allowedDomains && data.allowedDomains.length) ? data.allowedDomains[data.allowedDomains.length - 1] : domain;
-			window.showAppNotification('success', '<strong>' + added + '</strong> added to Authorized Domains!');
-			if (input) input.value = '';
-			refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
-		} else { window.showAppNotification('error', data.error || data.message || 'Failed to add domain'); }
-	}
-
-	async function removeDomain(domain) {
-		const res = await _wlPost('/unbind-domain', { apiKey: _wlCurrentKey, domain: domain });
-		if (!res) return;
-		const data = await res.json();
-		if (res.ok && data.success) {
-			window.showAppNotification('success', 'Domain <strong>' + domain + '</strong> removed.');
-			refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
-		} else { window.showAppNotification('error', data.error || 'Failed to remove domain'); }
-	}
-
-	async function clearAllDomains() {
-		const res = await _wlPost('/unbind-domain', { apiKey: _wlCurrentKey });
-		if (!res) return;
-		const data = await res.json();
-		if (res.ok && data.success) {
-			window.showAppNotification('success', 'All domains cleared. Domain restriction disabled.');
-			refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
-		} else { window.showAppNotification('error', data.error || 'Failed to clear domains'); }
-	}
-
-	// Init whitelist modal listeners on DOM ready
-	document.addEventListener('DOMContentLoaded', function () {
-		var closeBtn = document.getElementById('ip-modal-close-btn');
-		if (closeBtn) closeBtn.addEventListener('click', function () {
-			var m = document.getElementById('ip-whitelist-modal');
-			if (m) m.classList.add('hide');
+		if (ipRes.ok) { const d = await ipRes.json(); renderIPList(d.allowedIPs || [], d.max || 3); }
+		const domRes = await fetch(GC_API + '/get-domain-whitelist?key=' + encodeURIComponent(apiKey), {
+			headers: { 'Authorization': 'Bearer ' + token }
 		});
-		var modal = document.getElementById('ip-whitelist-modal');
-		if (modal) modal.addEventListener('click', function (e) {
-			if (e.target === modal) modal.classList.add('hide');
-		});
-		var tIp = document.getElementById('wl-tab-ip');
-		if (tIp) tIp.addEventListener('click', function () { switchWlTab('ip'); });
-		var tDom = document.getElementById('wl-tab-domain');
-		if (tDom) tDom.addEventListener('click', function () { switchWlTab('domain'); });
+		if (domRes.ok) { const d = await domRes.json(); renderDomainList(d.allowedDomains || [], d.max || 3); }
+	} catch (e) { console.error('refreshWhitelistData:', e); }
+}
 
-		var btnAddIp = document.getElementById('btn-ip-modal-add');
-		if (btnAddIp) btnAddIp.addEventListener('click', addIP);
-		var inputIp = document.getElementById('ip-modal-input');
-		if (inputIp) inputIp.addEventListener('keydown', function (e) { if (e.key === 'Enter') addIP(); });
-		var btnDetect = document.getElementById('btn-ip-modal-detect');
-		if (btnDetect) btnDetect.addEventListener('click', detectMyIP);
-		var btnClearIp = document.getElementById('btn-ip-modal-clear-all');
-		if (btnClearIp) btnClearIp.addEventListener('click', function () {
-			if (confirm('Remove ALL whitelisted IPs? This will disable IP restriction.')) clearAllIPs();
-		});
-		var btnAddDom = document.getElementById('btn-domain-modal-add');
-		if (btnAddDom) btnAddDom.addEventListener('click', addDomain);
-		var inputDom = document.getElementById('domain-modal-input');
-		if (inputDom) inputDom.addEventListener('keydown', function (e) { if (e.key === 'Enter') addDomain(); });
-		var btnClearDom = document.getElementById('btn-domain-modal-clear-all');
-		if (btnClearDom) btnClearDom.addEventListener('click', function () {
-			if (confirm('Remove ALL whitelisted domains? This will disable domain restriction.')) clearAllDomains();
-		});
+function renderIPList(ips, max) {
+	const list = document.getElementById('ip-modal-list');
+	const badge = document.getElementById('ip-modal-count-badge');
+	if (!list) return;
+	if (badge) badge.textContent = ips.length + ' / ' + max;
+	if (ips.length === 0) {
+		list.innerHTML = '<div style="padding:14px;background:var(--bg-primary);border:1px dashed var(--border-color);border-radius:10px;text-align:center;color:var(--text-muted);font-size:0.8rem">No IPs whitelisted \u2014 all IPs allowed</div>';
+		return;
+	}
+	list.innerHTML = ips.map(function (ip) {
+		return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-network-wired" style="color:#af86fc"></i><span style="font-family:monospace;font-size:0.85rem;color:var(--text-sharp)">' + ip + '</span></div><button class="btn-wl-remove-ip" data-ip="' + ip + '" style="background:none;border:none;color:#ff6666;cursor:pointer;padding:2px 6px" title="Remove"><i class="fa-solid fa-trash-can"></i></button></div>';
+	}).join('');
+	list.querySelectorAll('.btn-wl-remove-ip').forEach(function (btn) {
+		btn.addEventListener('click', function () { removeIP(btn.getAttribute('data-ip')); });
 	});
+}
+
+function renderDomainList(domains, max) {
+	const list = document.getElementById('domain-modal-list');
+	const badge = document.getElementById('domain-modal-count-badge');
+	if (!list) return;
+	if (badge) badge.textContent = domains.length + ' / ' + max;
+	if (domains.length === 0) {
+		list.innerHTML = '<div style="padding:14px;background:var(--bg-primary);border:1px dashed var(--border-color);border-radius:10px;text-align:center;color:var(--text-muted);font-size:0.8rem">No domains whitelisted \u2014 all origins allowed</div>';
+		return;
+	}
+	list.innerHTML = domains.map(function (d) {
+		return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-globe" style="color:#00f0ff"></i><span style="font-family:monospace;font-size:0.85rem;color:var(--text-sharp)">' + d + '</span></div><button class="btn-wl-remove-domain" data-domain="' + d + '" style="background:none;border:none;color:#ff6666;cursor:pointer;padding:2px 6px" title="Remove"><i class="fa-solid fa-trash-can"></i></button></div>';
+	}).join('');
+	list.querySelectorAll('.btn-wl-remove-domain').forEach(function (btn) {
+		btn.addEventListener('click', function () { removeDomain(btn.getAttribute('data-domain')); });
+	});
+}
+
+async function _wlPost(endpoint, body) {
+	const user = window.firebaseAuth && window.firebaseAuth.currentUser;
+	if (!user) { window.showAppNotification('error', 'Not logged in!'); return null; }
+	const token = await user.getIdToken();
+	return fetch(GC_API + endpoint, {
+		method: 'POST',
+		headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+		body: JSON.stringify(body)
+	});
+}
+
+async function addIP() {
+	const input = document.getElementById('ip-modal-input');
+	const ip = input ? input.value.trim() : '';
+	if (!ip) { window.showAppNotification('warning', 'Please enter an IP address!'); return; }
+	const res = await _wlPost('/bind-ip', { apiKey: _wlCurrentKey, ip: ip });
+	if (!res) return;
+	const data = await res.json();
+	if (res.ok && data.success) {
+		window.showAppNotification('success', '<strong>' + ip + '</strong> added to Authorized IPs!');
+		if (input) input.value = '';
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+	} else { window.showAppNotification('error', data.error || data.message || 'Failed to add IP'); }
+}
+
+async function removeIP(ip) {
+	const res = await _wlPost('/unbind-ip', { apiKey: _wlCurrentKey, ip: ip });
+	if (!res) return;
+	const data = await res.json();
+	if (res.ok && data.success) {
+		window.showAppNotification('success', 'IP <strong>' + ip + '</strong> removed.');
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+	} else { window.showAppNotification('error', data.error || 'Failed to remove IP'); }
+}
+
+async function clearAllIPs() {
+	const res = await _wlPost('/unbind-ip', { apiKey: _wlCurrentKey });
+	if (!res) return;
+	const data = await res.json();
+	if (res.ok && data.success) {
+		window.showAppNotification('success', 'All IPs cleared. IP restriction disabled.');
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+	} else { window.showAppNotification('error', data.error || 'Failed to clear IPs'); }
+}
+
+async function detectMyIP() {
+	const btn = document.getElementById('btn-ip-modal-detect');
+	const orig = btn ? btn.innerHTML : '';
+	try {
+		if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Detecting...';
+		const r = await fetch('https://api.ipify.org?format=json');
+		const d = await r.json();
+		const input = document.getElementById('ip-modal-input');
+		if (input && d.ip) input.value = d.ip;
+		if (btn) btn.innerHTML = orig;
+	} catch (e) {
+		if (btn) btn.innerHTML = orig;
+		window.showAppNotification('error', 'Could not detect IP. Please enter manually.');
+	}
+}
+
+async function addDomain() {
+	const input = document.getElementById('domain-modal-input');
+	const domain = input ? input.value.trim() : '';
+	if (!domain) { window.showAppNotification('warning', 'Please enter a domain!'); return; }
+	const res = await _wlPost('/bind-domain', { apiKey: _wlCurrentKey, domain: domain });
+	if (!res) return;
+	const data = await res.json();
+	if (res.ok && data.success) {
+		const added = (data.allowedDomains && data.allowedDomains.length) ? data.allowedDomains[data.allowedDomains.length - 1] : domain;
+		window.showAppNotification('success', '<strong>' + added + '</strong> added to Authorized Domains!');
+		if (input) input.value = '';
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+	} else { window.showAppNotification('error', data.error || data.message || 'Failed to add domain'); }
+}
+
+async function removeDomain(domain) {
+	const res = await _wlPost('/unbind-domain', { apiKey: _wlCurrentKey, domain: domain });
+	if (!res) return;
+	const data = await res.json();
+	if (res.ok && data.success) {
+		window.showAppNotification('success', 'Domain <strong>' + domain + '</strong> removed.');
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+	} else { window.showAppNotification('error', data.error || 'Failed to remove domain'); }
+}
+
+async function clearAllDomains() {
+	const res = await _wlPost('/unbind-domain', { apiKey: _wlCurrentKey });
+	if (!res) return;
+	const data = await res.json();
+	if (res.ok && data.success) {
+		window.showAppNotification('success', 'All domains cleared. Domain restriction disabled.');
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+	} else { window.showAppNotification('error', data.error || 'Failed to clear domains'); }
+}
+
+// Init whitelist modal listeners on DOM ready
+document.addEventListener('DOMContentLoaded', function () {
+	var closeBtn = document.getElementById('ip-modal-close-btn');
+	if (closeBtn) closeBtn.addEventListener('click', function () {
+		var m = document.getElementById('ip-whitelist-modal');
+		if (m) m.classList.add('hide');
+	});
+	var modal = document.getElementById('ip-whitelist-modal');
+	if (modal) modal.addEventListener('click', function (e) {
+		if (e.target === modal) modal.classList.add('hide');
+	});
+	var tIp = document.getElementById('wl-tab-ip');
+	if (tIp) tIp.addEventListener('click', function () { switchWlTab('ip'); });
+	var tDom = document.getElementById('wl-tab-domain');
+	if (tDom) tDom.addEventListener('click', function () { switchWlTab('domain'); });
+
+	var btnAddIp = document.getElementById('btn-ip-modal-add');
+	if (btnAddIp) btnAddIp.addEventListener('click', addIP);
+	var inputIp = document.getElementById('ip-modal-input');
+	if (inputIp) inputIp.addEventListener('keydown', function (e) { if (e.key === 'Enter') addIP(); });
+	var btnDetect = document.getElementById('btn-ip-modal-detect');
+	if (btnDetect) btnDetect.addEventListener('click', detectMyIP);
+	var btnClearIp = document.getElementById('btn-ip-modal-clear-all');
+	if (btnClearIp) btnClearIp.addEventListener('click', function () {
+		if (confirm('Remove ALL whitelisted IPs? This will disable IP restriction.')) clearAllIPs();
+	});
+	var btnAddDom = document.getElementById('btn-domain-modal-add');
+	if (btnAddDom) btnAddDom.addEventListener('click', addDomain);
+	var inputDom = document.getElementById('domain-modal-input');
+	if (inputDom) inputDom.addEventListener('keydown', function (e) { if (e.key === 'Enter') addDomain(); });
+	var btnClearDom = document.getElementById('btn-domain-modal-clear-all');
+	if (btnClearDom) btnClearDom.addEventListener('click', function () {
+		if (confirm('Remove ALL whitelisted domains? This will disable domain restriction.')) clearAllDomains();
+	});
+});

@@ -155,7 +155,7 @@
 	}
 
 	// Validation feedback using Worker
-	function validateInputEmails() {
+	function validateInputEmails(showList = false) {
 		return new Promise((resolve) => {
 			const content = textarea.value;
 			if (content.trim().length === 0) {
@@ -177,22 +177,24 @@
 			sanitizerWorker.onmessage = function (e) {
 				const { validEmails, invalidEmails } = e.data;
 				statsInput.textContent = `${getEmailsArray().length} email(s)`;
-				updateInvalidList(invalidEmails);
+				updateInvalidList(showList ? invalidEmails : []);
 
 				if (invalidEmails.length > 0) {
-					const nonGmailCount = invalidEmails.filter(x => x.message.includes('Wrong domain')).length;
-					const duplicateCount = invalidEmails.filter(x => x.message.includes('Duplicate')).length;
-					const formatCount = invalidEmails.length - nonGmailCount - duplicateCount;
+					if (showList) {
+						const nonGmailCount = invalidEmails.filter(x => x.message.includes('Wrong domain')).length;
+						const duplicateCount = invalidEmails.filter(x => x.message.includes('Duplicate')).length;
+						const formatCount = invalidEmails.length - nonGmailCount - duplicateCount;
 
-					let msg = '<strong>Validation Warning:</strong> ';
-					const warnParts = [];
-					if (duplicateCount > 0) warnParts.push(`<strong>${duplicateCount} duplicate(s)</strong>`);
-					if (nonGmailCount > 0) warnParts.push(`<strong>${nonGmailCount} non-gmail domain(s)</strong>`);
-					if (formatCount > 0) warnParts.push(`<strong>${formatCount} invalid format(s)</strong>`);
+						let msg = '<strong>Validation Warning:</strong> ';
+						const warnParts = [];
+						if (duplicateCount > 0) warnParts.push(`<strong>${duplicateCount} duplicate(s)</strong>`);
+						if (nonGmailCount > 0) warnParts.push(`<strong>${nonGmailCount} non-gmail domain(s)</strong>`);
+						if (formatCount > 0) warnParts.push(`<strong>${formatCount} invalid format(s)</strong>`);
 
-					msg += warnParts.join(', ') + '. Use the "Quick Fix" button below to clean up immediately.';
-					window.showAppNotification('warning', msg);
-					btnFix.classList.remove('hide');
+						msg += warnParts.join(', ') + '. Use the "Quick Fix" button below to clean up immediately.';
+						window.showAppNotification('warning', msg);
+						btnFix.classList.remove('hide');
+					}
 					resolve(false);
 				} else {
 					window.clearAppNotification();
@@ -216,6 +218,14 @@
 		}
 	}
 
+	// Immediately hide invalid list on input, paste, or focus – show only on button press
+	function hideInvalidListNow() {
+		if (invalidListBox) {
+			invalidListBox.classList.add('hide');
+			invalidListBox.innerHTML = '';
+		}
+	}
+
 	// Space key converts to newline
 	textarea.addEventListener('keydown', function (e) {
 		if (e.key === ' ') {
@@ -230,18 +240,28 @@
 
 	textarea.addEventListener('input', () => {
 		statsInput.textContent = `${getEmailsArray().length} email(s)`;
+		hideInvalidListNow();
 		clearTimeout(typingTimer);
 		typingTimer = setTimeout(formatSpacesToNewlines, doneTypingInterval);
-
 		clearTimeout(validationTimer);
-		validationTimer = setTimeout(validateInputEmails, 500);
+		// showList=false: validate for notification bar only, never show list while typing
+		validationTimer = setTimeout(() => validateInputEmails(false), 500);
+	});
+
+	textarea.addEventListener('paste', () => {
+		hideInvalidListNow();
+	});
+
+	textarea.addEventListener('focus', () => {
+		hideInvalidListNow();
 	});
 
 	textarea.addEventListener('blur', () => {
 		clearTimeout(typingTimer);
 		formatSpacesToNewlines();
 		statsInput.textContent = `${getEmailsArray().length} email(s)`;
-		validateInputEmails();
+		// Validate for notification bar only – do NOT show invalid list on blur
+		validateInputEmails(false);
 	});
 
 	// Add @gmail.com to lines without domain
@@ -351,8 +371,8 @@
 			return;
 		}
 
-		// Run validation check before execution
-		const isValid = await validateInputEmails();
+		// Run validation check before execution – showList=true: reveal invalid list on button press
+		const isValid = await validateInputEmails(true);
 		if (!isValid) return;
 
 		// Warning check

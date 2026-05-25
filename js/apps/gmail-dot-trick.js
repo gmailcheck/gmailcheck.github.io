@@ -95,7 +95,7 @@
 	}
 
 	// Validation feedback using Worker
-	function validateInputEmails() {
+	function validateInputEmails(showList = false) {
 		return new Promise((resolve) => {
 			const content = textarea.value;
 			if (content.trim().length === 0) {
@@ -117,22 +117,24 @@
 			sanitizerWorker.onmessage = function (e) {
 				const { validEmails, invalidEmails } = e.data;
 				statsInput.textContent = `${getEmailsArray().length} email(s)`;
-				updateInvalidList(invalidEmails);
+				updateInvalidList(showList ? invalidEmails : []);
 
 				if (invalidEmails.length > 0) {
-					const nonGmailCount = invalidEmails.filter(x => x.message.includes('Wrong domain')).length;
-					const duplicateCount = invalidEmails.filter(x => x.message.includes('Duplicate')).length;
-					const formatCount = invalidEmails.length - nonGmailCount - duplicateCount;
+					if (showList) {
+						const nonGmailCount = invalidEmails.filter(x => x.message.includes('Wrong domain')).length;
+						const duplicateCount = invalidEmails.filter(x => x.message.includes('Duplicate')).length;
+						const formatCount = invalidEmails.length - nonGmailCount - duplicateCount;
 
-					let msg = '<strong>Validation Warning:</strong> ';
-					const warnParts = [];
-					if (duplicateCount > 0) warnParts.push(`<strong>${duplicateCount} duplicate(s)</strong>`);
-					if (nonGmailCount > 0) warnParts.push(`<strong>${nonGmailCount} non-gmail domain(s)</strong>`);
-					if (formatCount > 0) warnParts.push(`<strong>${formatCount} invalid format(s)</strong>`);
+						let msg = '<strong>Validation Warning:</strong> ';
+						const warnParts = [];
+						if (duplicateCount > 0) warnParts.push(`<strong>${duplicateCount} duplicate(s)</strong>`);
+						if (nonGmailCount > 0) warnParts.push(`<strong>${nonGmailCount} non-gmail domain(s)</strong>`);
+						if (formatCount > 0) warnParts.push(`<strong>${formatCount} invalid format(s)</strong>`);
 
-					msg += warnParts.join(', ') + '. Use the "Quick Fix" button below to clean up immediately.';
-					window.showAppNotification('warning', msg);
-					btnFix.classList.remove('hide');
+						msg += warnParts.join(', ') + '. Use the "Quick Fix" button below to clean up immediately.';
+						window.showAppNotification('warning', msg);
+						btnFix.classList.remove('hide');
+					}
 					resolve(false);
 				} else {
 					window.clearAppNotification();
@@ -145,15 +147,31 @@
 	}
 
 	let validationTimer;
+
+	// Immediately hide invalid list on input, paste, or focus – show only on button press
+	function hideInvalidListNow() {
+		if (invalidListBox) {
+			invalidListBox.classList.add('hide');
+			invalidListBox.innerHTML = '';
+		}
+	}
+
 	textarea.addEventListener('input', () => {
 		statsInput.textContent = `${getEmailsArray().length} email(s)`;
-
+		hideInvalidListNow();
 		clearTimeout(validationTimer);
-		validationTimer = setTimeout(validateInputEmails, 500);
+		validationTimer = setTimeout(() => validateInputEmails(false), 500);
+	});
+	textarea.addEventListener('paste', () => {
+		hideInvalidListNow();
+	});
+	textarea.addEventListener('focus', () => {
+		hideInvalidListNow();
 	});
 	textarea.addEventListener('blur', () => {
 		statsInput.textContent = `${getEmailsArray().length} email(s)`;
-		validateInputEmails();
+		// Validate for notification bar only – do NOT show invalid list on blur
+		validateInputEmails(false);
 	});
 
 	// Task Queue for concurrency management
@@ -235,7 +253,8 @@
 		}
 
 		// Run validation check before execution
-		validateInputEmails().then(isValid => {
+		// showList=true: reveal invalid list only when Generate is pressed
+		validateInputEmails(true).then(isValid => {
 			if (!isValid) return;
 
 			// Send start notification if tab is hidden
@@ -339,36 +358,63 @@
 					statusEl.style.color = '#af86fc';
 
 					const len = username.length;
-					// Safety check for extreme username lengths
-					const safeLen = Math.min(len, 16);
-					const totalPossible = Math.pow(2, safeLen - 1);
+					// Limit exponent to 30 to avoid 32-bit integer overflow in bitwise shifts
+					const maxExponent = Math.min(len - 1, 30);
+					const totalPossible = Math.pow(2, maxExponent);
 					const totalCombinations = Math.min(totalPossible, maxCombinations);
+
+					// Determine how many characters we actually need to vary to achieve the target combinations
+					const safeLen = Math.min(
+						len,
+						totalCombinations > 1 ? Math.ceil(Math.log2(totalCombinations)) + 1 : 1
+					);
 
 					let allVariations = [];
 					const chunkLimit = mode === 'fast' ? 50000 : (mode === 'balance' ? 10000 : 2500);
 					let currentOffset = 0;
 					const startTime = Date.now();
 
-					function processChunk() {
+					// Using a Blob Worker to offload heavy string concatenation from the main thread
+					// exactly like the original app to handle massive generations smoothly.
+					const workerCode = `
+						self.onmessage = function(e) {
+							const { username, safeLen, domain, currentOffset, chunkLimit, totalCombinations, len } = e.data;
+							const nextOffset = Math.min(currentOffset + chunkLimit, totalCombinations);
+							const chunk = [];
+							for (let i = currentOffset; i < nextOffset; i++) {
+								let current = username[0];
+								for (let j = 0; j < safeLen - 1; j++) {
+									if ((i & (1 << j)) !== 0) {
+										current += '.';
+									}
+									current += username[j + 1];
+								}
+								if (len > safeLen) {
+									current += username.substring(safeLen);
+								}
+								chunk.push(current + '@' + domain);
+							}
+							self.postMessage({ chunk, nextOffset });
+						};
+					`;
+					const workerBlob = new Blob([workerCode], { type: 'application/javascript' });
+					const worker = new Worker(URL.createObjectURL(workerBlob));
+
+					function processNextChunk() {
 						if (!isRunning) {
+							worker.terminate();
 							next();
 							return;
 						}
+						worker.postMessage({ username, safeLen, domain, currentOffset, chunkLimit, totalCombinations, len });
+					}
 
-						const nextOffset = Math.min(currentOffset + chunkLimit, totalCombinations);
-
-						for (let i = currentOffset; i < nextOffset; i++) {
-							let current = username[0];
-							for (let j = 0; j < safeLen - 1; j++) {
-								if ((i & (1 << j)) !== 0) {
-									current += '.';
-								}
-								current += username[j + 1];
-							}
-							if (len > 16) {
-								current += username.substring(16);
-							}
-							allVariations.push(current + '@' + domain);
+					worker.onmessage = function(e) {
+						const { chunk, nextOffset } = e.data;
+						
+						// Push elements efficiently
+						for(let i = 0; i < chunk.length; i++) {
+							allVariations.push(chunk[i]);
 						}
 
 						currentOffset = nextOffset;
@@ -381,8 +427,9 @@
 						statsEl.textContent = `${currentOffset.toLocaleString()} / ${totalCombinations.toLocaleString()} variations (${speed.toLocaleString()}/s)`;
 
 						if (currentOffset < totalCombinations) {
-							setTimeout(processChunk, 0);
+							processNextChunk();
 						} else {
+							worker.terminate();
 							// Task complete
 							statusEl.innerHTML = '<span style="color: #66ffd9;"><i class="fa-solid fa-check-circle"></i> Completed</span>';
 							statsEl.textContent = `Successfully generated ${totalCombinations.toLocaleString()} variations!`;
@@ -438,8 +485,8 @@
 							next();
 						}
 					}
-
-					processChunk();
+					
+					processNextChunk();
 				});
 			});
 		});

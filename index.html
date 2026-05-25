@@ -16,8 +16,8 @@
 			remMode: 'responsive',
 			breakpoints: { mobile: 640, tablet: 1023 },
 			desktop: { baseWidth: 1920, baseHeight: 1080, minScale: 0.3, maxScale: 1.2 },
-			tablet: { baseWidth: 800, baseHeight: 1280, minScale: 0.2, maxScale: 1.1 },
-			mobile: { baseWidth: 500, baseHeight: 900, minScale: 0.1, maxScale: 1.0 }
+			tablet: { baseWidth: 1023, baseHeight: 1280, minScale: 0.2, maxScale: 1.1 },
+			mobile: { baseWidth: 640, baseHeight: 900, minScale: 0.1, maxScale: 1.0 }
 		});
 	</script>
 
@@ -345,7 +345,7 @@
 										<i class="fa-solid fa-notes-medical"></i>
 									</div>
 									<h3 class="font-keren style-custom-47">
-										IndexedDB Notepad</h3>
+										Notepad</h3>
 									<p class="style-custom-48">
 										A premium offline notepad to store email lists, credentials, or custom drafts.
 										Features automatic debounced auto-saving and full multi-note organization.
@@ -1490,10 +1490,10 @@
 									</p>
 
 									<select id="select-server-app1" class="btn style-custom-292">
-										<option value="fastServer2" selected>Fast 2</option>
-										<option value="fastServer1">Fast 1</option>
-										<option value="server2">Advanced 2</option>
+										<option value="fastServer1" selected>Fast 1</option>
+										<option value="fastServer2">Fast 2</option>
 										<option value="server1">Advanced 1</option>
+										<option value="server2">Advanced 2</option>
 									</select>
 								</div>
 
@@ -1901,15 +1901,14 @@
 									<div class="style-custom-326">
 										<input type="text" id="notepad-active-title" placeholder="Untitled Note"
 											autocomplete="off" class="style-custom-327">
-										<span id="notepad-save-status" class="style-custom-328">✓
-											Saved</span>
+										<span id="notepad-save-status" class="style-custom-328">New Note</span>
 									</div>
 
 									<!-- Toolbar buttons -->
 									<div class="style-custom-268">
-										<button class="btn btn-primary style-custom-329" id="btn-notepad-save"
+										<button class="btn style-custom-329" id="btn-notepad-save"
 											title="Save changes to database">
-											<i class="fa-solid fa-floppy-disk"></i> Save Changes
+											<i class="fa-solid fa-floppy-disk style-color-00cc44"></i> Save Changes
 										</button>
 										<button class="btn style-custom-330" id="btn-notepad-copy"
 											title="Copy to Clipboard">
