@@ -1274,18 +1274,6 @@ body[data-rds-mode="mobile"] .dashboard-wrapper {
     gap: 20px;
 }
 
-body[data-rds-mode="mobile"] .dashboard-header-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 20px 15px;
-}
-
-body[data-rds-mode="mobile"] .dashboard-header-card>div:last-child {
-    text-align: left;
-    width: 100%;
-}
-
 body[data-rds-mode="mobile"] .dashboard-wrapper>div[style*="display: flex"] {
     flex-direction: column;
     gap: 15px !important;
