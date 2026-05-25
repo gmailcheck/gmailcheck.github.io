@@ -1239,7 +1239,6 @@ body[data-rds-mode="mobile"] .app-x55-container {
 
 body[data-rds-mode="mobile"] .email-input {
     width: 100%;
-    padding-bottom: 10px;
 }
 
 body[data-rds-mode="mobile"] .controls {
@@ -1256,9 +1255,6 @@ body[data-rds-mode="mobile"] .control-title {
 
 body[data-rds-mode="mobile"] .results-container {
     width: 100%;
-    height: 480px;
-    flex: none;
-    padding: 12px;
 }
 
 /* App 1 (Gmail Checker) active results filter buttons layout */
@@ -1406,7 +1402,6 @@ body[data-rds-mode="tablet"] .app-x55-container {
 
 body[data-rds-mode="tablet"] .email-input {
     width: 100%;
-    padding-bottom: 10px;
 }
 
 body[data-rds-mode="tablet"] .controls {
@@ -1423,8 +1418,6 @@ body[data-rds-mode="tablet"] .control-title {
 
 body[data-rds-mode="tablet"] .results-container {
     width: 100%;
-    height: 520px;
-    flex: none;
 }
 
 /* Support view stacking for tablet */
@@ -4972,27 +4965,24 @@ body[data-rds-mode="mobile"] .style-custom-213 {
     flex-direction: column;
     gap: 12px;
     position: relative;
-    border: none
+    border: none;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
 }
 
 .history-item-card.app1 {
     border-left: 4px solid #af86fc;
-    box-shadow: 0 1px 6px rgba(175, 134, 252, 0.25);
 }
 
 .history-item-card.app2 {
     border-left: 4px solid #00f0ff;
-    box-shadow: 0 1px 6px rgba(0, 240, 255, 0.25);
 }
 
 .history-item-card.app3 {
     border-left: 4px solid #66ffd9;
-    box-shadow: 0 1px 6px rgba(102, 255, 217, 0.25);
 }
 
 .history-item-card.app4 {
     border-left: 4px solid #ffd700;
-    box-shadow: 0 1px 6px rgba(255, 215, 0, 0.25);
 }
 
 .history-item-card:hover {
