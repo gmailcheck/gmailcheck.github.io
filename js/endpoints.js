@@ -6,7 +6,7 @@
  * Usage: window.API.<endpoint> everywhere in JS files.
  */
 
-const isDev = true;
+const isDev = false;
 
 const _ENDPOINTS_PROD = {
     // ── Auth / Profile Service (gc-server) ──────────────────────────────────
