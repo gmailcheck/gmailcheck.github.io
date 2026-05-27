@@ -132,6 +132,28 @@
 						API KEY</span>
 				</div>
 
+				<div class="menu-item style-mb-5" id="notif-container" style="position: relative;">
+					<i class="fa-solid fa-bell"></i>
+					<span>Notifications</span>
+					<span id="notif-badge" class="hide"
+						style="background: #ff4757; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; margin-left: auto;">0</span>
+					<div id="notif-dropdown" class="hide"
+						style="position: absolute; bottom: 50px; left: 0; width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 1000; padding: 12px; min-height: 150px; max-height: 300px; overflow-y: auto; text-align: left; cursor: default;">
+						<div
+							style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
+							<h5
+								style="margin: 0; font-family: 'Orbitron', sans-serif; color: var(--text-sharp); font-size: 13px;">
+								Notifications</h5>
+							<button id="notif-mark-read"
+								style="background: none; border: none; color: #af86fc; cursor: pointer; font-size: 11px; padding: 0;">Mark
+								all read</button>
+						</div>
+						<div id="notif-list" style="display: flex; flex-direction: column; gap: 8px;">
+							<div style="color: var(--text-muted); text-align: center; font-size: 11px;">No new
+								notifications</div>
+						</div>
+					</div>
+				</div>
 				<div class="menu-item style-mb-5" id="sidebar-developer-btn">
 					<i class="fas fa-key"></i>
 					<span>Get API Key</span>
@@ -190,7 +212,7 @@
 
 					<div class="settings-panel-item" id="setting2-panel-item">
 						<i class="item-icon fas fa-sliders-h"></i>
-						<span>Setting 2</span>
+						<span>Preferences</span>
 					</div>
 
 					<div class="settings-panel-divider"></div>
@@ -443,7 +465,8 @@
 				<!-- Page Login -->
 				<div id="page-login" class="page-content hide">
 					<div class="login-page-container style-custom-58">
-						<div class="login-card style-custom-59">
+						<!-- standard login card, hidden by default during initial auth check -->
+						<div class="login-card style-custom-59 hide" id="login-card-content">
 							<div class="login-logo style-custom-60" onclick="window.setActiveMenu('home')">
 								<img src="logo.png" alt="logo"
 									onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23af86fc\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'"
@@ -465,6 +488,25 @@
 								and <a href="/privacy" class="anon-nav-link style-custom-69">Privacy
 									Policy</a>.
 							</div>
+						</div>
+
+						<!-- premium loading container, visible by default during initial auth check -->
+						<div class="login-card style-custom-59" id="login-loading-content"
+							style="text-align: center; padding: 40px 20px;">
+							<div class="login-logo style-custom-60">
+								<img src="logo.png" alt="logo"
+									onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23af86fc\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'"
+									class="style-custom-61">
+								<span class="style-custom-62">GMAIL CHECKER</span>
+							</div>
+							<div style="margin: 35px auto 25px auto;">
+								<i class="fa-solid fa-spinner fa-spin-pulse"
+									style="font-size: 2.5rem; color: #af86fc;"></i>
+							</div>
+							<p
+								style="color: var(--text-secondary); font-size: 0.9rem; font-family: 'RobotoMono', monospace;">
+								Verifying session...
+							</p>
 						</div>
 					</div>
 				</div>
@@ -560,7 +602,7 @@
 									2. Information We Collect</h3>
 								<p>When you register using Google Authentication, we collect basic profile identifiers
 									including your email address and display name. This details is utilized strictly to
-									manage subscription parameters, API quotas, and support ticket routing.</p>
+									manage subscription parameters, API credits, and support ticket routing.</p>
 
 								<h3 class="font-keren style-custom-77">
 									3. Third-Party Payments</h3>
@@ -655,7 +697,7 @@
 									</div>
 									<ul class="style-custom-105">
 										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-107"></i> 10,000 Gmail
+											<i class="fa-solid fa-circle-check style-custom-107"></i> 1,000 Gmail
 											Gmail Checks /
 											Day
 										</li>
@@ -674,27 +716,26 @@
 								<button class="btn style-custom-110" disabled>Active Plan</button>
 							</div>
 
-							<!-- PREMIUM MONTHLY PLAN (vip_1m) -->
+							<!-- GMAIL CHECKER PRO -->
 							<div class="pricing-card style-custom-111">
 								<div class="style-custom-99">
-									<span class="style-custom-112">Internal
-										SaaS</span>
+									<span class="style-custom-112">Popular</span>
 									<h2 class="font-keren style-custom-113">
-										VIP 1 MONTH</h2>
+										PRO</h2>
 									<div class="style-custom-102">
-										<span id="display-price-vip_1m" class="style-custom-103">$2.99</span>
-										<span class="style-custom-85">/ month</span>
+										<span id="display-price-pro_subs" class="style-custom-103">$2.99</span>
+										<span class="style-custom-85">/ 3 months</span>
 									</div>
 									<div class="style-custom-114">
 									</div>
 									<ul class="style-custom-105">
 										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-115"></i> <strong>100,000
-												Gmail Checks /
-												Day</strong>
+											<i class="fa-solid fa-circle-check style-custom-115"></i> <strong>25,000
+												Gmail
+												Checks / Day</strong>
 										</li>
 										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-115"></i> <strong>30 days
+											<i class="fa-solid fa-circle-check style-custom-115"></i> <strong>90 days
 												access</strong>
 										</li>
 										<li class="style-custom-106">
@@ -706,112 +747,29 @@
 										</li>
 									</ul>
 								</div>
-								<button class="btn btn-primary style-custom-116" id="btn-upgrade-vip_1m">Subscribe
-									Monthly</button>
+								<button class="btn btn-primary style-custom-116" id="btn-upgrade-pro_subs">Subscribe
+									PRO</button>
 							</div>
 
-							<!-- PREMIUM 3 MONTHS PLAN (vip_3m) -->
-							<div class="pricing-card style-custom-117">
+							<!-- GMAIL CHECKER ULTRA -->
+							<div class="pricing-card style-custom-128">
+								<div class="style-custom-129">BEST VALUE</div>
 								<div class="style-custom-99">
-									<span class="style-custom-118">Quarterly
-										Plan</span>
-									<h2 class="font-keren style-custom-113">
-										VIP 3 MONTHS</h2>
+									<span class="style-custom-130">Ultimate</span>
+									<h2 class="font-keren style-custom-113">ULTRA</h2>
 									<div class="style-custom-102">
-										<span id="display-price-vip_3m" class="style-custom-103">$5.99</span>
+										<span id="display-price-ultra_subs" class="style-custom-103">$8.99</span>
 										<span class="style-custom-85">/ 3 months</span>
 									</div>
-									<span id="display-saving-vip_3m" class="style-custom-119"></span>
-									<div class="style-custom-120">
-									</div>
-									<ul class="style-custom-105">
-										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-121"></i> <strong>100,000
-												Gmail Checks /
-												Day</strong>
-										</li>
-										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-121"></i> <strong>90 days
-												access</strong>
-										</li>
-										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-121"></i> Free Access All
-											Apps
-										</li>
-										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-121"></i> Priority Support
-										</li>
-									</ul>
-								</div>
-								<button class="btn btn-primary style-custom-122" id="btn-upgrade-vip_3m">Subscribe
-									3 Months</button>
-							</div>
-
-							<!-- PREMIUM 6 MONTHS PLAN (vip_6m) -->
-							<div class="pricing-card style-custom-123">
-								<div class="style-custom-99">
-									<span class="style-custom-124">Semi-Annual</span>
-									<h2 class="font-keren style-custom-113">
-										VIP 6 MONTHS</h2>
-									<div class="style-custom-102">
-										<span id="display-price-vip_6m" class="style-custom-103">$12.99</span>
-										<span class="style-custom-85">/ 6 months</span>
-									</div>
-									<span id="display-saving-vip_6m" class="style-custom-119"></span>
-									<div class="style-custom-125">
-									</div>
-									<ul class="style-custom-105">
-										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-126"></i> <strong>100,000
-												Gmail Checks /
-												Day</strong>
-										</li>
-										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-126"></i> <strong>180 days
-												access</strong>
-										</li>
-										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-126"></i> Free Access All
-											Apps
-										</li>
-										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-126"></i> Priority Support
-										</li>
-									</ul>
-								</div>
-								<button class="btn btn-primary style-custom-127" id="btn-upgrade-vip_6m">Subscribe
-									6 Months</button>
-							</div>
-
-							<!-- PREMIUM ANNUAL PLAN (vip_1y) -->
-							<div class="pricing-card style-custom-128">
-
-								<!-- Popular Badge -->
-								<div class="style-custom-129">
-									BEST VALUE</div>
-
-								<div class="style-custom-99">
-									<span class="style-custom-130">Internal
-										SaaS</span>
-									<h2 class="font-keren style-custom-113">
-										VIP 1 YEAR</h2>
-
-									<div class="style-custom-102">
-										<span id="display-price-vip_1y" class="style-custom-103">$39.99</span>
-										<span class="style-custom-85">/ year</span>
-									</div>
-									<span id="display-saving-vip_1y" class="style-custom-119"></span>
-
-									<div class="style-custom-131">
-									</div>
+									<div class="style-custom-131"></div>
 									<ul class="style-custom-105">
 										<li class="style-custom-106">
 											<i class="fa-solid fa-circle-check style-custom-132"></i> <strong>100,000
-												Gmail Checks /
-												Day</strong>
+												Gmail
+												Checks / Day</strong>
 										</li>
 										<li class="style-custom-106">
-											<i class="fa-solid fa-circle-check style-custom-132"></i> <strong>365 days
+											<i class="fa-solid fa-circle-check style-custom-132"></i> <strong>90 days
 												access</strong>
 										</li>
 										<li class="style-custom-106">
@@ -823,8 +781,8 @@
 										</li>
 									</ul>
 								</div>
-								<button class="btn btn-primary style-custom-133" id="btn-upgrade-vip_1y">Subscribe
-									Annual</button>
+								<button class="btn btn-primary style-custom-133" id="btn-upgrade-ultra_subs">Subscribe
+									ULTRA</button>
 							</div>
 
 						</div>
@@ -906,11 +864,11 @@
 							<div class="style-custom-161">
 								<div class="style-custom-88">
 									<span class="style-custom-162"><i class="fa-solid fa-chart-line style-mr-8"></i>
-										Quota</span>
+										Daily Limit</span>
 									<span id="db-quota-reset-text" class="style-custom-163">Resets in 24 hours</span>
 								</div>
 
-								<!-- Quota Bar -->
+								<!-- Daily Limit Bar -->
 								<div class="style-custom-63">
 									<div class="style-custom-164">
 										<span>Usage Progress:</span>
@@ -968,7 +926,7 @@
 							<div class="style-custom-88">
 								<h3 class="font-keren style-custom-182">
 									<i class="fa-solid fa-gem style-custom-183"></i>
-									VIP Subscription History
+									Subscription History
 								</h3>
 							</div>
 
@@ -1025,25 +983,81 @@
 									<table class="style-custom-198">
 										<thead>
 											<tr class="style-custom-199">
+												<th class="style-padding-1210">Project Name</th>
 												<th class="style-padding-1210">API Key</th>
-												<th class="style-padding-1210">Type</th>
 												<th class="style-padding-1210">Created At</th>
-												<th class="style-padding-1210">Expires At</th>
-												<th class="style-custom-201">Status</th>
 												<th class="style-custom-201">Authorized IPs</th>
-												<th class="style-custom-201">Authorized Domains
-												</th>
+												<th class="style-custom-201">Authorized Domains</th>
+												<th class="style-custom-201">Actions</th>
 											</tr>
 										</thead>
 										<tbody id="db-keys-table-body">
 											<tr>
-												<td colspan="7" class="style-custom-202">
+												<td colspan="6" class="style-custom-202">
 													<i class="fa-solid fa-circle-notch fa-spin style-mr-8"></i> Loading
 													your API keys...
 												</td>
 											</tr>
 										</tbody>
 									</table>
+								</div>
+							</div>
+						</div>
+
+						<!-- 1.5 DEVELOPER PANE: CREATE API KEY -->
+						<div id="tab-dev-create" class="dev-pane hide style-custom-194">
+							<div class="style-custom-195">
+								<h3 class="font-keren style-custom-182">Create New API Key</h3>
+								<p style="color: var(--text-muted); margin-bottom: 20px;">
+									Generate a new API Key to access the direct checker endpoints. Global Credits will
+									be
+									shared among all keys.
+								</p>
+								<div class="form-group" style="margin-bottom: 15px;">
+									<label
+										style="display: block; margin-bottom: 5px; color: var(--text-sharp); font-size: 0.85rem;">Project
+										Name</label>
+									<input type="text" id="input-new-key-project" class="style-custom-147"
+										placeholder="e.g. My Website Tracker"
+										style="width: 100%; max-width: 400px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color:var(--text-primary);">
+								</div>
+								<div class="form-group" style="margin-bottom: 15px;">
+									<label
+										style="display: block; margin-bottom: 5px; color: var(--text-sharp); font-size: 0.85rem;">Authorized
+										IPs (Optional, comma separated)</label>
+									<input type="text" id="input-new-key-ips" class="style-custom-147"
+										placeholder="e.g. 192.168.1.1, 10.0.0.1"
+										style="width: 100%; max-width: 400px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color:var(--text-primary);">
+								</div>
+								<div class="form-group" style="margin-bottom: 25px;">
+									<label
+										style="display: block; margin-bottom: 5px; color: var(--text-sharp); font-size: 0.85rem;">Authorized
+										Domains (Optional, comma separated)</label>
+									<input type="text" id="input-new-key-domains" class="style-custom-147"
+										placeholder="e.g. example.com, test.com"
+										style="width: 100%; max-width: 400px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color:var(--text-primary);">
+								</div>
+								<button id="btn-create-api-key" class="btn btn-primary style-custom-222"
+									style="padding: 10px 20px;">
+									<i class="fa-solid fa-plus style-mr-8"></i> Create API Key
+								</button>
+							</div>
+						</div>
+
+						<!-- DEVELOPER PANE: CREDITS -->
+						<div id="tab-dev-credits" class="dev-pane hide style-custom-194">
+							<div class="style-custom-167">
+								<h3 class="font-keren style-custom-182">
+									<i class="fa-solid fa-coins style-custom-203" style="color: #00f0ff;"></i>
+									My API Credits
+								</h3>
+							</div>
+
+							<!-- Dynamic Credits Display Card -->
+							<div id="dev-credits-container" class="style-custom-204">
+								<div class="style-custom-205">
+									<i class="fa-solid fa-circle-notch fa-spin style-mr-8"></i> Loading global
+									credits...
 								</div>
 							</div>
 						</div>
@@ -1060,181 +1074,186 @@
 							<!-- Dynamic Stats Cards Grid -->
 							<div id="dev-stats-keys-container" class="style-custom-204">
 								<div class="style-custom-205">
-									<i class="fa-solid fa-circle-notch fa-spin style-mr-8"></i> Loading
-									statistics for each of your API keys...
+									<i class="fa-solid fa-circle-notch fa-spin style-mr-8"></i> Loading global credits
+									statistics...
 								</div>
 							</div>
 						</div>
 
-						<!-- 3. DEVELOPER PANE: USAGE LOGS HISTORY -->
-						<div id="tab-dev-history" class="dev-pane hide style-custom-206">
-							<div class="style-custom-195">
-								<div class="style-custom-167">
-									<h3 class="font-keren style-custom-182">
-										Verification Activity Logs</h3>
-									<div class="style-custom-207">
-										<button id="btn-db-copy-history" class="btn style-custom-208"><i
-												class="fa-solid fa-copy style-mr-5"></i> Copy
-											History</button>
-										<button id="btn-db-download-history" class="btn style-custom-208"><i
-												class="fa-solid fa-download style-mr-5"></i> Download
-											CSV</button>
-									</div>
-								</div>
 
-								<!-- Logs Table -->
-								<div class="style-custom-197">
-									<table class="style-custom-210">
-										<thead>
-											<tr class="style-custom-199">
-												<th class="style-padding-1210">Timestamp</th>
-												<th class="style-padding-1210">API Key Prefix</th>
-												<th class="style-padding-1210">Emails Checked</th>
-												<th class="style-padding-1210">Result Matches</th>
-												<th class="style-custom-211">Speed Server</th>
-											</tr>
-										</thead>
-										<tbody id="db-history-table-body">
-											<tr>
-												<td colspan="5" class="style-custom-202">
-													No activity logs found for this account. Your checks will appear
-													here in real-time.
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</div>
-							</div>
-						</div>
 
 						<!-- 4. DEVELOPER PANE: ADD / PASTE NEW KEY -->
 						<div id="tab-dev-add" class="dev-pane hide style-custom-212">
 							<div class="style-custom-213">
 
-								<!-- API 100K CARD -->
+								<!-- API 1K QUOTA -->
 								<div class="pricing-card style-custom-214">
 									<div class="style-custom-215">
-										<span class="style-custom-216">Developer
-											API</span>
-										<h2 class="font-keren style-custom-138">
-											100K API KEY</h2>
+										<span class="style-custom-216">Developer API</span>
+										<h2 class="font-keren style-custom-138">100K CREDITS</h2>
 										<div class="style-custom-102">
-											<span id="display-price-api_100k" class="style-custom-217">$5.00</span>
-											<span class="style-custom-163">/ month</span>
+											<span id="display-price-api_100k" class="style-custom-217">$1.99</span>
+											<span class="style-custom-163">/ lifetime</span>
 										</div>
-										<div class="style-custom-218">
-										</div>
+										<div class="style-custom-218"></div>
 										<ul class="style-custom-219">
 											<li class="style-custom-220">
 												<i class="fa-solid fa-circle-check style-custom-221"></i>
 												<strong>100,000
-													Requests / Day</strong>
+													Total API Requests</strong>
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Lifetime
+												Access (No expiry)
 											</li>
 											<li class="style-custom-220">
 												<i class="fa-solid fa-circle-check style-custom-221"></i> Authorized IP
-												Access (Max 3)
-											</li>
-											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-221"></i> Authorized
-												Domain
-												Access (Max 3)
+												/ Domain
 											</li>
 											<li class="style-custom-220">
 												<i class="fa-solid fa-circle-check style-custom-221"></i> Direct checker
 												endpoint
 											</li>
-											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-221"></i> Priority
-												support
-											</li>
 										</ul>
 									</div>
-									<button class="btn btn-primary style-custom-222" id="btn-upgrade-api_100k">Buy
-										100K API Key</button>
+									<button class="btn btn-primary style-custom-222" id="btn-upgrade-api_100k">Buy 100K
+										Credits</button>
 								</div>
 
-								<!-- API 500K CARD -->
+								<!-- API 2K QUOTA -->
 								<div class="pricing-card style-custom-223">
 									<div class="style-custom-215">
-										<span class="style-custom-224">Developer
-											API</span>
-										<h2 class="font-keren style-custom-138">
-											500K API KEY</h2>
+										<span class="style-custom-224">Developer API</span>
+										<h2 class="font-keren style-custom-138">200K CREDITS</h2>
 										<div class="style-custom-102">
-											<span id="display-price-api_500k" class="style-custom-217">$10.00</span>
-											<span class="style-custom-163">/ month</span>
+											<span id="display-price-api_200k" class="style-custom-217">$2.99</span>
+											<span class="style-custom-163">/ lifetime</span>
 										</div>
-										<div class="style-custom-225">
-										</div>
+										<div class="style-custom-225"></div>
 										<ul class="style-custom-219">
 											<li class="style-custom-220">
 												<i class="fa-solid fa-circle-check style-custom-226"></i>
-												<strong>500,000
-													Requests / Day</strong>
+												<strong>200,000
+													Total API Requests</strong>
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i> Lifetime
+												Access (No expiry)
 											</li>
 											<li class="style-custom-220">
 												<i class="fa-solid fa-circle-check style-custom-226"></i> Authorized IP
-												Access (Max 3)
-											</li>
-											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-226"></i> Authorized
-												Domain
-												Access (Max 3)
+												/ Domain
 											</li>
 											<li class="style-custom-220">
 												<i class="fa-solid fa-circle-check style-custom-226"></i> Direct checker
 												endpoint
 											</li>
-											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-226"></i> Priority
-												support
-											</li>
 										</ul>
 									</div>
-									<button class="btn btn-primary style-custom-227" id="btn-upgrade-api_500k">Buy
-										500K API Key</button>
+									<button class="btn btn-primary style-custom-227" id="btn-upgrade-api_200k">Buy 200K
+										Credits</button>
 								</div>
 
-								<!-- API 1M CARD -->
-								<div class="pricing-card style-custom-228">
+								<!-- API 3K QUOTA -->
+								<div class="pricing-card style-custom-214">
 									<div class="style-custom-215">
-										<span class="style-custom-229">Developer
-											API</span>
-										<h2 class="font-keren style-custom-138">
-											1M API KEY</h2>
+										<span class="style-custom-216">Developer API</span>
+										<h2 class="font-keren style-custom-138">300K CREDITS</h2>
 										<div class="style-custom-102">
-											<span id="display-price-api_1m" class="style-custom-217">$15.00</span>
-											<span class="style-custom-163">/ month</span>
+											<span id="display-price-api_300k" class="style-custom-217">$3.99</span>
+											<span class="style-custom-163">/ lifetime</span>
 										</div>
-										<div class="style-custom-230">
-										</div>
+										<div class="style-custom-218"></div>
 										<ul class="style-custom-219">
 											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-231"></i>
-												<strong>1,000,000
-													Requests / Day</strong>
+												<i class="fa-solid fa-circle-check style-custom-221"></i>
+												<strong>300,000
+													Total API Requests</strong>
 											</li>
 											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-231"></i> Authorized IP
-												Access (Max 3)
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Lifetime
+												Access (No expiry)
 											</li>
 											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-231"></i> Authorized
-												Domain
-												Access (Max 3)
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Authorized IP
+												/ Domain
 											</li>
 											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-231"></i> Direct checker
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Direct checker
 												endpoint
-											</li>
-											<li class="style-custom-220">
-												<i class="fa-solid fa-circle-check style-custom-231"></i> Priority
-												support
 											</li>
 										</ul>
 									</div>
-									<button class="btn btn-primary style-custom-232" id="btn-upgrade-api_1m">Buy
-										1M API Key</button>
+									<button class="btn btn-primary style-custom-222" id="btn-upgrade-api_300k">Buy 300K
+										Credits</button>
+								</div>
+
+								<!-- API 4K QUOTA -->
+								<div class="pricing-card style-custom-223">
+									<div class="style-custom-215">
+										<span class="style-custom-224">Developer API</span>
+										<h2 class="font-keren style-custom-138">400K CREDITS</h2>
+										<div class="style-custom-102">
+											<span id="display-price-api_400k" class="style-custom-217">$4.99</span>
+											<span class="style-custom-163">/ lifetime</span>
+										</div>
+										<div class="style-custom-225"></div>
+										<ul class="style-custom-219">
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i>
+												<strong>400,000
+													Total API Requests</strong>
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i> Lifetime
+												Access (No expiry)
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i> Authorized IP
+												/ Domain
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-226"></i> Direct checker
+												endpoint
+											</li>
+										</ul>
+									</div>
+									<button class="btn btn-primary style-custom-227" id="btn-upgrade-api_400k">Buy 400K
+										Credits</button>
+								</div>
+
+								<!-- API 5K QUOTA -->
+								<div class="pricing-card style-custom-214">
+									<div class="style-custom-215">
+										<span class="style-custom-216">Developer API</span>
+										<h2 class="font-keren style-custom-138">500K CREDITS</h2>
+										<div class="style-custom-102">
+											<span id="display-price-api_500k" class="style-custom-217">$5.99</span>
+											<span class="style-custom-163">/ lifetime</span>
+										</div>
+										<div class="style-custom-218"></div>
+										<ul class="style-custom-219">
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i>
+												<strong>500,000
+													Total API Requests</strong>
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Lifetime
+												Access (No expiry)
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Authorized IP
+												/ Domain
+											</li>
+											<li class="style-custom-220">
+												<i class="fa-solid fa-circle-check style-custom-221"></i> Direct checker
+												endpoint
+											</li>
+										</ul>
+									</div>
+									<button class="btn btn-primary style-custom-222" id="btn-upgrade-api_500k">Buy 500K
+										Credits</button>
 								</div>
 
 							</div>
@@ -1275,13 +1294,13 @@
 									<div class="style-custom-88">
 										<h3 class="font-keren style-custom-182"><i
 												class="fa-solid fa-key style-custom-245"></i>
-											API Keys & Quota Purchases</h3>
+											API Keys & Credits Purchases</h3>
 										<span class="style-custom-184">Status:
 											Real-time</span>
 									</div>
 
 									<p class="style-custom-185">
-										Purchase additional API request quotas for your external applications.
+										Purchase additional API request credits for your external applications.
 									</p>
 
 									<!-- Invoices Container List -->
@@ -1298,9 +1317,10 @@
 									</div>
 
 									<div class="style-custom-189">
-										<button id="btn-dev-buy-api" class="btn btn-primary style-custom-246">
+										<button id="btn-dev-buy-api" class="btn btn-primary style-custom-246"
+											onclick="window.setActiveMenu('dev-add', true)">
 											<i class="fa-solid fa-cart-shopping style-mr-8"></i>Buy More
-											Quota
+											Credits
 										</button>
 									</div>
 								</div>
@@ -1414,6 +1434,41 @@
 					</div>
 				</div>
 				<!-- END WHITELIST MODAL -->
+
+				<!-- LOGOUT CONFIRMATION MODAL -->
+				<div id="logout-confirm-modal" class="modal-overlay hide style-custom-247">
+					<div class="style-custom-248"
+						style="max-width: 400px; border-radius: 20px; overflow: hidden; padding: 24px; text-align: center; margin: auto;">
+						<!-- Modal Header / Icon -->
+						<div style="margin-bottom: 20px;">
+							<div
+								style="width: 56px; height: 56px; background: rgba(255, 71, 87, 0.1); border: 1px solid rgba(255, 71, 87, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+								<i class="fa-solid fa-right-from-bracket"
+									style="font-size: 1.5rem; color: #ff4757;"></i>
+							</div>
+						</div>
+
+						<!-- Message -->
+						<h3 class="font-keren"
+							style="font-size: 1.25rem; color: var(--text-primary); margin-bottom: 8px;">Log Out</h3>
+						<p
+							style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5;">
+							Are you sure you want to log out of your session?
+						</p>
+
+						<!-- Action Buttons -->
+						<div style="display: flex; gap: 12px; justify-content: center;">
+							<button id="btn-logout-cancel" class="btn btn-secondary"
+								style="flex: 1; border-radius: 12px; padding: 10px 16px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer;">
+								Cancel
+							</button>
+							<button id="btn-logout-confirm" class="btn btn-danger"
+								style="flex: 1; border-radius: 12px; padding: 10px 16px; background: #ff4757; color: white; border: none; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);">
+								Log Out
+							</button>
+						</div>
+					</div>
+				</div>
 
 				<!-- Page App 1 -->
 				<div id="page-app1" class="page-content hide">
@@ -1977,12 +2032,149 @@
 
 				<!-- Page Setting 2 -->
 				<div id="page-setting2" class="page-content hide">
-					<div class="settings-container">
-						<h2>âš™ï¸ Setting 2</h2>
-						<p>Halaman pengaturan Kategori 2.</p>
-						<div class="dashboard-card">
-							<strong>ðŸ› ï¸ Manajemen Data</strong>
-							<p>Ini adalah dummy view untuk Kategori Pengaturan 2.</p>
+					<div class="settings-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+						<div class="dashboard-header-card"
+							style="margin-bottom: 25px; padding: 24px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 15px;">
+							<div
+								style="background: rgba(0, 240, 255, 0.1); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #00f0ff; font-size: 1.5rem;">
+								<i class="fa-solid fa-sliders"></i>
+							</div>
+							<div>
+								<h2 class="font-keren"
+									style="margin: 0; font-size: 1.5rem; color: var(--text-sharp); font-family: 'Orbitron', sans-serif;">
+									Preferences</h2>
+								<p style="margin: 5px 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">Customize
+									your dashboard behavior, sound notifications, and developer preferences</p>
+							</div>
+						</div>
+
+						<!-- Checker settings card -->
+						<div class="dashboard-card"
+							style="margin-bottom: 20px; padding: 24px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+							<h3 class="font-keren"
+								style="margin-top: 0; margin-bottom: 20px; font-size: 1.1rem; color: var(--text-sharp); display: flex; align-items: center; gap: 10px; font-family: 'Orbitron', sans-serif; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+								<i class="fa-solid fa-square-poll-horizontal" style="color: #af86fc;"></i>
+								Gmail Checker & UI Settings
+							</h3>
+
+							<!-- Switch 1: Compact Table -->
+							<div
+								style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+								<div style="max-width: 80%;">
+									<strong
+										style="color: var(--text-sharp); font-size: 0.95rem; display: block; margin-bottom: 4px;">Compact
+										Table Mode</strong>
+									<span style="color: var(--text-secondary); font-size: 0.85rem;">Reduce row padding
+										in results tables for higher information density. Perfect for large screen
+										displays.</span>
+								</div>
+								<label class="pref-switch"
+									style="position: relative; display: inline-block; width: 46px; height: 24px;">
+									<input type="checkbox" id="pref-compact-table"
+										style="opacity: 0; width: 0; height: 0;">
+									<span class="pref-slider"
+										style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 34px;"></span>
+								</label>
+							</div>
+
+							<!-- Switch 2: Sound Effects -->
+							<div
+								style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+								<div style="max-width: 80%;">
+									<strong
+										style="color: var(--text-sharp); font-size: 0.95rem; display: block; margin-bottom: 4px;">Chime
+										Sound Notifications</strong>
+									<span style="color: var(--text-secondary); font-size: 0.85rem;">Play a subtle
+										premium sound chime when a bulk verification job completes successfully.</span>
+								</div>
+								<label class="pref-switch"
+									style="position: relative; display: inline-block; width: 46px; height: 24px;">
+									<input type="checkbox" id="pref-sound-effects"
+										style="opacity: 0; width: 0; height: 0;">
+									<span class="pref-slider"
+										style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 34px;"></span>
+								</label>
+							</div>
+
+							<!-- Switch 3: Low Credit Alert -->
+							<div
+								style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+								<div style="max-width: 80%;">
+									<strong
+										style="color: var(--text-sharp); font-size: 0.95rem; display: block; margin-bottom: 4px;">Low
+										Credit Dashboard Alerts</strong>
+									<span style="color: var(--text-secondary); font-size: 0.85rem;">Show highly visible
+										alerts and desktop notifications if remaining API credits drop below 1,000
+										checks.</span>
+								</div>
+								<label class="pref-switch"
+									style="position: relative; display: inline-block; width: 46px; height: 24px;">
+									<input type="checkbox" id="pref-credit-alert"
+										style="opacity: 0; width: 0; height: 0;">
+									<span class="pref-slider"
+										style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 34px;"></span>
+								</label>
+							</div>
+
+							<!-- Switch 4: Browser Notification Permission -->
+							<div
+								style="display: flex; align-items: center; justify-content: space-between; border-top: 1px dashed var(--border-color); padding-top: 20px;">
+								<div style="max-width: 70%;">
+									<strong
+										style="color: var(--text-sharp); font-size: 0.95rem; display: block; margin-bottom: 4px;">Browser
+										Push Notifications</strong>
+									<span style="color: var(--text-secondary); font-size: 0.85rem;">Send desktop
+										notification updates when background tasks finish while you are on another
+										tab.</span>
+								</div>
+								<div id="pref-notif-permission-status" style="display: flex; align-items: center;">
+									<!-- Dynamic button or status badge here -->
+								</div>
+							</div>
+						</div>
+
+						<!-- Developer and API Webhook Card -->
+						<div class="dashboard-card"
+							style="margin-bottom: 25px; padding: 24px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+							<h3 class="font-keren"
+								style="margin-top: 0; margin-bottom: 20px; font-size: 1.1rem; color: var(--text-sharp); display: flex; align-items: center; gap: 10px; font-family: 'Orbitron', sans-serif; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+								<i class="fa-solid fa-code-fork" style="color: #00f0ff;"></i>
+								Developer & Webhook Configurations
+							</h3>
+
+							<!-- Webhook input group -->
+							<div class="form-group" style="margin-bottom: 20px;">
+								<label
+									style="display: block; margin-bottom: 8px; color: var(--text-sharp); font-size: 0.9rem; font-weight: 500;">Low
+									Credits Alert Webhook URL</label>
+								<input type="text" id="pref-webhook-url" class="style-custom-147"
+									placeholder="e.g. https://discord.com/api/webhooks/..."
+									style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-primary); font-family: 'RobotoMono', monospace; font-size: 0.85rem; box-sizing: border-box;">
+								<span
+									style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 6px;">Automated
+									alert triggers when any active API key goes below 1,000 daily check credits
+									remaining. Supports Discord, Slack, or any custom API endpoints.</span>
+							</div>
+
+							<!-- Debug Mode switch -->
+							<div
+								style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 20px;">
+								<div style="max-width: 80%;">
+									<strong
+										style="color: var(--text-sharp); font-size: 0.95rem; display: block; margin-bottom: 4px;">Developer
+										Console Logs (Debug Mode)</strong>
+									<span style="color: var(--text-secondary); font-size: 0.85rem;">Print detailed
+										console outputs of API endpoints payloads and performance telemetry logs in
+										browser inspector.</span>
+								</div>
+								<label class="pref-switch"
+									style="position: relative; display: inline-block; width: 46px; height: 24px;">
+									<input type="checkbox" id="pref-debug-mode"
+										style="opacity: 0; width: 0; height: 0;">
+									<span class="pref-slider"
+										style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 34px;"></span>
+								</label>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -2124,6 +2316,34 @@
 										directly into your production servers, SaaS applications, or local scripts.
 									</p>
 
+									<!-- API Credits Card -->
+									<div class="style-custom-256"
+										style="margin: 15px 0 25px 0; border: 1px solid var(--border-color); padding: 20px; border-radius: 16px; background: rgba(175, 134, 252, 0.03); box-shadow: inset 0 0 12px rgba(175, 134, 252, 0.02);">
+										<h4 class="font-keren"
+											style="color: #af86fc; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+											<i class="fa-solid fa-coins"></i> API Credits & Limits
+										</h4>
+										<p
+											style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 12px;">
+											Every check made programmatically via our API endpoints consumes <strong>1
+												Credit</strong> (or 1 unit of your Daily Limit). To support developers,
+											we provide the following:
+										</p>
+										<ul
+											style="color: var(--text-primary); font-size: 0.9rem; line-height: 1.7; padding-left: 20px; list-style-type: square; margin-bottom: 0;">
+											<li><strong>Welcome Bonus:</strong> New accounts instantly receive a
+												one-time gift of <strong>1,000 Credits</strong> upon sign-up to test
+												integrations.</li>
+											<li><strong>Daily Free Tier:</strong> Get <strong>50 Free Credits / Daily
+													Limit</strong> every single day (resets daily at 00:00 UTC).</li>
+											<li><strong>Interchangeable Terms:</strong> Under the hood,
+												<strong>Credits</strong> and <strong>Daily Limit</strong> refer to the
+												exact
+												same checking unit (1 check = 1 Credit).
+											</li>
+										</ul>
+									</div>
+
 									<div class="style-custom-347">
 										<h4 class="font-keren style-custom-348">API
 											Endpoint Overview</h4>
@@ -2186,8 +2406,6 @@ curl -X POST "https://gmail-checker.blacksoftchild.workers.dev/check1" \
 		]
 }'
 
-# Get API statistics
-curl "https://gmail-validation.mbahbabat.workers.dev/stats?key=YOUR_API_KEY"
 										</div>
 
 										<!-- Pane Python -->
@@ -2212,11 +2430,6 @@ def validate_emails(emails):
 	}
 		
 	response = requests.post(f'{SERVER_URL}/check1', headers=headers, json=data)
-	response.raise_for_status()
-	return response.json()
-
-def get_api_stats():
-	response = requests.get(f'{SERVER_URL}/stats?key={API_KEY}')
 	response.raise_for_status()
 	return response.json()
 
@@ -2265,23 +2478,6 @@ async function validateEmails(emails) {
 	}
 }
 
-// Get API statistics
-async function getApiStats() {
-	try {
-		const response = await fetch(`${SERVER_URL}/stats?key=${API_KEY}`);
-		
-		if (!response.ok) {
-		  throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-		}
-		
-		const data = await response.json();
-		return data;
-	} catch (error) {
-		console.error('Stats error:', error);
-		throw error;
-	}
-}
-
 // Example Usage
 const emails = ['test1@gmail.com', 'test2@gmail.com', 'test3@gmail.com'];
 validateEmails(emails)
@@ -2324,24 +2520,6 @@ function validateEmails($emails) {
 	return json_decode($response, true);
 }
 
-// Get API Statistics
-function getApiStats() {
-	global $api_key, $server_url;
-		
-	$ch = curl_init("$server_url/stats?key=$api_key");
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		
-	$response = curl_exec($ch);
-	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-	curl_close($ch);
-		
-	if ($http_code !== 200) {
-		throw new Exception("HTTP $http_code: $response");
-	}
-		
-	return json_decode($response, true);
-}
-
 // Usage example
 $emails = ['test1@gmail.com', 'test2@gmail.com', 'test3@gmail.com'];
 try {
@@ -2368,45 +2546,59 @@ try {
 										<h2 class="font-keren style-custom-343">
 											Billing & Payments Guide</h2>
 										<p class="style-custom-75">
-											Learn how VIP tiers, API quotas, and invoice systems work</p>
+											Learn how subscription plans, API credits, and invoice systems work</p>
 									</div>
 								</div>
 
 								<div class="style-custom-344">
 									<p>Our application offers flexible and secure payment plans for both end-users
-										(VIP
-										Memberships) and automated developers (Developer API Quotas).</p>
+										(Premium PRO & ULTRA memberships) and automated developers (Developer API
+										Credits).</p>
 
 									<div class="style-custom-358">
-										<!-- Box 1: VIP -->
+										<!-- Box 1: Premium Membership -->
 										<div class="style-custom-359">
-											<span class="style-custom-360"><i class="fa-solid fa-crown style-mr-6"></i>
-												VIP
-												Membership</span>
-											<p class="style-custom-361">
-												Unlocks higher volume direct checking options on our
-												high-performance
-												dedicated servers through the browser interface (App 1, 2, and 3).
+											<span class="style-custom-360"
+												style="color: #ffb86c; border-color: rgba(255, 184, 108, 0.2); background: rgba(255, 184, 108, 0.05); padding: 4px 10px; border-radius: 99px; font-size: 0.8rem; display: inline-flex; align-items: center; border: 1px solid;">
+												<i class="fa-solid fa-gem style-mr-6"></i>
+												Premium Membership
+											</span>
+											<p class="style-custom-361" style="margin-top: 10px;">
+												Unlocks premium email checking limits inside the browser workspace (App
+												1, 2, and 3) running on fast dedicated servers.
 											</p>
 											<ul class="style-custom-362">
-												<li><strong>Free Plan:</strong> Max 10K emails limit.</li>
-												<li><strong>VIP Plan:</strong> Max 100K emails limit + Fast servers.
-												</li>
+												<li><strong>Free Plan:</strong> 50 Gmail checks per day.</li>
+												<li><strong>PRO Plan ($2.99 / 90 Days):</strong> 500 Gmail checks per
+													day.</li>
+												<li><strong>ULTRA Plan ($8.99 / 90 Days):</strong> 2,500 Gmail checks
+													per day + high-speed servers.</li>
 											</ul>
 										</div>
 										<!-- Box 2: API -->
 										<div class="style-custom-359">
 											<span class="style-custom-363"><i class="fa-solid fa-key style-mr-6"></i>
-												Developer
-												API Keys</span>
-											<p class="style-custom-361">
-												Perfect for external programmatic access. Quotas are decoupled
-												entirely
-												from your personal browser subscription plan.</p>
-											<ul class="style-custom-362">
-												<li><strong>500K Daily Quota:</strong> $10.00 / month.</li>
-												<li><strong>1M Daily Quota:</strong> $15.00 / month.</li>
+												Developer API Keys</span>
+											<p class="style-custom-361" style="margin-bottom: 12px;">
+												Perfect for external programmatic integrations. API usage is decoupled
+												entirely from browser web-app subscription limits.
+											</p>
+											<ul class="style-custom-362" style="margin-bottom: 15px;">
+												<li><strong>Sign-up Bonus:</strong> New accounts get a one-time gift of
+													<strong>1,000 API Credits</strong>.
+												</li>
+												<li><strong>Daily Free Tier:</strong> <strong>50 Free Credits (Daily
+														Limit)</strong> reset every day.</li>
+												<li><strong>1,000 Credits Package:</strong> $1.99 (one-time purchase).
+												</li>
+												<li><strong>5,000 Credits Package:</strong> $5.99 (one-time purchase).
+												</li>
 											</ul>
+											<p
+												style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.4; border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 5px; font-family: 'RobotoMono', monospace;">
+												* Note: 1 Credit = 1 email check. The terms <strong>Credits</strong> and
+												<strong>Limit</strong> are used interchangeably in the API ecosystem.
+											</p>
 										</div>
 									</div>
 
@@ -2435,13 +2627,13 @@ try {
 											<strong class="style-custom-368">Invoice
 												Auto-Claim Routing:</strong>
 											<p class="style-custom-369">
-												The backend employs a stateful auto-routing mechanism. If a user
-												pays
-												for a subscription invoice, their subscription status is immediately
-												upgraded to VIP. If they pay for an API key invoice, the backend
-												generates and whitelists their programmatic Developer API Key
-												instantly
-												without overwriting or affecting their VIP tier status.</p>
+												The backend employs a stateful auto-routing mechanism. If a user pays
+												for a subscription invoice, their browser workspace account status is
+												immediately upgraded to <strong>PRO</strong> or <strong>ULTRA</strong>.
+												If they pay for an API key invoice, the backend adds the purchased
+												credits and whitelists their programmatic Developer API Key instantly
+												without overwriting or affecting their active browser subscription
+												status.</p>
 										</div>
 									</div>
 								</div>
@@ -2728,6 +2920,172 @@ try {
 					</div>
 				</div>
 
+				<!-- Page Admin Panel -->
+				<div id="page-admin" class="page-content hide">
+					<div class="style-custom-150">
+						<div class="style-custom-63">
+							<h1 class="font-keren style-custom-370">Admin Panel</h1>
+							<p style="color: var(--text-muted); margin-top: 5px;">Manage users, payments, and system
+								notifications.</p>
+						</div>
+
+						<div class="db-tabs">
+							<button class="db-tab-btn active" data-tab="admin-users">
+								<i class="fa-solid fa-users"></i> Users
+							</button>
+							<button class="db-tab-btn" data-tab="admin-payments">
+								<i class="fa-solid fa-wallet"></i> Payments
+							</button>
+							<button class="db-tab-btn" data-tab="admin-compensation">
+								<i class="fa-solid fa-award"></i> Compensation
+							</button>
+							<button class="db-tab-btn" data-tab="admin-notif">
+								<i class="fa-solid fa-bullhorn"></i> Push Notification
+							</button>
+						</div>
+
+						<!-- Users Tab -->
+						<div id="admin-users" class="db-tab-content active">
+							<div class="card">
+								<h3 class="font-keren" style="margin-bottom: 15px;">User Directory</h3>
+								<div class="table-responsive">
+									<table class="db-table" id="admin-users-table">
+										<thead>
+											<tr>
+												<th>Email</th>
+												<th>Plan</th>
+												<th>Expiry</th>
+												<th>API Credits</th>
+												<th>Role</th>
+												<th>Action</th>
+											</tr>
+										</thead>
+										<tbody id="admin-users-tbody">
+											<tr>
+												<td colspan="6" style="text-align: center;">Loading users...</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+
+						<!-- Payments Tab -->
+						<div id="admin-payments" class="db-tab-content hide">
+							<div class="card">
+								<h3 class="font-keren" style="margin-bottom: 15px;">Successful Payments</h3>
+								<div class="table-responsive">
+									<table class="db-table">
+										<thead>
+											<tr>
+												<th>Date</th>
+												<th>Email</th>
+												<th>Product</th>
+												<th>Amount</th>
+												<th>Invoice ID</th>
+											</tr>
+										</thead>
+										<tbody id="admin-payments-tbody">
+											<tr>
+												<td colspan="5" style="text-align: center;">Loading payments...</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+
+						<!-- Compensation Tab -->
+						<div id="admin-compensation" class="db-tab-content hide">
+							<div class="card">
+								<h3 class="font-keren" style="margin-bottom: 20px; font-size: 1.3rem;">Grant Credits or
+									Subscription</h3>
+								<div class="admin-card-grid">
+
+									<div class="admin-form-card">
+										<h4><i class="fa-solid fa-database style-color-af86fc"></i> Grant API Credits
+										</h4>
+										<input type="email" id="admin-quota-email" class="db-input"
+											placeholder="User Email">
+										<input type="number" id="admin-quota-amount" class="db-input"
+											placeholder="Amount (e.g. 5000)">
+										<button id="admin-btn-grant-quota" class="btn btn-primary"
+											style="width: 100%;">Grant Credits</button>
+									</div>
+
+									<div class="admin-form-card">
+										<h4><i class="fa-solid fa-gem style-color-af86fc"></i> Grant Subscription</h4>
+										<input type="email" id="admin-sub-email" class="db-input"
+											placeholder="User Email">
+										<select id="admin-sub-plan" class="db-input"
+											onchange="document.getElementById('admin-sub-special-quota').style.display = this.value === 'special_subs' ? 'block' : 'none'">
+											<option value="pro_subs">PRO (500 checks/day)</option>
+											<option value="ultra_subs">ULTRA (2500 checks/day)</option>
+											<option value="special_subs">SPECIAL (Custom credits)</option>
+										</select>
+										<input type="number" id="admin-sub-special-quota" class="db-input"
+											placeholder="Custom Credits (e.g. 5000)" style="display: none;">
+										<input type="number" id="admin-sub-days" class="db-input"
+											placeholder="Days (e.g. 30)">
+										<button id="admin-btn-grant-sub" class="btn btn-primary"
+											style="width: 100%;">Grant Subscription</button>
+									</div>
+
+									<div class="admin-form-card">
+										<h4><i class="fa-solid fa-key style-color-af86fc"></i> Generate Compensation Key
+										</h4>
+										<p
+											style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;">
+											Generates a <code style="color: #af86fc;">C_...</code> API key that bypasses
+											global credits limits. Only subject to a daily check limit.
+										</p>
+										<input type="email" id="admin-comp-email" class="db-input"
+											placeholder="User Email">
+										<input type="number" id="admin-comp-daily-limit" class="db-input"
+											placeholder="Daily Limit (e.g. 1000)" value="1000">
+										<input type="number" id="admin-comp-expiry-days" class="db-input"
+											placeholder="Expiry (days, leave empty = lifetime)">
+										<button id="admin-btn-gen-comp-key" class="btn btn-primary"
+											style="width: 100%;"><i class="fa-solid fa-key"
+												style="margin-right: 6px;"></i> Generate Key</button>
+										<div id="admin-comp-key-result"
+											style="display: none; margin-top: 12px; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-color); border-radius: 12px; padding: 14px; word-break: break-all; font-family: monospace; font-size: 0.78rem; color: #af86fc; line-height: 1.4;">
+										</div>
+									</div>
+
+								</div>
+							</div>
+						</div>
+
+						<!-- Notification Tab -->
+						<div id="admin-notif" class="db-tab-content hide">
+							<div class="card">
+								<h3 class="font-keren" style="margin-bottom: 20px; font-size: 1.3rem;">Push Notification
+								</h3>
+								<div class="admin-form-card" style="max-width: 600px;">
+									<h4><i class="fa-solid fa-paper-plane style-color-af86fc"></i> Dispatch Push Message
+									</h4>
+									<input type="text" id="admin-notif-email" class="db-input"
+										placeholder="User Email (Type 'ALL' for broadcast)">
+									<input type="text" id="admin-notif-title" class="db-input"
+										placeholder="Notification Title">
+									<textarea id="admin-notif-message" class="db-input"
+										placeholder="Notification Message" style="height: 100px;"></textarea>
+									<select id="admin-notif-type" class="db-input">
+										<option value="info">Info (Blue)</option>
+										<option value="success">Success (Green)</option>
+										<option value="warning">Warning (Yellow)</option>
+										<option value="danger">Danger (Red)</option>
+									</select>
+									<button id="admin-btn-push-notif" class="btn btn-primary" style="width: 100%;">Send
+										Notification</button>
+								</div>
+							</div>
+						</div>
+
+					</div>
+				</div>
+
 				<!-- Page Support Tickets -->
 				<div id="page-support" class="page-content hide">
 					<div class="style-custom-150">
@@ -2884,19 +3242,22 @@ try {
 			</div>
 		</div>
 
+		<script src="js/endpoints.js"></script>
+		<script src="js/notifications.js"></script>
+		<script src="js/admin.js"></script>
 		<script type="module" src="js/main.js"></script>
 		<script>
 			(function () {
 				// ========== KONFIGURASI ==========
 				// Ubah ke false untuk menonaktifkan maintenance
-				const isMt = false;
+				const isMt = true;
 
 				// Set waktu mulai maintenance (format: 'YYYY-MM-DD HH:MM:SS' atau 'YYYY-MM-DDTHH:MM:SS')
 				// Contoh: '2026-05-26 14:30:00' atau '2026-05-26T14:30:00'
-				const startTime = '2026-05-26 16:01:00';
+				const startTime = '2026-05-28 04:03:00';
 
 				// Durasi maintenance dalam menit
-				const durasiMenit = 60;
+				const durasiMenit = 120;
 				// ================================
 
 				// Jika maintenance tidak aktif, langsung keluar
@@ -3017,7 +3378,7 @@ try {
 				updateTimer();
 				const timerInterval = setInterval(updateTimer, 1000);
 			})();
-		</script>		
+		</script>
 </body>
 
 </html>

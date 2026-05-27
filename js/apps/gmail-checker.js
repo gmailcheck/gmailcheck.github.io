@@ -44,7 +44,7 @@
 
 	if (!textarea || !btnExecute) return;
 
-	const SERVER_URL = 'https://gmail-checker.blacksoftchild.workers.dev';
+	const SERVER_URL = window.API.GC_CHECKER_BASE;
 	let results = [];
 	let currentFilter = 'all';
 	let isRunning = false;
@@ -349,12 +349,26 @@
 				});
 			}
 
+			if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+				console.log(`[DEBUG] Fetching URL: ${url}`, {
+					method: options.method,
+					headers: options.headers,
+					body: options.body ? JSON.parse(options.body) : null
+				});
+			}
+
 			options.signal = controller.signal;
 			fetch(url, options).then(res => {
 				clearTimeout(timeoutId);
+				if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+					console.log(`[DEBUG] Received Response from ${url}: Status ${res.status}`);
+				}
 				resolve(res);
 			}).catch(err => {
 				clearTimeout(timeoutId);
+				if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+					console.warn(`[DEBUG] Fetch Error from ${url}:`, err);
+				}
 				reject(err);
 			});
 		});
@@ -362,9 +376,6 @@
 
 	// Execute Verification Flow
 	btnExecute.addEventListener('click', async function () {
-		// Request notification permission early
-		window.requestNotificationPermission();
-
 		const emails = getEmailsArray();
 		if (emails.length === 0) {
 			window.showAppNotification('danger', '<strong>Error:</strong> Please enter at least one email address first!');
@@ -435,14 +446,12 @@
 		}
 
 		// API endpoint resolution
-		const endpointMap = {
-			'fastServer2': 'auth-fastcheck2',
-			'fastServer1': 'auth-fastcheck1',
-			'server2': 'auth-check2',
-			'server1': 'auth-check1'
-		};
-		const activeEndpoint = endpointMap[selected] || 'auth-fastcheck2';
-		const requestUrl = `${SERVER_URL}/${activeEndpoint}`;
+		let endpoint = 'check1';
+		if (selected === 'fastServer1') endpoint = idToken ? 'auth-fastcheck1' : 'fastcheck1';
+		else if (selected === 'fastServer2') endpoint = idToken ? 'auth-fastcheck2' : 'fastcheck2';
+		else if (selected === 'server1') endpoint = idToken ? 'auth-check1' : 'check1';
+		else if (selected === 'server2') endpoint = idToken ? 'auth-check2' : 'check2';
+		const requestUrl = `${SERVER_URL}/${endpoint}`;
 
 		chunks.forEach((chunk, index) => {
 			// Card UI for progress logging
@@ -485,8 +494,7 @@
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
-							'Authorization': idToken ? `Bearer ${idToken}` : '',
-							'X-Api-Key': window.APIKEY || ''
+							'Authorization': idToken ? `Bearer ${idToken}` : ''
 						},
 						body: JSON.stringify({ mail: chunk }),
 						signal: abortController.signal
@@ -495,11 +503,36 @@
 					if (!isRunning) throw new Error('Aborted');
 
 					if (!response.ok) {
+						if (response.status === 402) {
+							let errData = {};
+							try {
+								errData = await response.json();
+							} catch (e) {}
+							const errorMsg = errData.message || 'You do not have enough credits to perform this request.';
+							const remaining = errData.message ? parseInt(errData.message.match(/have (\d+) remaining/)?.[1] || 0) : 0;
+							
+							// Abort other tasks and stop checker running state
+							if (abortController) abortController.abort();
+							isRunning = false;
+							btnExecute.style.display = 'inline-flex';
+							btnStop.style.display = 'none';
+							
+							progressEl.style.width = '100%';
+							progressEl.style.background = 'linear-gradient(90deg, #ff6666 0%, #ff3333 100%)';
+							statusEl.innerHTML = '<span style="color: #ff6666;"><i class="fa-solid fa-circle-exclamation"></i> Insufficient Credits</span>';
+							statsEl.textContent = errorMsg;
+							
+							showInsufficientCreditsModal(errorMsg, remaining);
+							
+							throw new Error('Insufficient Credits');
+						}
 						throw new Error(`Server returned ${response.status}`);
 					}
 
 					const data = await response.json();
-					if (!Array.isArray(data)) throw new Error('Invalid response array');
+					if (!Array.isArray(data) || data.length === 0) {
+						throw new Error(data?.error || 'Empty response or Server overloaded');
+					}
 
 					// Parse API Status
 					data.forEach(item => {
@@ -516,6 +549,19 @@
 							status: status,
 							details: item.details || 'Successfully checked'
 						});
+					});
+
+					// Jika ada email dalam chunk yang tidak dikembalikan oleh API, klasifikasikan sebagai failed
+					const returnedEmails = new Set(data.map(item => item.email ? item.email.toLowerCase().trim() : ''));
+					chunk.forEach(email => {
+						const lowerEmail = email.toLowerCase().trim();
+						if (!returnedEmails.has(lowerEmail)) {
+							results.push({
+								email: email,
+								status: 'failed',
+								details: 'No response from verification server'
+							});
+						}
 					});
 
 					progressEl.style.width = '100%';
@@ -535,7 +581,7 @@
 						results.push({
 							email: email,
 							status: 'failed',
-							details: err.message === 'Timeout (10s)' ? 'API Timeout (10s)' : 'API Connection Error'
+							details: err.message || 'API Connection Error'
 						});
 					});
 				}
@@ -567,7 +613,12 @@
 					updateDownloadButtonsLabels();
 
 					window.showAppNotification('success', `<strong>Verification Completed:</strong> Successfully processed <strong>${results.length.toLocaleString()} email(s)</strong>!`);
-					
+
+					// Play premium chime sound if enabled
+					if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
+						window.playSuccessChime();
+					}
+
 					// Send finished system notification
 					window.sendBrowserNotification("Gmail Checker Completed", `Successfully verified ${results.length.toLocaleString()} email(s)!`);
 
@@ -930,4 +981,82 @@
 			});
 		});
 	});
+
+	function showInsufficientCreditsModal(message, remainingCredits) {
+		let modal = document.getElementById('insufficient-credits-modal');
+		if (!modal) {
+			modal = document.createElement('div');
+			modal.id = 'insufficient-credits-modal';
+			modal.className = 'modal-overlay hide style-custom-134';
+			modal.style.zIndex = '99999';
+			modal.innerHTML = `
+				<div class="style-custom-135" style="max-width: 420px; text-align: center; gap: 20px;">
+					<!-- Close Button -->
+					<button id="credits-modal-close-btn" class="style-custom-136"><i class="fa-solid fa-xmark"></i></button>
+					
+					<!-- Warning Icon -->
+					<div style="margin-top: 10px; margin-bottom: 10px;">
+						<div style="width: 64px; height: 64px; background: rgba(255, 102, 102, 0.1); border: 1px solid rgba(255, 102, 102, 0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 0 15px rgba(255, 102, 102, 0.2);">
+							<i class="fa-solid fa-circle-exclamation" style="font-size: 1.75rem; color: #ff6666;"></i>
+						</div>
+					</div>
+
+					<!-- Title -->
+					<h3 class="font-keren" style="font-size: 1.35rem; color: var(--text-sharp); margin: 0; letter-spacing: 0.5px;">Insufficient Credits</h3>
+					
+					<!-- Message Description -->
+					<p id="credits-modal-message" style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.6; text-align: center;"></p>
+					
+					<!-- Quota Info Box -->
+					<div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 16px; margin: 5px 0; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
+						<span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Remaining Balance</span>
+						<span id="credits-modal-balance" style="font-family: monospace; font-size: 1rem; font-weight: bold; color: #ff6666; background: rgba(255, 102, 102, 0.1); padding: 4px 10px; border-radius: 8px;">0 credits</span>
+					</div>
+
+					<!-- Buttons -->
+					<div style="display: flex; gap: 12px; width: 100%; margin-top: 10px;">
+						<button id="btn-credits-modal-cancel" class="btn btn-secondary" style="flex: 1; border-radius: 12px; padding: 10px 16px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;">
+							Cancel
+						</button>
+						<button id="btn-credits-modal-upgrade" class="btn btn-primary" style="flex: 1; border-radius: 12px; padding: 10px 16px; background: linear-gradient(135deg, #af86fc 0%, #7e53c9 100%); color: white; border: none; font-weight: 700; cursor: pointer; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(175, 134, 252, 0.3); transition: all 0.2s;">
+							Upgrade Now
+						</button>
+					</div>
+				</div>
+			`;
+			document.body.appendChild(modal);
+
+			// Setup event listeners
+			const closeBtn = document.getElementById('credits-modal-close-btn');
+			const cancelBtn = document.getElementById('btn-credits-modal-cancel');
+			const upgradeBtn = document.getElementById('btn-credits-modal-upgrade');
+
+			const closeModal = () => {
+				modal.classList.add('hide');
+			};
+
+			closeBtn.addEventListener('click', closeModal);
+			cancelBtn.addEventListener('click', closeModal);
+			upgradeBtn.addEventListener('click', () => {
+				closeModal();
+				if (window.setActiveMenu) {
+					window.setActiveMenu('pricing', true);
+				}
+			});
+
+			// Close on overlay click
+			modal.addEventListener('click', (e) => {
+				if (e.target === modal) {
+					closeModal();
+				}
+			});
+		}
+
+		// Update modal dynamic values
+		document.getElementById('credits-modal-message').innerHTML = message;
+		document.getElementById('credits-modal-balance').textContent = `${remainingCredits} credit(s)`;
+
+		// Show modal
+		modal.classList.remove('hide');
+	}
 })();

@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function fetchProducts() {
 	try {
-		const response = await fetch(`https://gc-server.blacksoftchild.workers.dev/products`);
+		const response = await fetch(window.API.PRODUCTS);
 		const data = await response.json();
 		backendProducts = data.products || {};
 		console.log("Products loaded from backend:", backendProducts);
@@ -70,7 +70,7 @@ function initPricing() {
 	}
 
 	// 1.5 UPDATE STATIC PRICING CARDS DYNAMICALLY
-	const planIds = ['vip_1m', 'vip_3m', 'vip_6m', 'vip_1y'];
+	const planIds = ['pro_subs', 'ultra_subs'];
 	planIds.forEach(id => {
 		const priceDisplay = document.getElementById(`display-price-${id}`);
 		const product = backendProducts[id];
@@ -79,34 +79,6 @@ function initPricing() {
 		}
 	});
 
-	const mSub = backendProducts['vip_1m'];
-	const m3Sub = backendProducts['vip_3m'];
-	const m6Sub = backendProducts['vip_6m'];
-	const ySub = backendProducts['vip_1y'];
-
-	const display3MonthSaving = document.getElementById('display-saving-vip_3m');
-	if (m3Sub && mSub && display3MonthSaving) {
-		const monthlyEquivalent = (m3Sub.price_usd / 3).toFixed(2);
-		const expectedAnnual = mSub.price_usd * 3;
-		const savePercent = Math.round(((expectedAnnual - m3Sub.price_usd) / expectedAnnual) * 100);
-		display3MonthSaving.textContent = `Save ${savePercent}%`;
-	}
-
-	const display6MonthSaving = document.getElementById('display-saving-vip_6m');
-	if (m6Sub && mSub && display6MonthSaving) {
-		const monthlyEquivalent = (m6Sub.price_usd / 6).toFixed(2);
-		const expectedAnnual = mSub.price_usd * 6;
-		const savePercent = Math.round(((expectedAnnual - m6Sub.price_usd) / expectedAnnual) * 100);
-		display6MonthSaving.textContent = `Save ${savePercent}%`;
-	}
-
-	const displayAnnualSaving = document.getElementById('display-saving-vip_1y');
-	if (ySub && mSub && displayAnnualSaving) {
-		const monthlyEquivalent = (ySub.price_usd / 12).toFixed(2);
-		const expectedAnnual = mSub.price_usd * 12;
-		const savePercent = Math.round(((expectedAnnual - ySub.price_usd) / expectedAnnual) * 100);
-		displayAnnualSaving.textContent = `Save ${savePercent}%`;
-	}
 
 	// 2. CLAIM PREMIUM TRIAL BUTTON
 	const btnClaimTrial = document.getElementById('btn-claim-trial');
@@ -131,7 +103,7 @@ function initPricing() {
 				const idToken = await user.getIdToken(true);
 
 				// POST to auth service to claim trial
-				const res = await fetch(`https://gc-server.blacksoftchild.workers.dev/claim-trial`, {
+				const res = await fetch(window.API.CLAIM_TRIAL, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -145,7 +117,7 @@ function initPricing() {
 				}
 
 				// Generate Trial API Key on Checker service
-				const keyRes = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/generate-trial-key`, {
+				const keyRes = await fetch(window.API.GENERATE_API_KEY, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -222,7 +194,7 @@ function initPricing() {
 	};
 
 	// Bind purchase buttons dynamically for all subscription plans
-	const subPlanIds = ['vip_1m', 'vip_3m', 'vip_6m', 'vip_1y'];
+	const subPlanIds = ['pro_subs', 'ultra_subs'];
 	subPlanIds.forEach(id => {
 		const btn = document.getElementById(`btn-upgrade-${id}`);
 		if (btn) {
@@ -233,7 +205,7 @@ function initPricing() {
 	});
 
 	// 1.6 UPDATE API KEY CARDS DYNAMICALLY
-	const apiKeyIds = ['api_100k', 'api_500k', 'api_1m'];
+	const apiKeyIds = ['api_100k', 'api_200k', 'api_300k', 'api_400k', 'api_500k'];
 	apiKeyIds.forEach(id => {
 		const priceDisplay = document.getElementById(`display-price-${id}`);
 		const product = backendProducts[id];
@@ -268,7 +240,7 @@ function initPricing() {
 
 				const idToken = await user.getIdToken(true);
 
-				const res = await fetch(`https://gc-server.blacksoftchild.workers.dev/create-invoice`, {
+				const res = await fetch(window.API.CREATE_INVOICE, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',

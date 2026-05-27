@@ -8,7 +8,6 @@ window.applyAuthUIState = function (user) {
 	const topBarAnon = document.getElementById('top-bar-anon-view');
 	const topBarAuth = document.getElementById('top-bar-auth-view');
 	const userEmailDisplay = document.getElementById('user-email-display');
-	const userBadgeDisplay = document.getElementById('user-badge-display');
 	const userAvatarIcon = document.getElementById('user-avatar-icon');
 	const userAvatarImg = document.getElementById('user-avatar-img');
 
@@ -57,8 +56,17 @@ window.applyAuthUIState = function (user) {
 			if (popoverAvatarImg) popoverAvatarImg.classList.add('hide');
 		}
 
-		// Check or generate API Key (Free API Key)
-		window.handleUserApiKey(user);
+		// Restore cached APIKEY from localStorage (set by dashboard after profile loads)
+		const API_STORAGE_KEY = 'gmailChecker_apiData';
+		try {
+			const cached = localStorage.getItem(API_STORAGE_KEY);
+			if (cached) {
+				const data = JSON.parse(cached);
+				if (data && data.apiKey) {
+					window.APIKEY = data.apiKey;
+				}
+			}
+		} catch (e) { /* ignore parse errors */ }
 
 		// Handle routing for authenticated user
 		if (window.loginRedirectTarget) {
@@ -69,6 +77,10 @@ window.applyAuthUIState = function (user) {
 			window.setActiveMenu('app1', true);
 		} else {
 			window.setActiveMenu(currentMenuId, false);
+		}
+
+		if (window.loadDashboardData) {
+			window.loadDashboardData(false);
 		}
 	} else {
 		window.isUserAuthenticated = false;
@@ -93,51 +105,15 @@ window.applyAuthUIState = function (user) {
 	}
 
 	window.authInitialCheckDone = true;
+
+	// Hide loading spinner and restore standard login card once initial auth check is resolved
+	const loginCard = document.getElementById('login-card-content');
+	const loginLoading = document.getElementById('login-loading-content');
+	if (loginCard && loginLoading) {
+		loginCard.classList.remove('hide');
+		loginLoading.classList.add('hide');
+	}
 }
 
 // Exposed bridge for Firebase SDK Module block
 window.updateAuthUI = window.applyAuthUIState;
-
-// Function to handle automatic API key generation
-window.handleUserApiKey = async function (user) {
-	const API_STORAGE_KEY = 'gmailChecker_apiData';
-	try {
-		const cached = localStorage.getItem(API_STORAGE_KEY);
-		if (cached) {
-			const data = JSON.parse(cached);
-			if (data && data.apiKey) {
-				window.APIKEY = data.apiKey;
-				const userBadgeDisplay = document.getElementById('user-badge-display');
-				if (userBadgeDisplay) userBadgeDisplay.textContent = (data.type || 'free').toUpperCase();
-				const popoverBadgeDisplay = document.getElementById('profile-popover-badge-display');
-				if (popoverBadgeDisplay) popoverBadgeDisplay.textContent = (data.type || 'free').toUpperCase();
-				return;
-			}
-		}
-
-		// Generate new API Key via Cloudflare Worker if not cached
-		const idToken = await user.getIdToken(true);
-		const res = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/generate-free-key`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${idToken}`
-			}
-		});
-		if (res.ok) {
-			const data = await res.json();
-			window.APIKEY = data.apiKey;
-			localStorage.setItem(API_STORAGE_KEY, JSON.stringify({
-				apiKey: window.APIKEY,
-				type: 'free',
-				timestamp: Date.now()
-			}));
-			const userBadgeDisplay = document.getElementById('user-badge-display');
-			if (userBadgeDisplay) userBadgeDisplay.textContent = 'FREE';
-			const popoverBadgeDisplay = document.getElementById('profile-popover-badge-display');
-			if (popoverBadgeDisplay) popoverBadgeDisplay.textContent = 'FREE';
-		}
-	} catch (e) {
-		console.error("Failed to generate free key:", e);
-	}
-}

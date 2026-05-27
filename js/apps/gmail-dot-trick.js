@@ -243,9 +243,6 @@
 
 	// Generate Variations (Bulk Dashboard alur)
 	btnGenerate.addEventListener('click', function () {
-		// Request notification permission early
-		window.requestNotificationPermission();
-
 		const emails = getEmailsArray();
 		if (emails.length === 0) {
 			window.showAppNotification('danger', '<strong>Error:</strong> Please enter at least one email address first!');
@@ -471,6 +468,11 @@
 								btnDownloadAll.classList.remove('hide');
 
 								window.showAppNotification('success', `<strong>Generation Completed:</strong> Successfully processed <strong>${totalInputEmails} task(s)</strong> with <strong>${grandTotalVariations.toLocaleString()} total variations</strong>!`);
+
+								// Play premium chime sound if enabled
+								if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
+									window.playSuccessChime();
+								}
 
 								// Send finished system notification
 								window.sendBrowserNotification("Gmail Dot Trick Completed", `Successfully generated ${grandTotalVariations.toLocaleString()} variations!`);

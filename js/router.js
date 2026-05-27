@@ -6,22 +6,23 @@ window.sidebarMode = 'dashboard'; // 'dashboard' or 'developer'
 // Developer Center Sub-menu Items
 window.developerMenuItems = [
 	{ id: 'dev-keys', name: 'Manage API Keys', icon: 'fas fa-key', pageLabel: 'Manage API Keys' },
+	{ id: 'dev-create', name: 'Create API Key', icon: 'fas fa-plus-square', pageLabel: 'Create API Key' },
+	{ id: 'dev-credits', name: 'Credits', icon: 'fas fa-coins', pageLabel: 'API Credits' },
 	{ id: 'dev-stats', name: 'Stats', icon: 'fas fa-chart-bar', pageLabel: 'API Usage Stats' },
-	{ id: 'dev-history', name: 'Usage History', icon: 'fas fa-clock-rotate-left', pageLabel: 'API Check History' },
-	{ id: 'dev-add', name: 'Add new', icon: 'fas fa-plus-circle', pageLabel: 'Add API Key' },
+	{ id: 'dev-add', name: 'Buy Credits', icon: 'fas fa-shopping-cart', pageLabel: 'Buy Credits' },
 	{ id: 'dev-purchases', name: 'Purchase History', icon: 'fas fa-file-invoice-dollar', pageLabel: 'Purchase History' }
 ];
 
 // Documentation Sub-menu Items
 window.documentationMenuItems = [
-	{ id: 'doc-gmail-checker', name: 'Gmail Checker', icon: 'fas fa-shield-halved', pageLabel: 'Doc: Gmail Checker' },
-	{ id: 'doc-dot-tricks', name: 'Gmail Dot Tricks', icon: 'fas fa-wand-magic-sparkles', pageLabel: 'Doc: Gmail Dot Tricks' },
-	{ id: 'doc-name-combiner', name: 'Name Combiner', icon: 'fas fa-shuffle', pageLabel: 'Doc: Name Combiner' },
-	{ id: 'doc-api-key', name: 'Developer API Key', icon: 'fas fa-key', pageLabel: 'Doc: Developer API Key' },
-	{ id: 'doc-payments', name: 'Billing & Payments', icon: 'fas fa-credit-card', pageLabel: 'Doc: Billing & Payments' },
-	{ id: 'doc-email-extractor', name: 'Email Extractor', icon: 'fas fa-filter', pageLabel: 'Doc: Email Extractor' },
-	{ id: 'doc-notepad', name: 'Notepad', icon: 'fas fa-notes-medical', pageLabel: 'Doc: Notepad' },
-	{ id: 'doc-history', name: 'History', icon: 'fas fa-clock-rotate-left', pageLabel: 'Doc: Result History' }
+	{ id: 'doc-gmail-checker', name: 'Gmail Checker', icon: 'fas fa-shield-halved', pageLabel: 'Docs: Gmail Checker' },
+	{ id: 'doc-dot-tricks', name: 'Gmail Dot Tricks', icon: 'fas fa-wand-magic-sparkles', pageLabel: 'Docs: Gmail Dot Tricks' },
+	{ id: 'doc-name-combiner', name: 'Name Combiner', icon: 'fas fa-shuffle', pageLabel: 'Docs: Name Combiner' },
+	{ id: 'doc-api-key', name: 'Developer API Key', icon: 'fas fa-key', pageLabel: 'Docs: Developer API Key' },
+	{ id: 'doc-payments', name: 'Billing & Payments', icon: 'fas fa-credit-card', pageLabel: 'Docs: Billing & Payments' },
+	{ id: 'doc-email-extractor', name: 'Email Extractor', icon: 'fas fa-filter', pageLabel: 'Docs: Email Extractor' },
+	{ id: 'doc-notepad', name: 'Notepad', icon: 'fas fa-notes-medical', pageLabel: 'Docs: Notepad' },
+	{ id: 'doc-history', name: 'History', icon: 'fas fa-clock-rotate-left', pageLabel: 'Docs: Result History' }
 ];
 
 // Data menu (Ditambahkan properti 'path')
@@ -58,6 +59,14 @@ window.menuItems = [
 		]
 	},
 	{
+		id: 'admin',
+		name: 'Admin Panel',
+		icon: 'fas fa-user-shield',
+		pageLabel: 'Admin Panel',
+		path: '/admin',
+		hasSubmenu: false
+	},
+	{
 		id: 'history',
 		name: 'History',
 		icon: 'fas fa-clock-rotate-left',
@@ -91,10 +100,10 @@ window.menuItems = [
 	},
 	{
 		id: 'setting2',
-		name: 'Setting 2',
+		name: 'Preferences',
 		icon: 'fas fa-sliders-h',
-		pageLabel: 'Setting 2',
-		path: '/settings/2',
+		pageLabel: 'Preferences',
+		path: '/settings/preferences',
 		hasSubmenu: false
 	},
 	{
@@ -127,8 +136,9 @@ window.getMenuByPath = function (path) {
 
 	// Dev center routes
 	if (path === '/developer/keys') return 'dev-keys';
+	if (path === '/developer/create') return 'dev-create';
+	if (path === '/developer/credits') return 'dev-credits';
 	if (path === '/developer/stats') return 'dev-stats';
-	if (path === '/developer/history') return 'dev-history';
 	if (path === '/developer/add') return 'dev-add';
 	if (path === '/developer/purchases') return 'dev-purchases';
 
@@ -157,8 +167,9 @@ window.getPathById = function (id) {
 	if (id === 'privacy') return '/privacy';
 
 	if (id === 'dev-keys') return '/developer/keys';
+	if (id === 'dev-create') return '/developer/create';
+	if (id === 'dev-credits') return '/developer/credits';
 	if (id === 'dev-stats') return '/developer/stats';
-	if (id === 'dev-history') return '/developer/history';
 	if (id === 'dev-add') return '/developer/add';
 	if (id === 'dev-purchases') return '/developer/purchases';
 
@@ -239,6 +250,7 @@ window.renderMenu = function () {
 		// Normal Dashboard Mode
 		window.menuItems.forEach(menu => {
 			if (['settings', 'setting1', 'setting2', 'home', 'login', 'pricing'].includes(menu.id)) return;
+			if (menu.id === 'admin' && (!window.dashboardProfile || window.dashboardProfile.role !== 'admin')) return;
 
 			if (!menu.hasSubmenu) {
 				const menuDiv = createMenuItem(menu.id, menu.name, menu.icon);
@@ -316,8 +328,9 @@ window.toggleSubmenu = function (menuId, isOpen) {
 window.updateDevSubTabs = function (menuId) {
 	const devPanes = [
 		'tab-dev-keys',
+		'tab-dev-create',
+		'tab-dev-credits',
 		'tab-dev-stats',
-		'tab-dev-history',
 		'tab-dev-add',
 		'tab-dev-purchases'
 	];
@@ -328,8 +341,9 @@ window.updateDevSubTabs = function (menuId) {
 
 	let targetPaneId = 'tab-dev-keys';
 	if (menuId === 'dev-keys') targetPaneId = 'tab-dev-keys';
+	else if (menuId === 'dev-create') targetPaneId = 'tab-dev-create';
+	else if (menuId === 'dev-credits') targetPaneId = 'tab-dev-credits';
 	else if (menuId === 'dev-stats') targetPaneId = 'tab-dev-stats';
-	else if (menuId === 'dev-history') targetPaneId = 'tab-dev-history';
 	else if (menuId === 'dev-add') targetPaneId = 'tab-dev-add';
 	else if (menuId === 'dev-purchases') targetPaneId = 'tab-dev-purchases';
 
@@ -339,8 +353,8 @@ window.updateDevSubTabs = function (menuId) {
 	// Trigger table refreshes or stats sync when tabs are opened
 	if (menuId === 'dev-keys' && window.loadUserKeys) {
 		window.loadUserKeys();
-	} else if (menuId === 'dev-history' && window.loadCheckHistory) {
-		window.loadCheckHistory();
+	} else if (menuId === 'dev-credits' && window.renderCreditsTab) {
+		window.renderCreditsTab();
 	}
 }
 
@@ -380,14 +394,14 @@ window.setActiveMenu = function (menuId, pushState = true) {
 		return;
 	}
 
-	const devMenuIds = ['dev-keys', 'dev-stats', 'dev-history', 'dev-add', 'dev-purchases'];
+	const devMenuIds = ['dev-keys', 'dev-create', 'dev-credits', 'dev-stats', 'dev-add', 'dev-purchases'];
 	const isDevMenu = devMenuIds.includes(menuId);
 
 	const docMenuIds = ['doc-gmail-checker', 'doc-dot-tricks', 'doc-name-combiner', 'doc-api-key', 'doc-payments', 'doc-email-extractor', 'doc-notepad', 'doc-history'];
 	const isDocMenu = docMenuIds.includes(menuId);
 
 	// Check authentication before entering protected pages (documentation is public!)
-	const protectedPages = ['dashboard', 'history', 'app1', 'app2', 'app3', 'app4', 'app5', 'setting1', 'setting2', ...devMenuIds];
+	const protectedPages = ['dashboard', 'history', 'app1', 'app2', 'app3', 'app4', 'app5', 'setting1', 'setting2', 'admin', ...devMenuIds];
 	if (protectedPages.includes(menuId) && !window.isUserAuthenticated) {
 		window.loginRedirectTarget = menuId;
 		if (window.showAppNotification) {
@@ -395,6 +409,17 @@ window.setActiveMenu = function (menuId, pushState = true) {
 		}
 		window.setActiveMenu('login', pushState);
 		return;
+	}
+
+	// Admin Panel Authorization Check
+	if (menuId === 'admin') {
+		if (!window.dashboardProfile || window.dashboardProfile.role !== 'admin') {
+			if (window.showAppNotification) {
+				window.showAppNotification('danger', '🚫 <strong>Access Denied:</strong> Only administrators can access the Admin Panel!');
+			}
+			window.setActiveMenu('home', pushState);
+			return;
+		}
 	}
 
 	window.currentActiveMenu = menuId;
@@ -481,6 +506,8 @@ window.setActiveMenu = function (menuId, pushState = true) {
 		window.updateDevSubTabs(menuId);
 	} else if (isDocMenu) {
 		window.updateDocSubTabs(menuId);
+	} else if (menuId === 'admin' && window.loadActiveAdminTab) {
+		window.loadActiveAdminTab();
 	}
 }
 

@@ -88,7 +88,7 @@ function initDashboard() {
 			window.showAppNotification('success', 'âš¡ <strong>Active API Key updated!</strong> Reloading statistics...');
 
 			// Refresh Dashboard View
-			window.loadDashboardData();
+			window.loadDashboardData(true);
 		});
 	}
 
@@ -113,11 +113,16 @@ function initDashboard() {
 	const originalSetActiveMenu = window.setActiveMenu;
 	window.setActiveMenu = function (menuId, pushState = true) {
 		originalSetActiveMenu(menuId, pushState);
-		const devMenuIds = ['dev-keys', 'dev-stats', 'dev-history', 'dev-add', 'dev-purchases', 'pricing'];
+		const devMenuIds = ['dev-keys', 'dev-credits', 'dev-stats', 'dev-add', 'dev-purchases', 'pricing'];
 		if ((menuId === 'dashboard' || menuId === 'setting1' || devMenuIds.includes(menuId)) && window.isUserAuthenticated) {
 			window.loadDashboardData(false);
 		}
 	};
+
+	// Trigger load immediately if already authenticated on initialization
+	if (window.isUserAuthenticated) {
+		window.loadDashboardData(false);
+	}
 }
 
 let lastDashboardLoadTime = 0;
@@ -154,42 +159,9 @@ window.loadDashboardData = async function (force = false) {
 		// 1. Load owned keys list first to determine profile tiers
 		const keys = await loadOwnedKeysList(idToken);
 
-		// Auto-promotion: if currently using a free key, upgrade to VIP or Trial key automatically
-		const activeKeyCached = localStorage.getItem('gmailChecker_apiData');
-		let currentKeyType = 'free';
-		if (activeKeyCached) {
-			try {
-				currentKeyType = JSON.parse(activeKeyCached).type || 'free';
-			} catch (e) { }
-		}
-
-		if (currentKeyType === 'free' || !window.APIKEY) {
-			const vipKey = keys && keys.find(k => k.type === 'vip');
-			const trialKey = keys && keys.find(k => k.type === 'trial');
-			const promoKey = vipKey || trialKey;
-
-			if (promoKey) {
-				console.log(`Auto-promoting user to ${promoKey.type} key: ${promoKey.key}`);
-				localStorage.setItem('gmailChecker_apiData', JSON.stringify({
-					apiKey: promoKey.key,
-					type: promoKey.type,
-					timestamp: Date.now()
-				}));
-				window.APIKEY = promoKey.key;
-
-				if (keyDisplay) {
-					keyDisplay.value = promoKey.key;
-				}
-
-				const userBadgeDisplay = document.getElementById('user-badge-display');
-				if (userBadgeDisplay) userBadgeDisplay.textContent = promoKey.type.toUpperCase();
-				const popoverBadgeDisplay = document.getElementById('profile-popover-badge-display');
-				if (popoverBadgeDisplay) popoverBadgeDisplay.textContent = promoKey.type.toUpperCase();
-			}
-		}
 
 		// 2. Fetch User Profile status from auth service
-		const profileRes = await fetch(`https://gc-server.blacksoftchild.workers.dev/profile`, {
+		const profileRes = await fetch(window.API.PROFILE, {
 			method: 'GET',
 			headers: {
 				'Authorization': `Bearer ${idToken}`
@@ -198,51 +170,11 @@ window.loadDashboardData = async function (force = false) {
 
 		if (profileRes.ok) {
 			const profile = await profileRes.json();
+			window.dashboardProfile = profile;
+			window.renderMenu();
 
-			// Auto-claim VIP Keys for unclaimed finished purchases ("jomblo" invoices)
-			const history = profile.paymentHistory || {};
-			const unclaimedFinishedInvoices = Object.entries(history).filter(([invId, data]) => data.payment_status === 'finished' && !data.isUsed);
-
-			if (unclaimedFinishedInvoices.length > 0) {
-				for (const [invId, data] of unclaimedFinishedInvoices) {
-					const isApiKey = data.product_type === 'api_key';
-					const endpoint = isApiKey ? '/generate-api-key' : '/generate-vip-key';
-					const keyName = isApiKey ? 'Developer API Key' : 'VIP Key';
-
-					window.showAppNotification('info', `⚡ <strong>Auto-claiming ${keyName}</strong> for completed purchase ${invId.slice(0, 10)}...`);
-					try {
-						const genRes = await fetch(`https://gmail-checker.blacksoftchild.workers.dev${endpoint}`, {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								'Authorization': `Bearer ${idToken}`
-							},
-							body: JSON.stringify({ invoiceId: invId })
-						});
-
-						const genData = await genRes.json();
-						if (genRes.ok && genData.apiKey) {
-							if (isApiKey) {
-								window.showAppNotification('success', `⚡ <strong>${keyName} claimed successfully!</strong> Added to your dashboard.`);
-							} else {
-								window.showAppNotification('success', `⚡ <strong>${keyName} claimed successfully!</strong> Active key updated.`);
-								localStorage.setItem('gmailChecker_apiData', JSON.stringify({
-									apiKey: genData.apiKey,
-									type: 'vip',
-									timestamp: Date.now()
-								}));
-								window.APIKEY = genData.apiKey;
-							}
-						} else {
-							console.error("Auto-generation failed for invoice", invId, genData.error);
-						}
-					} catch (err) {
-						console.error("Auto-generation error for invoice", invId, err);
-					}
-				}
-				// Refresh the dashboard once unclaimed keys have been generated
-				await window.loadDashboardData();
-				return;
+			if (window.renderNotifications) {
+				window.renderNotifications(profile.notifications, profile.unread_notifications);
 			}
 
 			// Update Badges dynamically based on roles and keys
@@ -251,26 +183,19 @@ window.loadDashboardData = async function (force = false) {
 			let tier = 'FREE';
 			if (profile.role === 'admin') {
 				tier = 'ADMIN';
-			} else {
-				const hasVipKey = keys && keys.some(k => k.type === 'vip');
-				const hasTrialKey = keys && keys.some(k => k.type === 'trial');
-				if (hasVipKey) {
-					tier = 'VIP';
-				} else if (hasTrialKey || profile.hasClaimedTrial) {
-					tier = 'TRIAL';
-				}
+			} else if (profile.subscription_plan && profile.subscription_plan !== 'free' && profile.subscription_plan !== 'none' && profile.subscription_expiry > Date.now()) {
+				const plan = profile.subscription_plan;
+				if (plan === 'pro_subs') tier = 'PRO';
+				else if (plan === 'ultra_subs') tier = 'ULTRA';
+				else tier = 'PRO'; // safe fallback for any unrecognized plan
 			}
 
 			if (badge) {
 				badge.textContent = tier;
-				if (tier === 'VIP' || tier === 'ADMIN') {
+				if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
 					badge.style.color = '#af86fc';
 					badge.style.background = 'rgba(175, 134, 252, 0.1)';
 					badge.style.borderColor = 'rgba(175, 134, 252, 0.2)';
-				} else if (tier === 'TRIAL') {
-					badge.style.color = '#00f0ff';
-					badge.style.background = 'rgba(0, 240, 255, 0.1)';
-					badge.style.borderColor = 'rgba(0, 240, 255, 0.2)';
 				} else {
 					badge.style.color = 'var(--text-muted)';
 					badge.style.background = 'rgba(255, 255, 255, 0.05)';
@@ -286,49 +211,40 @@ window.loadDashboardData = async function (force = false) {
 			// UPDATE SUBSCRIPTION EXPIRY ACTIVE PERIOD STATS
 			const subExpiryDisplay = document.getElementById('db-subscription-expiry');
 			if (subExpiryDisplay) {
-				const vipKey = keys && keys.find(k => k.type === 'vip');
-				if (vipKey) {
-					if (vipKey.expiresAt === 'lifetime') {
-						subExpiryDisplay.textContent = 'Lifetime';
-						subExpiryDisplay.style.color = '#379e56ff';
-					} else {
-						const expDate = new Date(vipKey.expiresAt);
+				if (tier === 'PRO' || tier === 'ULTRA') {
+					if (profile.subscription_expiry) {
+						const expDate = new Date(profile.subscription_expiry);
 						subExpiryDisplay.textContent = expDate.toLocaleDateString();
-						if (expDate <= new Date()) {
-							subExpiryDisplay.style.color = '#ff6666';
-						} else {
-							subExpiryDisplay.style.color = '#379e56ff';
-						}
-					}
-				} else {
-					if (tier === 'ADMIN') {
-						subExpiryDisplay.textContent = 'Admin Console';
-						subExpiryDisplay.style.color = '#af86fc';
-					} else if (tier === 'TRIAL') {
-						subExpiryDisplay.textContent = 'Trial Period';
-						subExpiryDisplay.style.color = '#00f0ff';
+						subExpiryDisplay.style.color = expDate <= new Date() ? '#ff6666' : '#379e56ff';
 					} else {
 						subExpiryDisplay.textContent = 'Lifetime';
 						subExpiryDisplay.style.color = '#379e56ff';
 					}
+				} else if (tier === 'ADMIN') {
+					subExpiryDisplay.textContent = 'Admin Console';
+					subExpiryDisplay.style.color = '#af86fc';
+				} else {
+					subExpiryDisplay.textContent = 'lifetime';
+					subExpiryDisplay.style.color = '#379e56ff';
 				}
 			}
 
-			// UPDATE GET MORE VIP KEYS BUTTON TEXT
+			// UPDATE RENEW / SUBSCRIBE BUTTON TEXT
 			const btnPricingSub = document.getElementById('btn-dashboard-go-pricing-sub');
 			if (btnPricingSub) {
-				if (tier === 'VIP') {
-					btnPricingSub.innerHTML = `<i class="fa-solid fa-arrows-rotate" style="margin-right: 8px;"></i>Renew / Extend VIP`;
+				if (tier === 'PRO' || tier === 'ULTRA') {
+					btnPricingSub.innerHTML = `<i class="fa-solid fa-arrows-rotate" style="margin-right: 8px;"></i>Renew / Extend Subscription`;
 				} else {
 					btnPricingSub.innerHTML = `<i class="fa-solid fa-gem" style="margin-right: 8px;"></i>Subscribe Now`;
 				}
 			}
 
-			const historyEntries = Object.entries(history);
+			const paymentHistory = profile.paymentHistory || {};
+			const historyEntries = Object.entries(paymentHistory);
 
 			// Separate histories
-			const subscriptionHistory = historyEntries.filter(([id, data]) => !data.product_type || data.product_type === 'subscription');
-			const apiKeyHistory = historyEntries.filter(([id, data]) => data.product_type === 'api_key');
+			const subscriptionHistory = historyEntries.filter(([id, data]) => data && (!data.product_type || data.product_type === 'subscription'));
+			const apiKeyHistory = historyEntries.filter(([id, data]) => data && data.product_type === 'api_key');
 
 			// PENDING PAYMENT UI LOGIC
 			let pendingSubscription = null;
@@ -370,7 +286,7 @@ window.loadDashboardData = async function (force = false) {
 				const btnPendingCancel = document.getElementById('btn-pending-cancel');
 
 				if (pendingIdDisplay) pendingIdDisplay.textContent = pendingSubscription.id;
-				if (pendingPlanDisplay) pendingPlanDisplay.textContent = pendingSubscription.data.productName || (pendingSubscription.data.product_id === 'vip_1y' ? 'VIP 1 Year' : 'VIP 1 Month');
+				if (pendingPlanDisplay) pendingPlanDisplay.textContent = pendingSubscription.data.productName || 'Subscription Plan';
 
 				if (btnPendingPay && pendingSubscription.data.invoice_url) {
 					btnPendingPay.onclick = () => window.open(pendingSubscription.data.invoice_url, '_blank');
@@ -385,7 +301,7 @@ window.loadDashboardData = async function (force = false) {
 						newBtnCancel.disabled = true;
 						newBtnCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
 						try {
-							const cancelRes = await fetch('https://gc-server.blacksoftchild.workers.dev/cancel-invoice', {
+							const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
 								body: JSON.stringify({ invoiceId: pendingSubscription.id })
@@ -393,7 +309,7 @@ window.loadDashboardData = async function (force = false) {
 							const cancelData = await cancelRes.json();
 							if (cancelRes.ok && cancelData.success) {
 								window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-								await window.loadDashboardData();
+								await window.loadDashboardData(true);
 							} else {
 								throw new Error(cancelData.error || 'Server error');
 							}
@@ -428,7 +344,7 @@ window.loadDashboardData = async function (force = false) {
 				const btnDevPendingCancel = document.getElementById('btn-dev-pending-cancel');
 
 				if (devPendingIdDisplay) devPendingIdDisplay.textContent = pendingApiKey.id;
-				if (devPendingPlanDisplay) devPendingPlanDisplay.textContent = pendingApiKey.data.productName || 'API Key Quota';
+				if (devPendingPlanDisplay) devPendingPlanDisplay.textContent = pendingApiKey.data.productName || 'API Key Credits';
 
 				if (btnDevPendingPay && pendingApiKey.data.invoice_url) {
 					btnDevPendingPay.onclick = () => window.open(pendingApiKey.data.invoice_url, '_blank');
@@ -443,7 +359,7 @@ window.loadDashboardData = async function (force = false) {
 						newBtnDevCancel.disabled = true;
 						newBtnDevCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
 						try {
-							const cancelRes = await fetch('https://gc-server.blacksoftchild.workers.dev/cancel-invoice', {
+							const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
 								body: JSON.stringify({ invoiceId: pendingApiKey.id })
@@ -451,7 +367,7 @@ window.loadDashboardData = async function (force = false) {
 							const cancelData = await cancelRes.json();
 							if (cancelRes.ok && cancelData.success) {
 								window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-								await window.loadDashboardData();
+								await window.loadDashboardData(true);
 							} else {
 								throw new Error(cancelData.error || 'Server error');
 							}
@@ -491,14 +407,14 @@ window.loadDashboardData = async function (force = false) {
 						item.style.padding = '8px 12px';
 						item.style.fontSize = '0.8rem';
 
-						const label = data.product_id === 'vip_1y' ? 'VIP 1 Year' : 'VIP 1 Month';
+						const label = data.productName || 'Subscription Plan';
 						const dateStr = data.created_at ? new Date(data.created_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
 
 						let actionBtnHtml = '';
 						if (data.isUsed) {
-							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Claimed</span>`;
+							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
 						} else if (data.payment_status === 'finished') {
-							actionBtnHtml = `<button class="btn-generate-vip-invoice" data-invoice="${invoiceId}" style="background:linear-gradient(135deg,#af86fc,#7e53c9);color:white;border:none;border-radius:6px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'Orbitron',sans-serif;font-weight:bold;box-shadow:0 2px 8px rgba(175,134,252,0.2);white-space:nowrap"><i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px"></i>Generate Key</button>`;
+							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
 						} else {
 							const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.7rem;font-weight:bold;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
 							actionBtnHtml = `
@@ -511,10 +427,29 @@ window.loadDashboardData = async function (force = false) {
 							`;
 						}
 
+						let paymentDetailsHtml = '';
+						if (data.pay_currency && data.pay_amount) {
+							const usdValue = data.price_amount_usd ? ` (~$${data.price_amount_usd})` : '';
+							let txLink = '';
+							if (data.payin_hash) {
+								let explorerUrl = `https://blockchair.com/search?q=${data.payin_hash}`;
+								const curr = data.pay_currency.toLowerCase();
+								if (curr === 'trx' || curr === 'usdttrc20') explorerUrl = `https://tronscan.org/#/transaction/${data.payin_hash}`;
+								else if (curr === 'bnbbsc' || curr === 'usdtbsc') explorerUrl = `https://bscscan.com/tx/${data.payin_hash}`;
+								else if (curr === 'eth' || curr === 'usdt' || curr === 'usdterc20') explorerUrl = `https://etherscan.io/tx/${data.payin_hash}`;
+								else if (curr === 'matic' || curr === 'usdtmatic') explorerUrl = `https://polygonscan.com/tx/${data.payin_hash}`;
+								else if (curr === 'sol') explorerUrl = `https://solscan.io/tx/${data.payin_hash}`;
+								txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;font-size:0.65rem;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-cube" style="color:#00f0ff"></i> Block Explorer</a></div>`;
+							}
+							const addrHtml = data.pay_address ? `<br><span style="font-size:0.65rem;color:var(--text-muted)">To: ${data.pay_address.slice(0, 20)}...</span>` : '';
+							paymentDetailsHtml = `<div style="font-size:0.7rem;color:#00f0ff;margin-top:4px;font-family:'RobotoMono',monospace"><span style="text-transform:uppercase;font-weight:bold">${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
+						}
+
 						item.innerHTML = `
 							<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">
 								<span style="font-weight:bold;color:var(--text-sharp);font-size:0.8rem">${label}</span>
 								<span style="font-size:0.7rem;color:var(--text-muted);font-family:'RobotoMono',monospace">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
+								${paymentDetailsHtml}
 							</div>
 							<div>${actionBtnHtml}</div>
 						`;
@@ -530,7 +465,7 @@ window.loadDashboardData = async function (force = false) {
 							btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating...';
 
 							try {
-								const genRes = await fetch('https://gmail-checker.blacksoftchild.workers.dev/generate-vip-key', {
+								const genRes = await fetch(window.API.GENERATE_API_KEY, {
 									method: 'POST',
 									headers: {
 										'Content-Type': 'application/json',
@@ -541,14 +476,14 @@ window.loadDashboardData = async function (force = false) {
 
 								const genData = await genRes.json();
 								if (genRes.ok && genData.apiKey) {
-									window.showAppNotification('success', '⚡ <strong>VIP Key generated successfully!</strong> Active key updated.');
+									window.showAppNotification('success', '⚡ <strong>Key generated successfully!</strong> Active key updated.');
 									localStorage.setItem('gmailChecker_apiData', JSON.stringify({
 										apiKey: genData.apiKey,
 										type: 'vip',
 										timestamp: Date.now()
 									}));
 									window.APIKEY = genData.apiKey;
-									await window.loadDashboardData();
+									await window.loadDashboardData(true);
 								} else {
 									window.showAppNotification('danger', `Generation failed: ${genData.error || 'Server Error'}`);
 									btn.disabled = false;
@@ -572,7 +507,7 @@ window.loadDashboardData = async function (force = false) {
 							btn.disabled = true;
 
 							window.showAppNotification('info', 'Checking latest payment status...');
-							await window.loadDashboardData();
+							await window.loadDashboardData(true);
 						});
 					});
 
@@ -587,7 +522,7 @@ window.loadDashboardData = async function (force = false) {
 							btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
 							try {
-								const cancelRes = await fetch('https://gc-server.blacksoftchild.workers.dev/cancel-invoice', {
+								const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
 									method: 'POST',
 									headers: {
 										'Content-Type': 'application/json',
@@ -599,7 +534,7 @@ window.loadDashboardData = async function (force = false) {
 								const cancelData = await cancelRes.json();
 								if (cancelRes.ok && cancelData.success) {
 									window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-									await window.loadDashboardData();
+									await window.loadDashboardData(true);
 								} else {
 									window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
 									btn.disabled = false;
@@ -640,14 +575,14 @@ window.loadDashboardData = async function (force = false) {
 						item.style.padding = '8px 12px';
 						item.style.fontSize = '0.8rem';
 
-						const label = data.productName || 'API Key Quota';
+						const label = data.productName || (data.product_id === 'api_100k' ? '100,000 Requests Credits' : (data.product_id === 'api_200k' ? '200,000 Requests Credits' : 'API Credits'));
 						const dateStr = data.created_at ? new Date(data.created_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
 
 						let actionBtnHtml = '';
 						if (data.isUsed) {
-							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Claimed</span>`;
+							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
 						} else if (data.payment_status === 'finished') {
-							actionBtnHtml = `<button class="btn-generate-api-invoice" data-invoice="${invoiceId}" style="background:linear-gradient(135deg,#00f0ff,#0088ff);color:white;border:none;border-radius:6px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'Orbitron',sans-serif;font-weight:bold;box-shadow:0 2px 8px rgba(0,240,255,0.2);white-space:nowrap"><i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px"></i>Generate Key</button>`;
+							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
 						} else {
 							const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.7rem;font-weight:bold;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
 							actionBtnHtml = `
@@ -660,10 +595,29 @@ window.loadDashboardData = async function (force = false) {
 							`;
 						}
 
+						let paymentDetailsHtml = '';
+						if (data.pay_currency && data.pay_amount) {
+							const usdValue = data.price_amount_usd ? ` (~$${data.price_amount_usd})` : '';
+							let txLink = '';
+							if (data.payin_hash) {
+								let explorerUrl = `https://blockchair.com/search?q=${data.payin_hash}`;
+								const curr = data.pay_currency.toLowerCase();
+								if (curr === 'trx' || curr === 'usdttrc20') explorerUrl = `https://tronscan.org/#/transaction/${data.payin_hash}`;
+								else if (curr === 'bnbbsc' || curr === 'usdtbsc') explorerUrl = `https://bscscan.com/tx/${data.payin_hash}`;
+								else if (curr === 'eth' || curr === 'usdt' || curr === 'usdterc20') explorerUrl = `https://etherscan.io/tx/${data.payin_hash}`;
+								else if (curr === 'matic' || curr === 'usdtmatic') explorerUrl = `https://polygonscan.com/tx/${data.payin_hash}`;
+								else if (curr === 'sol') explorerUrl = `https://solscan.io/tx/${data.payin_hash}`;
+								txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;font-size:0.65rem;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-cube" style="color:#00f0ff"></i> Block Explorer</a></div>`;
+							}
+							const addrHtml = data.pay_address ? `<br><span style="font-size:0.65rem;color:var(--text-muted)">To: ${data.pay_address.slice(0, 20)}...</span>` : '';
+							paymentDetailsHtml = `<div style="font-size:0.7rem;color:#00f0ff;margin-top:4px;font-family:'RobotoMono',monospace"><span style="text-transform:uppercase;font-weight:bold">${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
+						}
+
 						item.innerHTML = `
 							<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">
 								<span style="font-weight:bold;color:var(--text-sharp);font-size:0.8rem">${label}</span>
 								<span style="font-size:0.7rem;color:var(--text-muted);font-family:'RobotoMono',monospace">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
+								${paymentDetailsHtml}
 							</div>
 							<div>${actionBtnHtml}</div>
 						`;
@@ -679,7 +633,7 @@ window.loadDashboardData = async function (force = false) {
 							btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating...';
 
 							try {
-								const genRes = await fetch('https://gmail-checker.blacksoftchild.workers.dev/generate-api-key', {
+								const genRes = await fetch(window.API.GENERATE_API_KEY, {
 									method: 'POST',
 									headers: {
 										'Content-Type': 'application/json',
@@ -692,7 +646,7 @@ window.loadDashboardData = async function (force = false) {
 								if (genRes.ok && genData.apiKey) {
 									window.showAppNotification('success', '⚡ <strong>Developer API Key generated successfully!</strong> It has been added to your table below.');
 									// Pembelian API key tidak mengubah internal user API key (window.APIKEY)
-									await window.loadDashboardData();
+									await window.loadDashboardData(true);
 								} else {
 									window.showAppNotification('danger', `Generation failed: ${genData.error || 'Server Error'}`);
 									btn.disabled = false;
@@ -716,7 +670,7 @@ window.loadDashboardData = async function (force = false) {
 							btn.disabled = true;
 
 							window.showAppNotification('info', 'Checking latest payment status...');
-							await window.loadDashboardData();
+							await window.loadDashboardData(true);
 						});
 					});
 
@@ -731,7 +685,7 @@ window.loadDashboardData = async function (force = false) {
 							btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
 							try {
-								const cancelRes = await fetch('https://gc-server.blacksoftchild.workers.dev/cancel-invoice', {
+								const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
 									method: 'POST',
 									headers: {
 										'Content-Type': 'application/json',
@@ -743,7 +697,7 @@ window.loadDashboardData = async function (force = false) {
 								const cancelData = await cancelRes.json();
 								if (cancelRes.ok && cancelData.success) {
 									window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-									await window.loadDashboardData();
+									await window.loadDashboardData(true);
 								} else {
 									window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
 									btn.disabled = false;
@@ -762,77 +716,110 @@ window.loadDashboardData = async function (force = false) {
 				}
 			}
 
-			// Update VIP info panel description dynamically
+			// Update subscription info panel description dynamically
 			const dbVipKeyDesc = document.getElementById('db-vip-key-desc');
 			if (dbVipKeyDesc) {
 				if (profile.role === 'admin') {
-					dbVipKeyDesc.textContent = 'Admin Console: All actions authorized. You can generate VIP keys with any invoice/payment ID.';
+					dbVipKeyDesc.textContent = 'Admin Console: All actions authorized.';
+				} else if (tier === 'PRO' || tier === 'ULTRA') {
+					dbVipKeyDesc.textContent = 'Each subscription purchase is logged here. Your active plan allows generating API checks via your personal key.';
 				} else {
-					const hasVipKey = keys && keys.some(k => k.type === 'vip');
-					if (hasVipKey) {
-						dbVipKeyDesc.textContent = 'Each VIP purchase automatically allows generating a new key. Click "Generate Key" on any completed invoice.';
-					} else if (profile.hasClaimedTrial) {
-						dbVipKeyDesc.textContent = 'You have active Premium Trial. Upgrade to VIP to generate multiple custom project keys!';
-					} else {
-						dbVipKeyDesc.textContent = 'VIP keys are issued with successful VIP payments. Purchase a plan to get started!';
-					}
+					dbVipKeyDesc.textContent = 'Purchase a PRO or ULTRA subscription to unlock premium daily credits.';
 				}
 			}
 
 
-			// 3. Fetch Quota Rate-limit stats for the active API key
-			if (window.APIKEY) {
-				const statsRes = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/stats?key=${window.APIKEY}`);
-				if (statsRes.ok) {
-					const stats = await statsRes.json();
+			// 3. Update Credits and Limits UI
+			let plan = profile.subscription_plan || 'none';
+			const expiry = profile.subscription_expiry || 0;
+			if (plan !== 'none' && expiry < Date.now()) plan = 'none';
 
-					// Update quota UI
-					const usageLabel = document.getElementById('db-quota-usage-label');
-					const devUsageLabel = document.getElementById('dev-quota-usage-label');
-					const labelText = `${stats.requestsUsed.toLocaleString()} / ${stats.maxRequests.toLocaleString()} Requests`;
-					if (usageLabel) usageLabel.textContent = labelText;
-					if (devUsageLabel) devUsageLabel.textContent = labelText;
+			let availableCredits = 0;
+			if (plan === 'pro_subs') {
+				availableCredits = profile.pro_subs_credits !== undefined ? profile.pro_subs_credits : 0;
+			} else if (plan === 'ultra_subs') {
+				availableCredits = profile.ultra_subs_credits !== undefined ? profile.ultra_subs_credits : 0;
+			} else if (plan === 'special_subs') {
+				availableCredits = profile.special_credits !== undefined ? profile.special_credits : 0;
+			} else {
+				availableCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
+			}
 
-					const quotaBar = document.getElementById('db-quota-bar');
-					const devQuotaBar = document.getElementById('dev-quota-bar');
-					const pct = (stats.requestsUsed / stats.maxRequests) * 100;
-					if (quotaBar) quotaBar.style.width = `${Math.min(100, pct)}%`;
-					if (devQuotaBar) devQuotaBar.style.width = `${Math.min(100, pct)}%`;
+			// App Dashboard Credits
+			const appUsageLabel = document.getElementById('db-quota-usage-label');
+			const appQuotaBar = document.getElementById('db-quota-bar');
+			const appRemaining = document.getElementById('db-remaining-requests');
 
-					const dbRemaining = document.getElementById('db-remaining-requests');
-					const devRemaining = document.getElementById('dev-remaining-requests');
-					if (dbRemaining) dbRemaining.textContent = stats.remainingRequests.toLocaleString();
-					if (devRemaining) devRemaining.textContent = stats.remainingRequests.toLocaleString();
+			if (appUsageLabel) appUsageLabel.textContent = `Available Balance: ${availableCredits.toLocaleString()}`;
+			if (appQuotaBar) appQuotaBar.style.width = `100%`; // Static 100% since it's just a balance now
+			if (appRemaining) appRemaining.textContent = availableCredits.toLocaleString();
 
-					// Clear previous countdown interval
-					if (countdownInterval) clearInterval(countdownInterval);
+			// Developer Dashboard Credits (Global API Credits)
+			const apiAvailable = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
 
-					const dbCountdown = document.getElementById('db-reset-countdown');
-					const devCountdown = document.getElementById('dev-reset-countdown');
-
-					if (dbCountdown || devCountdown) {
-						let sec = Math.floor((stats.resetTimestamp - Date.now()) / 1000);
-
-						const updateTimer = () => {
-							if (sec <= 0) {
-								if (dbCountdown) dbCountdown.textContent = '00:00:00';
-								if (devCountdown) devCountdown.textContent = '00:00:00';
-								clearInterval(countdownInterval);
-								return;
-							}
-							let h = Math.floor(sec / 3600);
-							let m = Math.floor((sec % 3600) / 60);
-							let s = sec % 60;
-							const timeText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-							if (dbCountdown) dbCountdown.textContent = timeText;
-							if (devCountdown) devCountdown.textContent = timeText;
-							sec--;
-						};
-
-						updateTimer();
-						countdownInterval = setInterval(updateTimer, 1000);
+			// Low credit alert check with webhook integration
+			if (apiAvailable < 1000) {
+				if (localStorage.getItem('gmailChecker_creditAlert') !== 'false') {
+					window.showAppNotification('warning', `⚠️ <strong>Low Credits Alert:</strong> Your developer API quota has dropped to <strong>${apiAvailable.toLocaleString()}</strong> remaining checks! Please top up soon to avoid interruption.`);
+				}
+				// Webhook support
+				const webhookUrl = localStorage.getItem('gmailChecker_webhookUrl');
+				if (webhookUrl && webhookUrl.startsWith('http')) {
+					const lastWebhookSent = localStorage.getItem('gmailChecker_lastWebhookSent') || 0;
+					if (Date.now() - lastWebhookSent > 3600000) { // 1 hour throttle
+						localStorage.setItem('gmailChecker_lastWebhookSent', Date.now());
+						fetch(webhookUrl, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								username: "Gmail Checker Bot",
+								content: `🚨 **Low API Credits Alert** 🚨\nActive account email: \`${profile.email || 'N/A'}\`\nRemaining API Credits: \`${apiAvailable.toLocaleString()}\` checks.\n\n_Please top up your account credits soon!_`
+							})
+						}).catch(e => console.error("Webhook post failed:", e));
 					}
 				}
+			}
+
+			const devUsageLabel = document.getElementById('dev-quota-usage-label');
+			const devQuotaBar = document.getElementById('dev-quota-bar');
+			const devRemaining = document.getElementById('dev-remaining-requests');
+
+			if (devUsageLabel) devUsageLabel.textContent = `Available Balance: ${apiAvailable.toLocaleString()}`;
+			if (devQuotaBar) devQuotaBar.style.width = `100%`; // Static 100% since it's just a balance now
+			if (devRemaining) devRemaining.textContent = apiAvailable.toLocaleString();
+
+			// Clear previous countdown interval
+			if (countdownInterval) clearInterval(countdownInterval);
+
+			const dbCountdown = document.getElementById('db-reset-countdown');
+			const devCountdown = document.getElementById('dev-reset-countdown');
+
+			if (dbCountdown || devCountdown) {
+				// Calculate seconds until next UTC midnight
+				const now = new Date();
+				const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+				let sec = Math.floor((tomorrow.getTime() - now.getTime()) / 1000);
+
+				const updateTimer = () => {
+					if (sec <= 0) {
+						if (dbCountdown) dbCountdown.textContent = '00:00:00';
+						if (devCountdown) devCountdown.textContent = '00:00:00';
+						clearInterval(countdownInterval);
+						return;
+					}
+
+					const h = Math.floor(sec / 3600);
+					const m = Math.floor((sec % 3600) / 60);
+					const s = sec % 60;
+					const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+					if (dbCountdown) dbCountdown.textContent = timeStr;
+					if (devCountdown) devCountdown.textContent = "Lifetime Credits"; // Lifetime credits don't reset
+					sec--;
+				};
+
+				updateTimer();
+				countdownInterval = setInterval(updateTimer, 1000);
 			}
 		} // closes if (profileRes.ok)
 
@@ -853,7 +840,7 @@ async function loadOwnedKeysList(idToken) {
 	if (!tableBody) return [];
 
 	try {
-		const res = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/get-all-keys`, {
+		const res = await fetch(window.API.GET_ALL_KEYS, {
 			method: 'GET',
 			headers: {
 				'Authorization': `Bearer ${idToken}`
@@ -863,16 +850,20 @@ async function loadOwnedKeysList(idToken) {
 		if (!res.ok) throw new Error("Failed to get keys list");
 
 		const keys = await res.json();
+		window.ownedKeys = keys;
 		tableBody.innerHTML = '';
 
-		const developerKeys = keys.filter(k => k.type === 'api_key' || k.type === 'free');
+		const developerKeys = keys.filter(k => k.type === 'api_key' || k.type === 'compensation');
 
 		if (developerKeys.length === 0) {
-			tableBody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: var(--text-muted);">No Developer API keys found. Purchase an API Key package to generate one.</td></tr>`;
+			tableBody.innerHTML = `<tr><td colspan="6" style="padding: 30px; text-align: center; color: var(--text-muted);">No Developer API keys found. Purchase an API Key package to generate one.</td></tr>`;
 
 			// Render the stats cards deck dynamically
 			if (typeof renderDevStatsCards === 'function') {
 				await renderDevStatsCards(keys);
+			}
+			if (typeof renderCreditsTab === 'function') {
+				renderCreditsTab();
 			}
 			return keys;
 		}
@@ -890,27 +881,30 @@ async function loadOwnedKeysList(idToken) {
 			row.style.fontSize = '0.9rem';
 			row.style.color = 'var(--text-primary)';
 
+			const isAllowedType = k.type === 'api_key' || k.type === 'compensation';
+			const isApiKey = k.type === 'api_key';
+			const ipList = k.allowedIPs || [];
+			const domainList = k.allowedDomains ? (Array.isArray(k.allowedDomains) ? k.allowedDomains : Object.keys(k.allowedDomains)) : [];
+
 			row.innerHTML = `
-				<td style="padding: 15px 10px; font-family: 'RobotoMono'; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-					<span class="db-key-value" data-full-key="${k.key}">${k.key.slice(0, 12)}...</span>
-					<button class="btn-copy-tbl" data-key="${k.key}" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; font-size: 0.8rem;" title="Copy Full Key"><i class="fa-solid fa-copy"></i></button>
+				<td style="padding: 15px 10px; color: var(--text-sharp); font-weight: bold; font-family: 'Orbitron', sans-serif;">
+					${k.projectName || "API Key"}
 				</td>
-				<td style="padding: 15px 10px; font-weight: bold; text-transform: uppercase;">
-					<span style="color: ${k.type === 'vip' ? '#af86fc' : k.type === 'trial' ? '#00f0ff' : 'var(--text-muted)'}">${k.type}</span>
-					${k.invoiceId ? `<br><span style="font-size:0.7rem;color:var(--text-muted);font-family:'RobotoMono',monospace;font-weight:normal">Inv: ${k.invoiceId.slice(0, 8)}</span>` : ''}
+				<td style="padding: 15px 10px; font-family: 'RobotoMono'; font-weight: bold;">
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<span class="db-key-value" data-full-key="${k.key}">${k.key.slice(0, 12)}...</span>
+						<button class="btn-copy-tbl" data-key="${k.key}" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; font-size: 0.8rem;" title="Copy Full Key"><i class="fa-solid fa-copy"></i></button>
+					</div>
 				</td>
 				<td style="padding: 15px 10px; color: var(--text-secondary);">${createdStr}</td>
-				<td style="padding: 15px 10px; color: var(--text-secondary);">${expiresStr}</td>
-				<td style="padding: 15px 10px; text-align: center;">
-					<span style="background: ${isExpired ? 'rgba(255, 77, 77, 0.1)' : 'rgba(102, 255, 217, 0.1)'}; color: ${isExpired ? '#ff6666' : '#66ffd9'}; border: 1px solid ${isExpired ? 'rgba(255,77,77,0.2)' : 'rgba(102,255,217,0.2)'}; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;">
-						${isExpired ? 'EXPIRED' : 'ACTIVE'}
-					</span>
+				<td style="padding: 12px 10px; text-align: center;">
+					${isAllowedType ? `<button class="btn-wl-manage" data-key="${k.key}" data-tab="ip" style="background:rgba(175,134,252,0.08);border:1px solid rgba(175,134,252,0.25);color:#af86fc;border-radius:8px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'RobotoMono';white-space:nowrap"><i class="fa-solid fa-network-wired" style="margin-right:4px"></i>${(ipList.length > 0) ? ipList.length + ' IP(s)' : 'None'}</button>` : '<span style="color:var(--text-muted);font-size:0.75rem">&#8212;</span>'}
 				</td>
 				<td style="padding: 12px 10px; text-align: center;">
-					${(k.type === 'vip' || k.type === 'api_key') ? `<button class="btn-wl-manage" data-key="${k.key}" data-tab="ip" style="background:rgba(175,134,252,0.08);border:1px solid rgba(175,134,252,0.25);color:#af86fc;border-radius:8px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'RobotoMono';white-space:nowrap"><i class="fa-solid fa-network-wired" style="margin-right:4px"></i>${(k.allowedIPs && k.allowedIPs.length > 0) ? k.allowedIPs.length + ' IP(s)' : 'None'}</button>` : '<span style="color:var(--text-muted);font-size:0.75rem">&#8212;</span>'}
+					${isAllowedType ? `<button class="btn-wl-manage" data-key="${k.key}" data-tab="domain" style="background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.2);color:#00f0ff;border-radius:8px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'RobotoMono';white-space:nowrap"><i class="fa-solid fa-globe" style="margin-right:4px"></i>${(domainList.length > 0) ? domainList.length + ' Domain(s)' : 'None'}</button>` : '<span style="color:var(--text-muted);font-size:0.75rem">&#8212;</span>'}
 				</td>
 				<td style="padding: 12px 10px; text-align: center;">
-					${(k.type === 'vip' || k.type === 'api_key') ? `<button class="btn-wl-manage" data-key="${k.key}" data-tab="domain" style="background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.2);color:#00f0ff;border-radius:8px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'RobotoMono';white-space:nowrap"><i class="fa-solid fa-globe" style="margin-right:4px"></i>${(k.allowedDomains && k.allowedDomains.length > 0) ? k.allowedDomains.length + ' Domain(s)' : 'None'}</button>` : '<span style="color:var(--text-muted);font-size:0.75rem">&#8212;</span>'}
+					${isApiKey ? `<button class="btn-delete-key-tbl" data-key="${k.key}" style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.2);color:#ff6666;border-radius:8px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'RobotoMono';"><i class="fa-solid fa-trash"></i></button>` : '<span style="color:var(--text-muted);font-size:0.75rem">&#8212;</span>'}
 				</td>
 			`;
 
@@ -954,7 +948,45 @@ async function loadOwnedKeysList(idToken) {
 				window.showAppNotification('success', 'âš¡ <strong>Active API Key updated!</strong> Statistics re-calibrating...');
 
 				// Refresh Dashboard
-				window.loadDashboardData();
+				window.loadDashboardData(true);
+			});
+		});
+
+		document.querySelectorAll('.btn-delete-key-tbl').forEach(btn => {
+			btn.addEventListener('click', async (e) => {
+				e.stopPropagation();
+				const keyVal = btn.getAttribute('data-key');
+				if (confirm("Are you sure you want to delete this API Key? This action cannot be undone.")) {
+					// Langsung hapus element TR secara optimis
+					const rowEl = btn.closest('tr');
+					if (rowEl) {
+						rowEl.style.transition = 'all 0.3s ease';
+						rowEl.style.opacity = '0';
+						rowEl.style.transform = 'translateX(-20px)';
+						setTimeout(() => { rowEl.remove(); }, 300);
+					}
+
+					try {
+						const res = await fetch(window.API.DELETE_API_KEY, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								'Authorization': `Bearer ${idToken}`
+							},
+							body: JSON.stringify({ apiKey: keyVal })
+						});
+						if (res.ok) {
+							window.showAppNotification('success', '🗑️ <strong>API Key deleted</strong> successfully!');
+							window.loadDashboardData(true);
+						} else {
+							window.showAppNotification('danger', 'Error deleting API key.');
+							window.loadDashboardData(true);
+						}
+					} catch (err) {
+						window.showAppNotification('danger', 'Error deleting API key.');
+						window.loadDashboardData(true);
+					}
+				}
 			});
 		});
 
@@ -962,165 +994,213 @@ async function loadOwnedKeysList(idToken) {
 		if (typeof renderDevStatsCards === 'function') {
 			await renderDevStatsCards(keys);
 		}
+		if (typeof renderCreditsTab === 'function') {
+			renderCreditsTab();
+		}
 
 		return keys;
 	} catch (e) {
 		console.error(e);
-		tableBody.innerHTML = `<tr><td colspan="7" style="padding: 30px; text-align: center; color: #ff6666;">Error loading API keys list: ${e.message}</td></tr>`;
+		tableBody.innerHTML = `<tr><td colspan="6" style="padding: 30px; text-align: center; color: #ff6666;">Error loading API keys list: ${e.message}</td></tr>`;
 	}
 }
 
 let devCountdownInterval = null;
 
 // RENDER BEAUTIFUL DYNAMIC STATS CARDS FOR EACH OWNED KEY
-async function renderDevStatsCards(keys) {
+async function renderDevStatsCards(keys = []) {
 	const container = document.getElementById('dev-stats-keys-container');
 	if (!container) return;
 
-	const devKeys = keys ? keys.filter(k => k.type === 'api_key' || k.type === 'free') : [];
+	const developerKeys = keys.filter(k => k.type === 'api_key' || k.type === 'compensation');
 
-	if (!devKeys || devKeys.length === 0) {
+	if (developerKeys.length === 0) {
 		container.innerHTML = `
-			<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px;">
-				No API keys registered to compile stats.
+			<div style="width: 100%; padding: 40px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px;">
+				<i class="fa-solid fa-chart-bar" style="font-size: 2.5rem; color: var(--border-color); margin-bottom: 15px; display: block;"></i>
+				No API Keys found. Stats will appear here once you generate an API Key.
 			</div>
 		`;
 		return;
 	}
 
-	container.innerHTML = `
-		<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px;">
-			<i class="fa-solid fa-circle-notch fa-spin" style="margin-right: 8px;"></i> Fetching live quota details for all keys...
-		</div>
-	`;
-
-	try {
-		// Fetch stats sequentially to prevent rate limits or flickering
-		const keysWithStats = [];
-		for (const k of devKeys) {
-			try {
-				const statsRes = await fetch(`https://gmail-checker.blacksoftchild.workers.dev/stats?key=${k.key}`);
-				if (statsRes.ok) {
-					const stats = await statsRes.json();
-					keysWithStats.push({ keyData: k, stats });
-				} else {
-					keysWithStats.push({ keyData: k, stats: null });
-				}
-			} catch (e) {
-				console.error(`Error loading key stats for ${k.key}:`, e);
-				keysWithStats.push({ keyData: k, stats: null });
+	// Dynamic async fetching of additional key statistics
+	const statsPromises = developerKeys.map(async (k) => {
+		try {
+			const endpoint = k.type === 'compensation' ? window.API.GET_USAGE_STATS_C : window.API.GET_USAGE_STATS;
+			const res = await fetch(`${endpoint}?key=${k.key}`);
+			if (res.ok) {
+				return { key: k.key, stats: await res.json() };
 			}
-			// Small delay between requests to avoid rate limits
-			await new Promise(r => setTimeout(r, 150));
+		} catch (e) {
+			console.error("Failed to fetch stats for key", k.key, e);
 		}
-		container.innerHTML = '';
+		return { key: k.key, stats: null };
+	});
 
-		keysWithStats.forEach(({ keyData, stats }) => {
-			const card = document.createElement('div');
-			card.className = 'pricing-card'; // Reuses premium glassmorphism styling
-			card.style.flex = '1';
-			card.style.minWidth = '320px';
-			card.style.background = 'var(--bg-secondary)';
-			card.style.border = keyData.type === 'vip' ? '1px solid rgba(175, 134, 252, 0.3)' : '1px solid var(--border-color)';
-			card.style.borderRadius = '20px';
-			card.style.padding = '25px';
-			card.style.display = 'flex';
-			card.style.flexDirection = 'column';
-			card.style.gap = '20px';
-			card.style.boxShadow = 'var(--shadow-md)';
-			card.style.position = 'relative';
-			card.style.overflow = 'hidden';
+	const statsResults = await Promise.all(statsPromises);
+	const statsMap = statsResults.reduce((acc, curr) => {
+		acc[curr.key] = curr.stats;
+		return acc;
+	}, {});
 
-			if (keyData.type === 'vip') {
-				card.innerHTML += `
-					<div style="position: absolute; top: 12px; right: -25px; background: #af86fc; color: #121212; font-size: 0.6rem; font-weight: bold; font-family: 'Orbitron', monospace; padding: 2px 25px; transform: rotate(45deg); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-						VIP
-					</div>
-				`;
-			}
+	let html = '';
+	developerKeys.forEach((k, index) => {
+		const maskedKey = k.key.slice(0, 8) + '...' + k.key.slice(-8);
+		const s = statsMap[k.key] || {};
+		const totalUsage = k.usage || s.usage || 0;
+		const totalLimit = k.limit || s.limit || 50000;
+		const dailyKeyUsage = s.dailyKeyUsage || 0;
+		const dailyLimit = k.daily_limit || s.daily_limit || 100000;
+		const expiresStr = k.expiresAt === 'lifetime' || s.expiresAt === 'lifetime' ? 'Lifetime' : new Date(k.expiresAt || s.expiresAt).toLocaleDateString();
 
-			const keyDisplayLabel = `${keyData.key.slice(0, 10)}...`;
-
-			if (!stats) {
-				card.innerHTML += `
-					<div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-						<span style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted); font-family: 'Orbitron', monospace; letter-spacing: 1px;">
-							${keyData.type.toUpperCase()} KEY
-						</span>
-						<h3 class="font-keren" style="font-size: 1.1rem; color: var(--text-sharp); margin: 0; font-family: 'RobotoMono', monospace; display: flex; align-items: center; gap: 8px;">
-							<span>${keyDisplayLabel}</span>
-						</h3>
-						<p style="font-size: 0.8rem; color: #ff6666; margin: 0;">Failed to retrieve active quota stats.</p>
-					</div>
-				`;
-				container.appendChild(card);
-				return;
-			}
-
-			const pct = (stats.requestsUsed / stats.maxRequests) * 100;
-			const barColor = keyData.type === 'vip' ? 'linear-gradient(90deg, #af86fc 0%, #7e53c9 100%)' : 'linear-gradient(90deg, #00f0ff 0%, #0072ff 100%)';
-
-			card.innerHTML += `
-				<div style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
-					<!-- Key Info Header -->
-					<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-						<span style="font-size: 0.75rem; font-weight: bold; color: ${keyData.type === 'vip' ? '#af86fc' : '#00f0ff'}; font-family: 'Orbitron', monospace; letter-spacing: 1px;">
-							${keyData.type.toUpperCase()} DEVELOPER KEY
-						</span>
-					</div>
-
-					<div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-						<span style="font-family: 'RobotoMono', monospace; font-size: 0.85rem; color: var(--text-sharp); font-weight: bold;">
-							${keyData.key.slice(0, 16)}...
-						</span>
-						<button onclick="navigator.clipboard.writeText('${keyData.key}').then(() => window.showAppNotification('success', '📋 <strong>Key copied</strong> to clipboard!'))" 
-							style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; font-size: 0.85rem;" title="Copy Full Key">
-							<i class="fa-solid fa-copy"></i>
-						</button>
-					</div>
-
-					<!-- Usage Progress bar -->
-					<div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-						<div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary);">
-							<span>Usage Progress:</span>
-							<strong style="color: var(--text-sharp); font-family: 'RobotoMono'; font-size: 0.8rem;">
-								${stats.requestsUsed.toLocaleString()} / ${stats.maxRequests.toLocaleString()}
-							</strong>
+		html += `
+			<div class="pricing-card" style="flex: 1; min-width: 300px; max-width: 48%; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; gap: 20px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; box-sizing: border-box; margin-bottom: 10px;">
+				<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+					<div style="display: flex; align-items: center; gap: 12px;">
+						<div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(175, 134, 252, 0.1); display: flex; align-items: center; justify-content: center; color: #af86fc; font-size: 1.2rem;">
+							<i class="fa-solid fa-key"></i>
 						</div>
-						<div style="width: 100%; height: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; position: relative;">
-							<div style="width: ${Math.min(100, pct)}%; height: 100%; background: ${barColor}; transition: width 0.4s ease; border-radius: 10px;"></div>
-						</div>
-					</div>
-
-					<!-- Key Stats Footer -->
-					<div style="display: flex; justify-content: space-between; gap: 15px; margin-top: 5px; flex-wrap: wrap; width: 100%;">
-						<div style="display: flex; flex-direction: column; gap: 3px;">
-							<span style="font-size: 0.7rem; color: var(--text-muted);">Remaining Checks</span>
-							<strong style="font-size: 1.05rem; color: var(--text-sharp); font-family: 'Orbitron', monospace;">
-								${stats.remainingRequests.toLocaleString()}
-							</strong>
-						</div>
-						<div style="display: flex; flex-direction: column; gap: 3px; text-align: right;">
-							<span style="font-size: 0.7rem; color: var(--text-muted);">Reset Timer</span>
-							<strong class="dev-reset-countdown-timer" data-reset-time="${stats.resetTimestamp}" style="font-size: 1.05rem; color: #ff6666; font-family: 'Orbitron', monospace;">
-								00:00:00
-							</strong>
+						<div>
+							<h4 style="margin: 0; font-family: 'Orbitron', sans-serif; font-size: 1rem; color: var(--text-sharp);">${k.type === 'compensation' ? 'Compensation Key' : 'API Key'} #${index + 1}</h4>
+							<span style="font-size: 0.75rem; color: var(--text-muted); font-family: 'RobotoMono', monospace;">${maskedKey}</span>
 						</div>
 					</div>
 				</div>
-			`;
+				
+				<div style="background: rgba(0,0,0,0.15); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); display: flex; flex-direction: column; gap: 12px;">
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<span style="font-size: 0.85rem; color: var(--text-muted);">${k.type === 'compensation' ? 'Total Key Usage' : 'Total Usage Count'}</span>
+						<span style="font-family: 'Orbitron', monospace; font-size: 1.25rem; font-weight: bold; color: #66ffd9; text-shadow: 0 0 8px rgba(102, 255, 217, 0.2);">
+							${totalUsage.toLocaleString()}
+						</span>
+					</div>
 
-			container.appendChild(card);
-		});
+					${k.type === 'compensation' ? `
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<span style="font-size: 0.85rem; color: var(--text-muted);">Daily Key Usage</span>
+						<span style="font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: bold; color: #00f0ff;">
+							${dailyKeyUsage.toLocaleString()} / ${dailyLimit.toLocaleString()}
+						</span>
+					</div>
+					` : ''}
 
-		// Start unified countdowns for all dynamic timer tags
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<span style="font-size: 0.85rem; color: var(--text-muted);">Created At</span>
+						<span style="font-size: 0.8rem; color: var(--text-secondary);">
+							${new Date(k.createdAt).toLocaleDateString()}
+						</span>
+					</div>
+
+					${k.type === 'compensation' ? `
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<span style="font-size: 0.85rem; color: var(--text-muted);">Expires At</span>
+						<span style="font-size: 0.8rem; color: #af86fc; font-weight: bold;">
+							${expiresStr}
+						</span>
+					</div>
+
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<span style="font-size: 0.85rem; color: var(--text-muted);">Daily Reset In</span>
+						<span style="font-family: 'Orbitron', monospace; font-size: 0.95rem; font-weight: bold; color: #ffad33; display: flex; align-items: center; gap: 6px;">
+							<i class="fa-solid fa-clock-rotate-left fa-spin" style="font-size: 0.8rem; --fa-animation-duration: 4s;"></i>
+							<span class="dev-reset-countdown-timer" data-reset-time="${new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0, 0)).getTime()}">--:--:--</span>
+						</span>
+					</div>
+					` : ''}
+				</div>
+			</div>
+		`;
+	});
+
+	container.innerHTML = html;
+
+	if (typeof updateAllDevCountdowns === 'function') {
 		updateAllDevCountdowns();
-	} catch (err) {
-		console.error("Failed rendering dev stats deck:", err);
-		container.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #ff6666;">Error displaying statistics: ${err.message}</div>`;
 	}
 }
 
+window.renderCreditsTab = function () {
+	const container = document.getElementById('dev-credits-container');
+	if (!container) return;
+	const profile = window.dashboardProfile || {};
+	const premiumCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
+	const freeCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
+	const totalAvailable = premiumCredits + freeCredits;
+
+	const compKeys = (window.ownedKeys || []).filter(k => k.type === 'compensation');
+
+	let compHtml = '';
+	if (compKeys.length > 0) {
+		compHtml = `
+			<div style="margin-top: 25px; display: flex; flex-direction: column; gap: 15px; width: 100%; border-top: 1px solid var(--border-color); padding-top: 25px;">
+				<h4 style="margin: 0; font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: #af86fc; display: flex; align-items: center; gap: 8px;">
+					<i class="fa-solid fa-gift"></i> Compensation Keys & Limits
+				</h4>
+				<div style="display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box;">
+		`;
+		compKeys.forEach(k => {
+			const dailyLimit = k.daily_limit || 100000;
+			const maskedKey = k.key.slice(0, 8) + '...' + k.key.slice(-8);
+			compHtml += `
+				<div style="background: rgba(0,0,0,0.15); padding: 18px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
+					<div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
+						<span style="font-family: 'Orbitron', sans-serif; font-size: 0.82rem; color: var(--text-sharp); font-weight: bold;">
+							${k.projectName || 'Compensation Key'}
+						</span>
+						<span style="font-family: 'RobotoMono', monospace; font-size: 0.72rem; color: var(--text-muted);">
+							${maskedKey}
+						</span>
+					</div>
+					<div style="text-align: right;">
+						<span style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Daily Limit</span>
+						<span style="font-family: 'Orbitron', monospace; font-size: 1.15rem; font-weight: bold; color: #66ffd9;">
+							${dailyLimit.toLocaleString()} / day
+						</span>
+					</div>
+				</div>
+			`;
+		});
+		compHtml += `
+				</div>
+			</div>
+		`;
+	}
+
+	container.innerHTML = `
+		<div class="pricing-card" style="flex: 1; min-width: 320px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; display: flex; flex-direction: column; gap: 24px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; width: 100%; box-sizing: border-box;">
+			<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+				<div style="display: flex; align-items: center; gap: 12px;">
+					<div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(0,240,255,0.1); display: flex; align-items: center; justify-content: center; color: #00f0ff; font-size: 1.4rem;">
+						<i class="fa-solid fa-coins"></i>
+					</div>
+					<div>
+						<h4 style="margin: 0; font-family: 'Orbitron', sans-serif; font-size: 1.25rem; color: var(--text-sharp);">Credits</h4>
+						<span style="font-size: 0.8rem; color: var(--text-muted); font-family: 'RobotoMono', monospace;">Lifetime Non-Expiring API Credits</span>
+					</div>
+				</div>
+			</div>
+			
+			<div style="background: rgba(0,0,0,0.2); padding: 35px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+				<span style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 1.5px;">Available Credits</span>
+				<div style="font-size: 3rem; font-weight: bold; color: #66ffd9; font-family: 'Orbitron', monospace; text-shadow: 0 0 15px rgba(102, 255, 217, 0.4);">
+					${totalAvailable.toLocaleString()}
+				</div>
+				<span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; font-family: 'RobotoMono', monospace;">
+					(${freeCredits.toLocaleString()} Free + ${premiumCredits.toLocaleString()} Premium)
+				</span>
+			</div>
+
+			<div style="display: flex; justify-content: center; margin-top: 10px;">
+				<button class="btn btn-primary" onclick="window.setActiveMenu('dev-add', true)" style="padding: 14px 28px; border-radius: 14px; font-weight: bold; display: flex; align-items: center; gap: 10px; font-family: 'Orbitron', sans-serif; box-shadow: 0 4px 15px rgba(175, 134, 252, 0.3);">
+					<i class="fa-solid fa-cart-shopping"></i> Buy Credits
+				</button>
+			</div>
+
+			${compHtml}
+		</div>
+	`;
+}
 // UNIFIED TIMER COUNTDOWN UPDATE FOR DECK
 function updateAllDevCountdowns() {
 	if (devCountdownInterval) clearInterval(devCountdownInterval);
@@ -1210,7 +1290,7 @@ async function loadUsageHistory() {
 // WHITELIST MODAL - Authorized IPs + Authorized Domains
 // =============================================================
 
-const GC_API = 'https://gmail-checker.blacksoftchild.workers.dev';
+const GC_API = window.API.GC_CHECKER_BASE;
 let _wlCurrentKey = null;
 
 async function openWhitelistModal(apiKey, tab) {
@@ -1315,7 +1395,7 @@ async function addIP() {
 	if (res.ok && data.success) {
 		window.showAppNotification('success', '<strong>' + ip + '</strong> added to Authorized IPs!');
 		if (input) input.value = '';
-		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData(true);
 	} else { window.showAppNotification('error', data.error || data.message || 'Failed to add IP'); }
 }
 
@@ -1325,7 +1405,7 @@ async function removeIP(ip) {
 	const data = await res.json();
 	if (res.ok && data.success) {
 		window.showAppNotification('success', 'IP <strong>' + ip + '</strong> removed.');
-		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData(true);
 	} else { window.showAppNotification('error', data.error || 'Failed to remove IP'); }
 }
 
@@ -1335,7 +1415,7 @@ async function clearAllIPs() {
 	const data = await res.json();
 	if (res.ok && data.success) {
 		window.showAppNotification('success', 'All IPs cleared. IP restriction disabled.');
-		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData(true);
 	} else { window.showAppNotification('error', data.error || 'Failed to clear IPs'); }
 }
 
@@ -1366,7 +1446,7 @@ async function addDomain() {
 		const added = (data.allowedDomains && data.allowedDomains.length) ? data.allowedDomains[data.allowedDomains.length - 1] : domain;
 		window.showAppNotification('success', '<strong>' + added + '</strong> added to Authorized Domains!');
 		if (input) input.value = '';
-		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData(true);
 	} else { window.showAppNotification('error', data.error || data.message || 'Failed to add domain'); }
 }
 
@@ -1376,8 +1456,8 @@ async function removeDomain(domain) {
 	const data = await res.json();
 	if (res.ok && data.success) {
 		window.showAppNotification('success', 'Domain <strong>' + domain + '</strong> removed.');
-		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
-	} else { window.showAppNotification('error', data.error || 'Failed to remove domain'); }
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData(true);
+	} else { window.showAppNotification('error', data.error || 'Failed to remove domain'); refreshWhitelistData(_wlCurrentKey); }
 }
 
 async function clearAllDomains() {
@@ -1386,7 +1466,7 @@ async function clearAllDomains() {
 	const data = await res.json();
 	if (res.ok && data.success) {
 		window.showAppNotification('success', 'All domains cleared. Domain restriction disabled.');
-		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData();
+		refreshWhitelistData(_wlCurrentKey); window.loadDashboardData(true);
 	} else { window.showAppNotification('error', data.error || 'Failed to clear domains'); }
 }
 
@@ -1424,4 +1504,71 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (btnClearDom) btnClearDom.addEventListener('click', function () {
 		if (confirm('Remove ALL whitelisted domains? This will disable domain restriction.')) clearAllDomains();
 	});
+
+	// Create API Key logic
+	const btnCreateKey = document.getElementById('btn-create-api-key');
+	if (btnCreateKey) {
+		btnCreateKey.addEventListener('click', async () => {
+			const projectEl = document.getElementById('input-new-key-project');
+			const ipsEl = document.getElementById('input-new-key-ips');
+			const domainsEl = document.getElementById('input-new-key-domains');
+			const limitEl = document.getElementById('input-new-key-daily-limit');
+
+			const projectName = projectEl ? projectEl.value.trim() : '';
+			if (!projectName) {
+				window.showAppNotification('danger', '⚠️ <strong>Project Name is required!</strong> Please specify a project name to identify this key.');
+				return;
+			}
+
+			const allowedIps = ipsEl ? ipsEl.value.split(',').map(x => x.trim()).filter(x => x) : [];
+			const allowedDomains = domainsEl ? domainsEl.value.split(',').map(x => x.trim()).filter(x => x) : [];
+			const dailyLimit = limitEl && limitEl.value ? parseInt(limitEl.value) : 1000;
+
+			btnCreateKey.disabled = true;
+			btnCreateKey.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin style-mr-8"></i> Creating...';
+
+			try {
+				const user = window.firebaseAuth.currentUser;
+				if (!user) throw new Error("Firebase User not resolved.");
+				const idToken = await user.getIdToken(true);
+
+				const res = await fetch(window.API.GENERATE_API_KEY, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${idToken}`
+					},
+					body: JSON.stringify({
+						type: 'api_key',
+						projectName: projectName || "API Key",
+						allowedIps,
+						allowedDomains,
+						dailyLimit
+					})
+				});
+
+				const result = await res.json();
+				if (!res.ok) throw new Error(result.error || "Failed to create API key");
+
+				window.showAppNotification('success', '⚡ <strong>API Key created successfully!</strong>');
+
+				// Clear inputs
+				if (projectEl) projectEl.value = '';
+				if (ipsEl) ipsEl.value = '';
+				if (domainsEl) domainsEl.value = '';
+
+				// Switch to manage keys tab and refresh
+				window.setActiveMenu('dev-keys');
+				window.loadDashboardData(true);
+
+			} catch (err) {
+				console.error(err);
+				window.showAppNotification('danger', `Create Key Failed: ${err.message}`);
+			} finally {
+				btnCreateKey.disabled = false;
+				btnCreateKey.innerHTML = '<i class="fa-solid fa-plus style-mr-8"></i> Create API Key';
+			}
+		});
+	}
 });
+

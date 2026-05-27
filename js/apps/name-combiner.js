@@ -202,9 +202,6 @@
 
 	// Generate Variations (Fisher-Yates Worker alur)
 	btnGenerate.addEventListener('click', function () {
-		// Request notification permission early
-		window.requestNotificationPermission();
-
 		const words = getWordsArray();
 		if (words.length === 0) {
 			window.showAppNotification('danger', '<strong>Error:</strong> Please enter some names first!');
@@ -416,6 +413,11 @@
 			}
 
 			window.showAppNotification('success', `<strong>Generation Completed:</strong> Successfully permuted <strong>${uniqueCleanNames.length} names</strong> into <strong>${combinationsBuffer.length.toLocaleString()} combinations</strong>!`);
+
+			// Play premium chime sound if enabled
+			if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
+				window.playSuccessChime();
+			}
 
 			// Send finished system notification
 			window.sendBrowserNotification("Name Combiner Completed", `Successfully generated ${combinationsBuffer.length.toLocaleString()} combinations!`);

@@ -892,6 +892,7 @@ body {
 }
 
 .anon-nav {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 35px;
@@ -1085,7 +1086,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: var(--text-muted);
     margin-top: 5px;
     border-top: 1px solid var(--border-color);
@@ -2243,8 +2244,6 @@ body[data-rds-mode="mobile"] #page-documentation pre {
 
 .style-custom-82 {
     color: var(--text-secondary);
-    font-family: 'RobotoMono', monospace;
-    font-size: 1.1rem;
     line-height: 1.6;
 }
 
@@ -3271,9 +3270,8 @@ body[data-rds-mode="mobile"] .style-custom-97 {
 }
 
 .style-custom-204 {
-    display: grid;
-    gap: 25px;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    display: flex;
+    gap: 10px;
     width: 100%;
 }
 
@@ -4405,6 +4403,7 @@ body[data-rds-mode="mobile"] .style-custom-213 {
     flex-direction: column;
     gap: 10px;
     max-height: 380px;
+    min-height: 200px;
     overflow-y: auto;
     padding-right: 5px;
 }
@@ -4420,7 +4419,7 @@ body[data-rds-mode="mobile"] .style-custom-213 {
 
 .style-custom-342 {
     backdrop-filter: blur(10px);
-    background: var(--bg-secondary);
+    background: var(--bg-input);
     border: 1px solid var(--border-color);
     border-radius: 20px;
     box-shadow: var(--shadow-md);
@@ -5118,4 +5117,220 @@ body[data-rds-mode="mobile"] .anon-logo span {
 body[data-rds-mode="mobile"] .container.home-active #btn-toggle-sidebar,
 body[data-rds-mode="tablet"] .container.home-active #btn-toggle-sidebar {
     display: none !important;
+}
+
+/* Premium Dashboard & Admin Tables */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-top: 15px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.db-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'RobotoMono', monospace;
+    text-align: left;
+    min-width: 800px;
+}
+
+.db-table thead {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.db-table th {
+    padding: 14px 18px;
+    color: var(--text-sharp);
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.db-table td {
+    padding: 14px 18px;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.db-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.db-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.db-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- PREMIUM ADMIN PANEL STYLING --- */
+.db-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    background: rgba(175, 134, 252, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    margin-bottom: 24px;
+    width: fit-content;
+}
+
+.db-tab-btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.88rem;
+}
+
+.db-tab-btn:hover {
+    background: rgba(175, 134, 252, 0.08);
+    color: var(--text-sharp);
+}
+
+.db-tab-btn.active {
+    background: linear-gradient(135deg, #af86fc, #7e53c9);
+    color: white;
+    box-shadow: 0 4px 15px rgba(175, 134, 252, 0.35);
+    font-weight: 600;
+}
+
+/* Glassmorphic Cards inside Admin Panel */
+#page-admin .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+}
+
+/* Table Responsive */
+#page-admin .table-responsive {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+/* Form Groups */
+.admin-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.admin-form-card {
+    background: rgba(175, 134, 252, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.admin-form-card:hover {
+    border-color: rgba(175, 134, 252, 0.3);
+    box-shadow: 0 8px 24px rgba(175, 134, 252, 0.03);
+}
+
+.admin-form-card h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.05rem;
+    color: var(--text-sharp);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 10px;
+}
+
+.admin-form-card input.db-input,
+.admin-form-card select.db-input,
+.admin-form-card textarea.db-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    color: var(--text-input);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    outline: none;
+    transition: all 0.25s ease;
+}
+
+.admin-form-card input.db-input:focus,
+.admin-form-card select.db-input:focus,
+.admin-form-card textarea.db-input:focus {
+    border-color: #af86fc;
+    box-shadow: 0 0 0 3px rgba(175, 134, 252, 0.15);
+}
+
+/* Button overrides inside Admin */
+.admin-form-card .btn-primary {
+    background: linear-gradient(135deg, #af86fc, #7e53c9);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+    font-family: 'Orbitron', sans-serif;
+    box-shadow: 0 4px 12px rgba(175, 134, 252, 0.2);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.admin-form-card .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(175, 134, 252, 0.3);
+}
+
+/* ==========================================================================
+   PREMIUM PREFERENCES PAGE TOGGLE SWITCHES
+   ========================================================================== */
+
+.pref-switch input:checked+.pref-slider {
+    background-color: #00f0ff !important;
+}
+
+.pref-switch input:focus+.pref-slider {
+    box-shadow: 0 0 1px #00f0ff;
+}
+
+.pref-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: .3s;
+    border-radius: 50%;
+}
+
+.pref-switch input:checked+.pref-slider:before {
+    transform: translateX(22px);
+}
+
+/* Compact Table Mode Override */
+body.compact-table td {
+    padding: 8px 10px !important;
 }

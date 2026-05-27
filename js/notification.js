@@ -123,3 +123,45 @@ window.sendBrowserNotification = function (title, body) {
 		}
 	}
 };
+
+window.playSuccessChime = function () {
+	try {
+		const AudioContext = window.AudioContext || window.webkitAudioContext;
+		if (!AudioContext) throw new Error("AudioContext not supported");
+		const context = new AudioContext();
+		
+		// Create synthesizers
+		const osc1 = context.createOscillator();
+		const osc2 = context.createOscillator();
+		const gain = context.createGain();
+		
+		// High fidelity modern electronic chime frequencies
+		osc1.type = 'sine';
+		osc1.frequency.setValueAtTime(587.33, context.currentTime); // D5
+		osc1.frequency.exponentialRampToValueAtTime(880.00, context.currentTime + 0.15); // A5
+		
+		osc2.type = 'triangle';
+		osc2.frequency.setValueAtTime(880.00, context.currentTime); // A5
+		osc2.frequency.exponentialRampToValueAtTime(1174.66, context.currentTime + 0.15); // D6
+		
+		// Gentle gain curve for beautiful fading sustain
+		gain.gain.setValueAtTime(0.12, context.currentTime);
+		gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.6);
+		
+		osc1.connect(gain);
+		osc2.connect(gain);
+		gain.connect(context.destination);
+		
+		osc1.start();
+		osc2.start();
+		osc1.stop(context.currentTime + 0.6);
+		osc2.stop(context.currentTime + 0.6);
+	} catch (e) {
+		console.warn("Web Audio API Chime failed, falling back to Audio object:", e);
+		try {
+			const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-200.wav');
+			audio.volume = 0.3;
+			audio.play().catch(() => {});
+		} catch (ex) {}
+	}
+};

@@ -5,7 +5,7 @@
 		if (!pageSupport) return;
 
 		// API Base URL
-		const API_BASE = 'https://gc-support.blacksoftchild.workers.dev';
+		const API_BASE = window.API.GC_SUPPORT_BASE;
 
 		// Form Selectors
 		const inputSubject = document.getElementById('support-subject');
