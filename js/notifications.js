@@ -26,10 +26,10 @@ function initNotifications() {
         if (markReadBtn) {
             markReadBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if(!window.dashboardProfile || !window.dashboardProfile.notifications) return;
-                
+                if (!window.dashboardProfile || !window.dashboardProfile.notifications) return;
+
                 const unreadNotifs = window.dashboardProfile.notifications.filter(n => !n.read).map(n => n.id);
-                if(unreadNotifs.length === 0) return;
+                if (unreadNotifs.length === 0) return;
 
                 try {
                     const idToken = await window.firebaseAuth.currentUser.getIdToken(true);
@@ -38,12 +38,12 @@ function initNotifications() {
                         headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ notifIds: unreadNotifs })
                     });
-                    
+
                     // Optimistic update
                     window.dashboardProfile.notifications.forEach(n => n.read = true);
                     window.dashboardProfile.unread_notifications = 0;
                     renderNotifications(window.dashboardProfile.notifications, 0);
-                } catch(e) {
+                } catch (e) {
                     console.error('Failed to mark read', e);
                 }
             });
@@ -51,10 +51,10 @@ function initNotifications() {
     }
 }
 
-window.renderNotifications = function(notifications = [], unreadCount = 0) {
+window.renderNotifications = function (notifications = [], unreadCount = 0) {
     const badge = document.getElementById('notif-badge');
     const list = document.getElementById('notif-list');
-    
+
     if (badge) {
         if (unreadCount > 0) {
             badge.textContent = unreadCount;
@@ -63,13 +63,13 @@ window.renderNotifications = function(notifications = [], unreadCount = 0) {
             badge.classList.add('hide');
         }
     }
-    
+
     if (list) {
         if (notifications.length === 0) {
             list.innerHTML = `<div style="color: var(--text-muted); text-align: center; font-size: 12px;">No new notifications</div>`;
             return;
         }
-        
+
         list.innerHTML = '';
         notifications.forEach(n => {
             const div = document.createElement('div');
@@ -88,11 +88,11 @@ window.renderNotifications = function(notifications = [], unreadCount = 0) {
             };
             const bg = bgMap[n.type] || bgMap.info;
 
-            div.style.cssText = `padding: 8px; border-radius: 6px; background: ${bg}; border-left: 3px solid ${color}; position: relative; font-size: 12px; word-break: break-word;`;
+            div.style.cssText = `padding: 8px; border-radius: 6px; background: ${bg}; border-left: 3px solid ${color}; position: relative; font-size: 12px; word-break: break-word; white-space: pre-wrap;`;
             if (!n.read) {
                 div.style.borderLeftWidth = '5px';
             }
-            
+
             div.innerHTML = `
                 <strong style="color: var(--text-sharp); display: block; margin-bottom: 2px; font-size: 12px;">${n.title}</strong>
                 <span style="color: var(--text-primary); display: block; line-height: 1.35; font-size: 11px;">${n.message}</span>
