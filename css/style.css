@@ -537,18 +537,19 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 20px;
     background-color: var(--bg-primary);
     position: relative;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 /* Style untuk setiap page */
 .page-content {
     flex: 1 1 100%;
     display: flex;
+    padding: 20px;
     flex-direction: column;
     align-items: center;
+    overflow-y: auto;
 }
 
 /* Class untuk menyembunyikan element */
