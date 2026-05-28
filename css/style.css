@@ -137,6 +137,7 @@ body {
     flex-direction: column;
     width: 300px;
     height: 100%;
+	min-height: 720px;
     position: relative;
 }
 
@@ -168,10 +169,7 @@ body {
 }
 
 .side-bar-bottom-content {
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 15px;
-    border-bottom: 1px solid var(--border-color);
+    padding: 10px;
 }
 
 /* Style untuk menu items */
@@ -1204,7 +1202,6 @@ body[data-rds-mode="mobile"] .side-bar {
     left: 0;
     height: 100vh;
     height: 100dvh;
-    min-height: 650px;
     width: 75%;
     z-index: 1000;
     background-color: var(--bg-sidebar);
@@ -1368,7 +1365,6 @@ body[data-rds-mode="tablet"] .side-bar {
     left: 0;
     height: 100vh;
     height: 100dvh;
-    min-height: 650px;
     width: 50%;
     z-index: 1000;
     background-color: var(--bg-sidebar);
