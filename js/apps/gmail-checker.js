@@ -374,6 +374,133 @@
 		});
 	}
 
+	// Persistent WebSocket Manager with Multiplexing callbacks
+	function getOrCreateGmailCheckerWS(serverUrl, idToken) {
+		window.gmailCheckerWSCallbacks = window.gmailCheckerWSCallbacks || new Map();
+
+		if (window.gmailCheckerWS && (window.gmailCheckerWS.readyState === WebSocket.OPEN || window.gmailCheckerWS.readyState === WebSocket.CONNECTING)) {
+			return Promise.resolve(window.gmailCheckerWS);
+		}
+
+		return new Promise((resolve, reject) => {
+			const wsBase = serverUrl.replace(/^http/, 'ws');
+			const wsUrl = `${wsBase}/ws-check?auth=${encodeURIComponent(idToken)}`;
+			
+			if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+				console.log(`[DEBUG] Initializing Persistent WebSocket: ${wsUrl}`);
+			}
+
+			const ws = new WebSocket(wsUrl);
+			window.gmailCheckerWS = ws;
+
+			let isInitialized = false;
+
+			ws.onopen = () => {
+				isInitialized = true;
+				resolve(ws);
+			};
+
+			ws.onmessage = (event) => {
+				try {
+					const data = JSON.parse(event.data);
+					if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+						console.log(`[DEBUG] Persistent WS Message:`, data);
+					}
+
+					const batchId = data.batchId;
+					if (batchId && window.gmailCheckerWSCallbacks.has(batchId)) {
+						const callback = window.gmailCheckerWSCallbacks.get(batchId);
+						if (data.type === "results") {
+							window.gmailCheckerWSCallbacks.delete(batchId);
+							callback.resolve({
+								ok: true,
+								status: 200,
+								json: async () => data.results
+							});
+						} else if (data.type === "error") {
+							window.gmailCheckerWSCallbacks.delete(batchId);
+							callback.resolve({
+								ok: false,
+								status: data.error === "Insufficient Credits" ? 402 : 500,
+								json: async () => ({ error: data.error, message: data.message || data.error })
+							});
+						}
+					}
+				} catch (e) {
+					console.error("WS message parse error:", e);
+				}
+			};
+
+			ws.onerror = (err) => {
+				if (!isInitialized) {
+					reject(new Error('WebSocket connection error'));
+				}
+				// Reject all pending active requests
+				for (const [batchId, callback] of window.gmailCheckerWSCallbacks.entries()) {
+					callback.reject(new Error('WebSocket error occurred'));
+				}
+				window.gmailCheckerWSCallbacks.clear();
+				window.gmailCheckerWS = null;
+			};
+
+			ws.onclose = (event) => {
+				if (!isInitialized) {
+					reject(new Error(`WebSocket closed (Code: ${event.code})`));
+				}
+				// Reject all pending active requests
+				for (const [batchId, callback] of window.gmailCheckerWSCallbacks.entries()) {
+					callback.reject(new Error('WebSocket connection lost'));
+				}
+				window.gmailCheckerWSCallbacks.clear();
+				window.gmailCheckerWS = null;
+			};
+		});
+	}
+
+	// WebSocket checking client helper for authenticated users using shared connection
+	function checkWithWebSocket(serverUrl, chunk, selectedService, idToken, signal) {
+		return new Promise(async (resolve, reject) => {
+			const batchId = 'batch_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+			try {
+				const ws = await getOrCreateGmailCheckerWS(serverUrl, idToken);
+				
+				// Register promise in multiplexed callback map
+				window.gmailCheckerWSCallbacks.set(batchId, { resolve, reject });
+
+				if (signal) {
+					const onAbort = () => {
+						if (window.gmailCheckerWSCallbacks.has(batchId)) {
+							window.gmailCheckerWSCallbacks.delete(batchId);
+							reject(new Error('Aborted'));
+						}
+					};
+					signal.addEventListener('abort', onAbort);
+				}
+
+				let serviceName = 'check1';
+				if (selectedService === 'server2') serviceName = 'check2';
+				else if (selectedService === 'fastServer1') serviceName = 'fastcheck1';
+				else if (selectedService === 'fastServer2') serviceName = 'fastcheck2';
+
+				if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+					console.log(`[DEBUG] Sending execute_check over persistent WS:`, { serviceName, batchId, count: chunk.length });
+				}
+
+				ws.send(JSON.stringify({
+					type: "execute_check",
+					batchId: batchId,
+					emails: chunk,
+					fastCheck: selectedService.startsWith('fast'),
+					service: serviceName
+				}));
+
+			} catch (err) {
+				reject(err);
+			}
+		});
+	}
+
 	// Execute Verification Flow
 	btnExecute.addEventListener('click', async function () {
 		const emails = getEmailsArray();
@@ -439,7 +566,7 @@
 		let idToken = '';
 		try {
 			if (window.firebaseAuth && window.firebaseAuth.currentUser) {
-				idToken = await window.firebaseAuth.currentUser.getIdToken(true);
+				idToken = await window.firebaseAuth.currentUser.getIdToken(false);
 			}
 		} catch (e) {
 			console.error("Auth Token generation failed:", e);
@@ -490,15 +617,21 @@
 				statsEl.textContent = 'Contacting secure worker API...';
 
 				try {
-					const response = await fetchWithTimeout(requestUrl, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							'Authorization': idToken ? `Bearer ${idToken}` : ''
-						},
-						body: JSON.stringify({ mail: chunk }),
-						signal: abortController.signal
-					}, 180000); // Strict 3 minutes timeout
+					let response;
+					if (idToken) {
+						// Authenticated dashboard user: use WebSocket checker to bypass Cloudflare's 10s request timeout
+						response = await checkWithWebSocket(SERVER_URL, chunk, selected, idToken, abortController.signal);
+					} else {
+						// Anonymous user / External API fallback
+						response = await fetchWithTimeout(requestUrl, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({ mail: chunk }),
+							signal: abortController.signal
+						}, 180000);
+					}
 
 					if (!isRunning) throw new Error('Aborted');
 
