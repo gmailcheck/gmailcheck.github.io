@@ -1598,9 +1598,84 @@ window.connectPresenceWS = function (idToken) {
 		const ws = new WebSocket(wsUrl);
 		window.presenceWS = ws;
 
+		// Activity & Inactivity tracking logic
+		let lastActivity = Date.now();
+		let currentStatus = "online";
+		let activityTimeout = null;
+		const idleTimeoutMs = 3 * 60 * 1000; // 3 minutes of zero interaction -> offline/idle
+
+		const activityEvents = ["visibilitychange", "online", "offline", "mousedown", "mousemove", "keypress", "scroll", "touchstart", "click", "keydown", "wheel"];
+
+		const sendWSStatus = (status) => {
+			if (ws.readyState === WebSocket.OPEN) {
+				try {
+					ws.send(JSON.stringify({ type: "status", status: status }));
+				} catch (e) {}
+			}
+		};
+
+		const handleUserActivity = (event) => {
+			// If browser goes network offline
+			if ((event && event.type === "offline") || !navigator.onLine) {
+				if (currentStatus !== "offline") {
+					currentStatus = "offline";
+					sendWSStatus("offline");
+				}
+				return;
+			}
+
+			// If tab/page is hidden
+			if (document.visibilityState === "hidden") {
+				if (currentStatus !== "offline") {
+					currentStatus = "offline";
+					sendWSStatus("offline");
+				}
+				return;
+			}
+
+			// If we are currently offline and we trigger activity, go online!
+			if (currentStatus !== "online") {
+				currentStatus = "online";
+				sendWSStatus("online");
+			}
+
+			lastActivity = Date.now();
+
+			// Inactivity Timer
+			if (activityTimeout) clearTimeout(activityTimeout);
+			activityTimeout = setTimeout(() => {
+				if (currentStatus === "online") {
+					currentStatus = "offline";
+					sendWSStatus("offline");
+				}
+			}, idleTimeoutMs);
+		};
+
+		const cleanupActivityListeners = () => {
+			activityEvents.forEach(evt => {
+				document.removeEventListener(evt, handleUserActivity);
+			});
+			window.removeEventListener("online", handleUserActivity);
+			window.removeEventListener("offline", handleUserActivity);
+			if (activityTimeout) {
+				clearTimeout(activityTimeout);
+				activityTimeout = null;
+			}
+		};
+
 		ws.onopen = () => {
 			console.log("🟢 Connected to Presence WebSocket successfully!");
 			
+			// Set initial status to online explicitly
+			sendWSStatus("online");
+
+			// Bind activity/presence listener events
+			activityEvents.forEach(evt => {
+				document.addEventListener(evt, handleUserActivity, { passive: true });
+			});
+			window.addEventListener("online", handleUserActivity);
+			window.addEventListener("offline", handleUserActivity);
+
 			// Clear existing interval if any
 			if (window.presencePingInterval) {
 				clearInterval(window.presencePingInterval);
@@ -1627,6 +1702,9 @@ window.connectPresenceWS = function (idToken) {
 
 		ws.onclose = (event) => {
 			console.log(`🔴 Connection to Presence WS closed (Code: ${event.code}). Reconnecting in 5s...`);
+			
+			cleanupActivityListeners();
+
 			if (window.presencePingInterval) {
 				clearInterval(window.presencePingInterval);
 			}
@@ -1650,6 +1728,17 @@ window.connectPresenceWS = function (idToken) {
 		ws.onerror = (err) => {
 			console.error("⚠️ Presence WS Error:", err);
 		};
+
+		// Explicit unload cleanup to force status change instantly on tab close
+		window.addEventListener("beforeunload", () => {
+			cleanupActivityListeners();
+			if (ws.readyState === WebSocket.OPEN) {
+				try {
+					ws.send(JSON.stringify({ type: "status", status: "offline" }));
+					ws.close();
+				} catch (e) {}
+			}
+		});
 
 	} catch (err) {
 		console.error("❌ Failed to initialize WebSocket Presence:", err);
