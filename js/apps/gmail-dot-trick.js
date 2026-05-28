@@ -355,12 +355,7 @@
 					statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
 					statusEl.style.color = '#af86fc';
 
-					if (tasksList) {
-						tasksList.scrollTo({
-							top: tasksList.scrollHeight,
-							behavior: 'smooth'
-						});
-					}
+					card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
 					const len = username.length;
 					// Limit exponent to 30 to avoid 32-bit integer overflow in bitwise shifts
@@ -465,12 +460,7 @@
 
 							completedTasks++;
 
-							if (tasksList) {
-								tasksList.scrollTo({
-									top: tasksList.scrollHeight,
-									behavior: 'smooth'
-								});
-							}
+							card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
 							// If all tasks completed, display all action buttons
 							if (completedTasks === totalInputEmails) {

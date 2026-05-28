@@ -755,8 +755,19 @@ window.loadDashboardData = async function (force = false) {
 			const appQuotaBar = document.getElementById('db-quota-bar');
 			const appRemaining = document.getElementById('db-remaining-requests');
 
+			// Determine max daily credit limit based on active plan
+			let maxDailyCredits;
+			if (plan === 'pro_subs') maxDailyCredits = 25000;
+			else if (plan === 'ultra_subs') maxDailyCredits = 100000;
+			else if (plan === 'special_subs') maxDailyCredits = null; // no cap, treat as full
+			else maxDailyCredits = 1000; // free tier
+
+			const quotaPct = maxDailyCredits
+				? Math.min(100, Math.round((availableCredits / maxDailyCredits) * 100))
+				: 100;
+
 			if (appUsageLabel) appUsageLabel.textContent = `Available Balance: ${availableCredits.toLocaleString()}`;
-			if (appQuotaBar) appQuotaBar.style.width = `100%`; // Static 100% since it's just a balance now
+			if (appQuotaBar) appQuotaBar.style.width = `${quotaPct}%`;
 			if (appRemaining) appRemaining.textContent = availableCredits.toLocaleString();
 
 			// Developer Dashboard Credits (Global API Credits)
@@ -861,7 +872,7 @@ async function loadOwnedKeysList(idToken) {
 		const developerKeys = keys.filter(k => k.type === 'api_key' || k.type === 'compensation');
 
 		if (developerKeys.length === 0) {
-			tableBody.innerHTML = `<tr><td colspan="6" style="padding: 30px; text-align: center; color: var(--text-muted);">No Developer API keys found. Purchase an API Key package to generate one.</td></tr>`;
+			tableBody.innerHTML = `<tr><td colspan="6" style="padding: 30px; text-align: center; color: var(--text-muted);">No Developer API keys found.</td></tr>`;
 
 			// Render the stats cards deck dynamically
 			if (typeof renderDevStatsCards === 'function') {

@@ -874,7 +874,9 @@
 								<div class="style-custom-63">
 									<div class="style-custom-164">
 										<span>Usage Progress:</span>
-										<strong id="db-quota-usage-label">0 / 0 Requests</strong>
+										<div style="font-size: 10px; color:var(--text-muted)" id="db-quota-usage-label">
+											0 /
+											0 Requests</div>
 									</div>
 									<div class="style-custom-165">
 										<div id="db-quota-bar" class="style-custom-166">
@@ -2952,19 +2954,24 @@ try {
 						<!-- Users Tab -->
 						<div id="admin-users" class="db-tab-content active">
 							<div class="card">
-								<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+								<div
+									style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
 									<h3 class="font-keren" style="margin: 0;">User Directory</h3>
 									<div style="display: flex; align-items: center; gap: 12px;">
 										<div style="display: flex; align-items: center; gap: 6px;">
-											<span style="font-size: 11px; color: var(--text-muted); font-family: 'Orbitron', sans-serif;">Sort:</span>
-											<select id="admin-users-sort" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 4px 8px; font-size: 11px; font-family: 'Orbitron', sans-serif; cursor: pointer; outline: none;">
+											<span
+												style="font-size: 11px; color: var(--text-muted); font-family: 'Orbitron', sans-serif;">Sort:</span>
+											<select id="admin-users-sort"
+												style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 4px 8px; font-size: 11px; font-family: 'Orbitron', sans-serif; cursor: pointer; outline: none;">
 												<option value="online">Online First</option>
 												<option value="api_usage">API Usage</option>
 												<option value="newest">Newest Reg</option>
 												<option value="plan">Plan (Pro/Ultra)</option>
 											</select>
 										</div>
-										<span id="admin-total-users" style="background: rgba(175, 134, 252, 0.1); color: #af86fc; border: 1px solid rgba(175, 134, 252, 0.2); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: bold; font-family: 'Orbitron', sans-serif;">Total Users: 0</span>
+										<span id="admin-total-users"
+											style="background: rgba(175, 134, 252, 0.1); color: #af86fc; border: 1px solid rgba(175, 134, 252, 0.2); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: bold; font-family: 'Orbitron', sans-serif;">Total
+											Users: 0</span>
 									</div>
 								</div>
 								<div class="table-responsive">
@@ -3106,9 +3113,11 @@ try {
 						<!-- Support Tickets Tab -->
 						<div id="admin-support" class="db-tab-content hide">
 							<div class="card">
-								<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+								<div
+									style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
 									<h3 class="font-keren" style="margin: 0;">Support Tickets Management</h3>
-									<button class="btn btn-primary" id="admin-btn-refresh-support" style="width: auto; padding: 6px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+									<button class="btn btn-primary" id="admin-btn-refresh-support"
+										style="width: auto; padding: 6px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
 										<i class="fa-solid fa-rotate"></i> Refresh
 									</button>
 								</div>
@@ -3126,7 +3135,8 @@ try {
 										</thead>
 										<tbody id="admin-support-tbody">
 											<tr>
-												<td colspan="6" style="text-align: center; color: var(--text-muted);">Loading tickets...</td>
+												<td colspan="6" style="text-align: center; color: var(--text-muted);">
+													Loading tickets...</td>
 											</tr>
 										</tbody>
 									</table>
@@ -3299,17 +3309,21 @@ try {
 						</button>
 
 						<div class="style-custom-391">
-							<div class="style-custom-383" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+							<div class="style-custom-383"
+								style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
 								<div>
 									<span id="admin-ticket-modal-id" class="style-custom-392">#TCK-12345</span>
 									<span id="admin-ticket-modal-status-badge" class="style-custom-393">OPEN</span>
 								</div>
-								<button id="admin-btn-modal-resolve" class="btn" style="background: rgba(102, 255, 217, 0.15); color: #66ffd9; border: 1px solid rgba(102, 255, 217, 0.2); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: all 0.2s;">
+								<button id="admin-btn-modal-resolve" class="btn"
+									style="background: rgba(102, 255, 217, 0.15); color: #66ffd9; border: 1px solid rgba(102, 255, 217, 0.2); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: all 0.2s;">
 									<i class="fa-solid fa-check"></i> Mark Resolved
 								</button>
 							</div>
-							<h3 class="font-keren style-custom-394" id="admin-ticket-modal-subject" style="margin-top: 10px;">Gmail checking limits query</h3>
-							<span id="admin-ticket-modal-meta" class="style-custom-395">User: user1 | Category: General | Priority: Medium | Date: 2026-05-20</span>
+							<h3 class="font-keren style-custom-394" id="admin-ticket-modal-subject"
+								style="margin-top: 10px;">Gmail checking limits query</h3>
+							<span id="admin-ticket-modal-meta" class="style-custom-395">User: user1 | Category: General
+								| Priority: Medium | Date: 2026-05-20</span>
 						</div>
 
 						<div id="admin-ticket-modal-chat-history" class="style-custom-396">
@@ -3318,7 +3332,8 @@ try {
 
 						<div id="admin-ticket-modal-reply-container" class="style-custom-397">
 							<div class="style-custom-398">
-								<input type="text" id="admin-ticket-modal-reply-input" placeholder="Type your reply to the user here..." class="style-custom-400">
+								<input type="text" id="admin-ticket-modal-reply-input"
+									placeholder="Type your reply to the user here..." class="style-custom-400">
 								<button class="btn btn-primary style-custom-401" id="admin-btn-submit-ticket-reply">
 									Send Reply
 								</button>
