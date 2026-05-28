@@ -191,21 +191,53 @@ async function loadAdminUsers() {
         if (!res.ok) throw new Error('Failed to fetch');
         const users = await res.json();
 
+        // Update Total Users badge
+        const totalUsersEl = document.getElementById('admin-total-users');
+        if (totalUsersEl) {
+            totalUsersEl.textContent = `Total Users: ${users.length}`;
+        }
+
         tbody.innerHTML = '';
         users.forEach(u => {
             const tr = document.createElement('tr');
+            
+            // Format registration date
+            const regDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A';
+            const emailColHtml = `
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-weight: bold; color: var(--text-sharp);">${u.email}</span>
+                    <small style="color: var(--text-muted); font-size: 10px; margin-top: 2px;">Reg: ${regDate}</small>
+                </div>
+            `;
+
+            // Format last seen with glowing "Online" indicator if active in last 5 minutes
+            let lastSeenHtml = '';
+            if (!u.lastSeen) {
+                lastSeenHtml = `<span style="color: var(--text-muted);">Never</span>`;
+            } else {
+                const diff = Date.now() - u.lastSeen;
+                if (diff < 5 * 60 * 1000) { // 5 minutes
+                    lastSeenHtml = `<span style="color: #66ffd9; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #66ffd9; box-shadow: 0 0 8px #66ffd9;"></span>Online</span>`;
+                } else {
+                    lastSeenHtml = `<span style="color: var(--text-muted); font-size: 11px;">${new Date(u.lastSeen).toLocaleString()}</span>`;
+                }
+            }
+
+            const planLabel = u.subscription_plan === 'none' ? 'free' : u.subscription_plan;
+
             tr.innerHTML = `
-                <td>${u.email}</td>
-                <td>${u.subscription_plan}</td>
+                <td>${emailColHtml}</td>
+                <td style="text-transform: capitalize; font-weight: bold;">${planLabel}</td>
                 <td>${u.subscription_expiry ? new Date(u.subscription_expiry).toLocaleDateString() : 'Lifetime'}</td>
-                <td>${u.api_usage} / ${(u.api_credits !== undefined ? u.api_credits : u.api_quota)}</td>
-                <td>${u.role}</td>
+                <td style="font-family: monospace;">${u.api_usage.toLocaleString()} / ${(u.api_credits !== undefined ? u.api_credits : u.api_quota).toLocaleString()}</td>
+                <td>${lastSeenHtml}</td>
+                <td><span style="background: ${u.role === 'admin' ? 'rgba(175, 134, 252, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${u.role === 'admin' ? '#af86fc' : 'var(--text-muted)'}; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase;">${u.role}</span></td>
                 <td>-</td>
             `;
             tbody.appendChild(tr);
         });
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">Failed to load users</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Failed to load users: ${err.message}</td></tr>`;
     }
 }
 

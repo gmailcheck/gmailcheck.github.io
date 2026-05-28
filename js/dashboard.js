@@ -177,6 +177,11 @@ window.loadDashboardData = async function (force = false) {
 				window.renderNotifications(profile.notifications, profile.unread_notifications);
 			}
 
+			// Connect to Presence WebSocket to enable real-time status and save database query cost
+			if (window.connectPresenceWS) {
+				window.connectPresenceWS(idToken);
+			}
+
 			// Update Badges dynamically based on roles and keys
 			const badge = document.getElementById('db-user-badge');
 
@@ -1571,4 +1576,84 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 });
+
+// ========== REAL-TIME PRESENCE WEBSOCKET CLIENT ==========
+window.presenceWS = null;
+window.presencePingInterval = null;
+
+window.connectPresenceWS = function (idToken) {
+	// Prevent duplicate connections if already connected or connecting
+	if (window.presenceWS) {
+		if (window.presenceWS.readyState === WebSocket.OPEN || window.presenceWS.readyState === WebSocket.CONNECTING) {
+			return;
+		}
+	}
+
+	try {
+		// Convert https:// to wss:// or http:// to ws://
+		const wsBase = window.API.GC_SERVER_BASE.replace(/^http/, 'ws');
+		const wsUrl = `${wsBase}/ws?auth=${encodeURIComponent(idToken)}`;
+
+		console.log("🔌 Connecting to Presence WebSocket...");
+		const ws = new WebSocket(wsUrl);
+		window.presenceWS = ws;
+
+		ws.onopen = () => {
+			console.log("🟢 Connected to Presence WebSocket successfully!");
+			
+			// Clear existing interval if any
+			if (window.presencePingInterval) {
+				clearInterval(window.presencePingInterval);
+			}
+
+			// Send ping heartbeats every 45 seconds to keep connection alive
+			window.presencePingInterval = setInterval(() => {
+				if (ws.readyState === WebSocket.OPEN) {
+					ws.send(JSON.stringify({ type: "ping" }));
+				}
+			}, 45000);
+		};
+
+		ws.onmessage = (event) => {
+			try {
+				const data = JSON.parse(event.data);
+				if (data.type === "welcome") {
+					console.log(`👤 WS Presence registered for: ${data.email}`);
+				}
+			} catch (err) {
+				// Ignore JSON parse errors for non-JSON traffic
+			}
+		};
+
+		ws.onclose = (event) => {
+			console.log(`🔴 Connection to Presence WS closed (Code: ${event.code}). Reconnecting in 5s...`);
+			if (window.presencePingInterval) {
+				clearInterval(window.presencePingInterval);
+			}
+			
+			// Reconnect automatically if user is still logged in
+			if (window.isUserAuthenticated && window.firebaseAuth && window.firebaseAuth.currentUser) {
+				setTimeout(async () => {
+					try {
+						const user = window.firebaseAuth.currentUser;
+						if (user) {
+							const freshToken = await user.getIdToken(true);
+							window.connectPresenceWS(freshToken);
+						}
+					} catch (e) {
+						console.error("Failed to get fresh token for WS reconnect:", e);
+					}
+				}, 5000);
+			}
+		};
+
+		ws.onerror = (err) => {
+			console.error("⚠️ Presence WS Error:", err);
+		};
+
+	} catch (err) {
+		console.error("❌ Failed to initialize WebSocket Presence:", err);
+	}
+};
+
 

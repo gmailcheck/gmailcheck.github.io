@@ -138,7 +138,7 @@
 					<span id="notif-badge" class="hide"
 						style="background: #ff4757; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; margin-left: auto;">0</span>
 					<div id="notif-dropdown" class="hide"
-						style="position: absolute; bottom: 50px; left: 0; width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 1000; padding: 12px; min-height: 150px; max-height: 300px; overflow-y: auto; text-align: left; cursor: default;">
+						style="position: absolute; bottom: 50px; left: 0; width: 320px; width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); z-index: 1000; padding: 12px; min-height: 150px; max-height: 500px; overflow-y: auto; text-align: left; cursor: default;">
 						<div
 							style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px;">
 							<h5
@@ -2947,7 +2947,10 @@ try {
 						<!-- Users Tab -->
 						<div id="admin-users" class="db-tab-content active">
 							<div class="card">
-								<h3 class="font-keren" style="margin-bottom: 15px;">User Directory</h3>
+								<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+									<h3 class="font-keren" style="margin: 0;">User Directory</h3>
+									<span id="admin-total-users" style="background: rgba(175, 134, 252, 0.1); color: #af86fc; border: 1px solid rgba(175, 134, 252, 0.2); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: bold; font-family: 'Orbitron', sans-serif;">Total Users: 0</span>
+								</div>
 								<div class="table-responsive">
 									<table class="db-table" id="admin-users-table">
 										<thead>
@@ -2956,6 +2959,7 @@ try {
 												<th>Plan</th>
 												<th>Expiry</th>
 												<th>API Credits</th>
+												<th>Last Seen</th>
 												<th>Role</th>
 												<th>Action</th>
 											</tr>
