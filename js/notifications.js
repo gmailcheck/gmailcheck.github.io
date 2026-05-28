@@ -137,10 +137,15 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
                 // If it was collapsed, expand it
                 if (!isExpanded) {
                     card.classList.add('expanded');
-                    body.style.maxHeight = body.scrollHeight + 'px';
+                    body.style.maxHeight = '100%';
                     body.style.opacity = '1';
                     body.style.marginTop = '6px';
                     if (chevron) chevron.style.transform = 'rotate(180deg)';
+
+                    // Smoothly scroll the card into view within the dropdown after the transition starts
+                    setTimeout(() => {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
                 }
             });
 
