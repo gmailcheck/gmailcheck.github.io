@@ -764,7 +764,7 @@ window.loadDashboardData = async function (force = false) {
 
 			// Low credit alert check with webhook integration
 			if (apiAvailable < 1000) {
-				if (localStorage.getItem('gmailChecker_creditAlert') !== 'false') {
+				if (localStorage.getItem('gmailChecker_creditAlert') === 'true') {
 					window.showAppNotification('warning', `⚠️ <strong>Low Credits Alert:</strong> Your developer API quota has dropped to <strong>${apiAvailable.toLocaleString()}</strong> remaining checks! Please top up soon to avoid interruption.`);
 				}
 				// Webhook support

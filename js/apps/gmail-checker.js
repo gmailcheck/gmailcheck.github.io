@@ -385,7 +385,7 @@
 		return new Promise((resolve, reject) => {
 			const wsBase = serverUrl.replace(/^http/, 'ws');
 			const wsUrl = `${wsBase}/ws-check?auth=${encodeURIComponent(idToken)}`;
-			
+
 			if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
 				console.log(`[DEBUG] Initializing Persistent WebSocket: ${wsUrl}`);
 			}
@@ -464,7 +464,7 @@
 
 			try {
 				const ws = await getOrCreateGmailCheckerWS(serverUrl, idToken);
-				
+
 				// Register promise in multiplexed callback map
 				window.gmailCheckerWSCallbacks.set(batchId, { resolve, reject });
 
@@ -640,23 +640,23 @@
 							let errData = {};
 							try {
 								errData = await response.json();
-							} catch (e) {}
+							} catch (e) { }
 							const errorMsg = errData.message || 'You do not have enough credits to perform this request.';
 							const remaining = errData.message ? parseInt(errData.message.match(/have (\d+) remaining/)?.[1] || 0) : 0;
-							
+
 							// Abort other tasks and stop checker running state
 							if (abortController) abortController.abort();
 							isRunning = false;
 							btnExecute.style.display = 'inline-flex';
 							btnStop.style.display = 'none';
-							
+
 							progressEl.style.width = '100%';
 							progressEl.style.background = 'linear-gradient(90deg, #ff6666 0%, #ff3333 100%)';
 							statusEl.innerHTML = '<span style="color: #ff6666;"><i class="fa-solid fa-circle-exclamation"></i> Insufficient Credits</span>';
 							statsEl.textContent = errorMsg;
-							
+
 							showInsufficientCreditsModal(errorMsg, remaining);
-							
+
 							throw new Error('Insufficient Credits');
 						}
 						throw new Error(`Server returned ${response.status}`);
@@ -817,6 +817,8 @@
 
 		resultsContainer.classList.add('hide');
 		inputContainer.classList.remove('hide');
+
+		results = [];
 
 		statsInput.textContent = '0 email(s)';
 		statsLive.textContent = '0';

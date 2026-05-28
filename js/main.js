@@ -422,7 +422,7 @@ function initApp() {
 		// Load saved preferences from localStorage (with smart defaults)
 		const compactTableActive = localStorage.getItem('gmailChecker_compactTable') === 'true';
 		const soundEffectsActive = localStorage.getItem('gmailChecker_soundEffects') !== 'false';
-		const creditAlertActive = localStorage.getItem('gmailChecker_creditAlert') !== 'false';
+		const creditAlertActive = localStorage.getItem('gmailChecker_creditAlert') === 'true';
 		const debugModeActive = localStorage.getItem('gmailChecker_debugMode') === 'true';
 		const webhookUrlVal = localStorage.getItem('gmailChecker_webhookUrl') || '';
 

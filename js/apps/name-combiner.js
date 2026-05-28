@@ -433,6 +433,9 @@
 		}
 		resultsContainer.classList.add('hide');
 		inputContainer.classList.remove('hide');
+
+		combinationsBuffer = [];
+
 		statsInput.textContent = '0 name(s)';
 		statsOutput.textContent = '0 variation(s)';
 

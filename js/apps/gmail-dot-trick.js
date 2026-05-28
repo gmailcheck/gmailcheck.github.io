@@ -406,11 +406,11 @@
 						worker.postMessage({ username, safeLen, domain, currentOffset, chunkLimit, totalCombinations, len });
 					}
 
-					worker.onmessage = function(e) {
+					worker.onmessage = function (e) {
 						const { chunk, nextOffset } = e.data;
-						
+
 						// Push elements efficiently
-						for(let i = 0; i < chunk.length; i++) {
+						for (let i = 0; i < chunk.length; i++) {
 							allVariations.push(chunk[i]);
 						}
 
@@ -487,7 +487,7 @@
 							next();
 						}
 					}
-					
+
 					processNextChunk();
 				});
 			});
@@ -499,6 +499,9 @@
 		isRunning = false;
 		resultsContainer.classList.add('hide');
 		inputContainer.classList.remove('hide');
+
+		taskResults.clear();
+
 		statsInput.textContent = '0 email(s)';
 		statsOutput.textContent = '0 variation(s)';
 
