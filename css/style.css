@@ -1206,7 +1206,7 @@ body[data-rds-mode="mobile"] .side-bar {
     left: 0;
     height: 100vh;
     height: 100dvh;
-    min-height: 720px;
+    min-height: 650px;
     z-index: 1000;
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
@@ -1369,7 +1369,7 @@ body[data-rds-mode="tablet"] .side-bar {
     left: 0;
     height: 100vh;
     height: 100dvh;
-    min-height: 720px;
+    min-height: 650px;
     z-index: 1000;
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
