@@ -72,7 +72,7 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
 
         list.innerHTML = '';
         notifications.forEach(n => {
-            const div = document.createElement('div');
+            const card = document.createElement('div');
             const colorMap = {
                 info: '#af86fc',
                 success: '#379e56ff',
@@ -88,17 +88,63 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
             };
             const bg = bgMap[n.type] || bgMap.info;
 
-            div.style.cssText = `padding: 8px; border-radius: 6px; background: ${bg}; border-left: 3px solid ${color}; position: relative; font-size: 12px; word-break: break-word; white-space: pre-wrap;`;
+            card.style.cssText = `padding: 8px; border-radius: 6px; background: ${bg}; border-left: 3px solid ${color}; position: relative; font-size: 12px; word-break: break-word; display: flex; flex-direction: column; transition: all 0.3s ease;`;
             if (!n.read) {
-                div.style.borderLeftWidth = '5px';
+                card.style.borderLeftWidth = '5px';
             }
 
-            div.innerHTML = `
-                <strong style="color: var(--text-sharp); display: block; margin-bottom: 2px; font-size: 12px;">${n.title}</strong>
+            // Create Header
+            const header = document.createElement('div');
+            header.style.cssText = `display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; width: 100%;`;
+            header.innerHTML = `
+                <strong style="color: var(--text-sharp); display: block; font-size: 12px; flex-grow: 1; text-align: left; padding-right: 8px; line-height: 1.35;">${n.title}</strong>
+                <i class="fa-solid fa-chevron-down notif-chevron" style="font-size: 10px; color: var(--text-muted); transition: transform 0.2s ease; margin-top: 3px; flex-shrink: 0;"></i>
+            `;
+
+            // Create Body
+            const body = document.createElement('div');
+            body.className = 'notif-body';
+            body.style.cssText = `max-height: 0px; overflow: hidden; transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin-top 0.2s ease; opacity: 0; margin-top: 0px; white-space: pre-wrap;`;
+            body.innerHTML = `
                 <span style="color: var(--text-primary); display: block; line-height: 1.35; font-size: 11px;">${n.message}</span>
                 <small style="color: var(--text-muted); font-size: 9px; margin-top: 4px; display: block;">${new Date(n.createdAt).toLocaleString()}</small>
             `;
-            list.appendChild(div);
+
+            card.appendChild(header);
+            card.appendChild(body);
+
+            // Accordion click handling
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                const isExpanded = card.classList.contains('expanded');
+                const chevron = header.querySelector('.notif-chevron');
+
+                // Collapse all sibling cards
+                const siblingCards = list.children;
+                for (let sibling of siblingCards) {
+                    sibling.classList.remove('expanded');
+                    const siblingBody = sibling.querySelector('.notif-body');
+                    const siblingChevron = sibling.querySelector('.notif-chevron');
+                    if (siblingBody && siblingChevron) {
+                        siblingBody.style.maxHeight = '0px';
+                        siblingBody.style.opacity = '0';
+                        siblingBody.style.marginTop = '0px';
+                        siblingChevron.style.transform = 'rotate(0deg)';
+                    }
+                }
+
+                // If it was collapsed, expand it
+                if (!isExpanded) {
+                    card.classList.add('expanded');
+                    body.style.maxHeight = body.scrollHeight + 'px';
+                    body.style.opacity = '1';
+                    body.style.marginTop = '6px';
+                    if (chevron) chevron.style.transform = 'rotate(180deg)';
+                }
+            });
+
+            list.appendChild(card);
         });
     }
 }
