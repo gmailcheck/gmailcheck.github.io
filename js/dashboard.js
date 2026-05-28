@@ -1582,6 +1582,7 @@ window.presenceWS = null;
 window.presencePingInterval = null;
 
 window.connectPresenceWS = function (idToken) {
+	window.cachedUserToken = idToken;
 	// Prevent duplicate connections if already connected or connecting
 	if (window.presenceWS) {
 		if (window.presenceWS.readyState === WebSocket.OPEN || window.presenceWS.readyState === WebSocket.CONNECTING) {
@@ -1736,6 +1737,18 @@ window.connectPresenceWS = function (idToken) {
 				try {
 					ws.send(JSON.stringify({ type: "status", status: "offline" }));
 					ws.close();
+				} catch (e) {}
+			}
+
+			// Fire-and-forget keepalive REST fetch to mark offline instantly
+			if (window.cachedUserToken) {
+				try {
+					const apiBase = window.API.GC_SERVER_BASE;
+					fetch(`${apiBase}/user/presence-offline?auth=${encodeURIComponent(window.cachedUserToken)}`, {
+						method: "POST",
+						mode: "no-cors",
+						keepalive: true
+					});
 				} catch (e) {}
 			}
 		});
