@@ -1611,7 +1611,7 @@ window.connectPresenceWS = function (idToken) {
 			if (ws.readyState === WebSocket.OPEN) {
 				try {
 					ws.send(JSON.stringify({ type: "status", status: status }));
-				} catch (e) {}
+				} catch (e) { }
 			}
 		};
 
@@ -1666,7 +1666,7 @@ window.connectPresenceWS = function (idToken) {
 
 		ws.onopen = () => {
 			console.log("🟢 Connected to Presence WebSocket successfully!");
-			
+
 			// Set initial status to online explicitly
 			sendWSStatus("online");
 
@@ -1703,13 +1703,13 @@ window.connectPresenceWS = function (idToken) {
 
 		ws.onclose = (event) => {
 			console.log(`🔴 Connection to Presence WS closed (Code: ${event.code}). Reconnecting in 5s...`);
-			
+
 			cleanupActivityListeners();
 
 			if (window.presencePingInterval) {
 				clearInterval(window.presencePingInterval);
 			}
-			
+
 			// Reconnect automatically if user is still logged in
 			if (window.isUserAuthenticated && window.firebaseAuth && window.firebaseAuth.currentUser) {
 				setTimeout(async () => {
@@ -1737,7 +1737,7 @@ window.connectPresenceWS = function (idToken) {
 				try {
 					ws.send(JSON.stringify({ type: "status", status: "offline" }));
 					ws.close();
-				} catch (e) {}
+				} catch (e) { }
 			}
 
 			// Fire-and-forget keepalive REST fetch to mark offline instantly
@@ -1749,7 +1749,7 @@ window.connectPresenceWS = function (idToken) {
 						mode: "no-cors",
 						keepalive: true
 					});
-				} catch (e) {}
+				} catch (e) { }
 			}
 		});
 

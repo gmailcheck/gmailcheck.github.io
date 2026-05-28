@@ -25,6 +25,9 @@ function initAdminPanel() {
             }
 
             // Load specific tab data
+            if (targetId !== 'admin-support') {
+                stopAdminSupportAutoRefresh();
+            }
             if (targetId === 'admin-users') loadAdminUsers();
             if (targetId === 'admin-payments') loadAdminPayments();
             if (targetId === 'admin-support') loadAdminSupport();
@@ -36,6 +39,9 @@ function initAdminPanel() {
         const activeTab = document.querySelector('.db-tab-btn.active[data-tab^="admin-"]');
         if (activeTab) {
             const targetId = activeTab.getAttribute('data-tab');
+            if (targetId !== 'admin-support') {
+                stopAdminSupportAutoRefresh();
+            }
             if (targetId === 'admin-users') loadAdminUsers();
             if (targetId === 'admin-payments') loadAdminPayments();
             if (targetId === 'admin-support') loadAdminSupport();
@@ -217,6 +223,40 @@ function initAdminPanel() {
             btnSubmitReply.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
 
             try {
+                // WebSocket optimized path
+                if (adminSupportWS && adminSupportWS.readyState === WebSocket.OPEN) {
+                    console.log("⚡ Sending admin reply via WebSocket...");
+                    adminSupportWS.send(JSON.stringify({
+                        type: "reply",
+                        ticketId: activeAdminTicketId,
+                        message: text
+                    }));
+
+                    // Update local state immediately
+                    const ticket = loadedAdminTicketsList.find(t => t.ticketId === activeAdminTicketId);
+                    if (ticket) {
+                        if (!ticket.replies) ticket.replies = {};
+                        const replyId = `RPL-${Date.now()}`;
+                        const newReply = {
+                            sender: "Admin",
+                            senderType: "admin",
+                            message: text,
+                            images: [],
+                            createdAt: Date.now()
+                        };
+                        ticket.replies[replyId] = newReply;
+                        ticket.lastActivity = newReply.createdAt;
+
+                        renderAdminSupportTable();
+                        updateAdminModalState(ticket);
+                    }
+
+                    input.value = '';
+                    window.showAppNotification('success', 'Reply submitted successfully!');
+                    return;
+                }
+
+                // Fallback to HTTP POST
                 const res = await fetch(`${window.API.GC_SUPPORT_BASE}/admin/ticket/reply`, {
                     method: 'POST',
                     headers: {
@@ -230,7 +270,18 @@ function initAdminPanel() {
 
                 input.value = '';
                 window.showAppNotification('success', 'Reply submitted successfully!');
-                await silentReloadAdminSupport();
+                if (data.reply) {
+                    const ticket = loadedAdminTicketsList.find(t => t.ticketId === activeAdminTicketId);
+                    if (ticket) {
+                        if (!ticket.replies) ticket.replies = {};
+                        const replyId = data.reply.replyId || `RPL-${Date.now()}`;
+                        ticket.replies[replyId] = data.reply;
+                        ticket.lastActivity = data.reply.createdAt || Date.now();
+
+                        renderAdminSupportTable();
+                        updateAdminModalState(ticket);
+                    }
+                }
             } catch (err) {
                 window.showAppNotification('danger', err.message);
             } finally {
@@ -249,6 +300,27 @@ function initAdminPanel() {
             btnResolve.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
 
             try {
+                // WebSocket optimized path
+                if (adminSupportWS && adminSupportWS.readyState === WebSocket.OPEN) {
+                    console.log("⚡ Sending ticket resolve via WebSocket...");
+                    adminSupportWS.send(JSON.stringify({
+                        type: "resolve",
+                        ticketId: activeAdminTicketId
+                    }));
+
+                    window.showAppNotification('success', 'Ticket resolved successfully!');
+                    const ticket = loadedAdminTicketsList.find(t => t.ticketId === activeAdminTicketId);
+                    if (ticket) {
+                        ticket.status = "resolved";
+                        ticket.lastActivity = Date.now();
+                    }
+                    renderAdminSupportTable();
+                    document.getElementById('admin-ticket-modal').classList.add('hide');
+                    activeAdminTicketId = null;
+                    return;
+                }
+
+                // Fallback to HTTP POST
                 const res = await fetch(`${window.API.GC_SUPPORT_BASE}/admin/ticket/resolve`, {
                     method: 'POST',
                     headers: {
@@ -261,9 +333,14 @@ function initAdminPanel() {
                 if (!res.ok) throw new Error(data.error || 'Failed to resolve ticket');
 
                 window.showAppNotification('success', 'Ticket resolved successfully!');
+                const ticket = loadedAdminTicketsList.find(t => t.ticketId === activeAdminTicketId);
+                if (ticket) {
+                    ticket.status = "resolved";
+                    ticket.lastActivity = Date.now();
+                }
+                renderAdminSupportTable();
                 document.getElementById('admin-ticket-modal').classList.add('hide');
                 activeAdminTicketId = null;
-                await loadAdminSupport();
             } catch (err) {
                 window.showAppNotification('danger', err.message);
             } finally {
@@ -275,7 +352,7 @@ function initAdminPanel() {
 }
 
 async function getAuthToken() {
-    return await window.firebaseAuth.currentUser.getIdToken(true);
+    return await window.firebaseAuth.currentUser.getIdToken(false);
 }
 
 let loadedAdminUsersList = [];
@@ -333,7 +410,9 @@ async function silentReloadAdminUsers() {
 }
 
 function startAdminUsersAutoRefresh() {
-    if (window.adminUsersRefreshInterval) return;
+    if (window.adminUsersRefreshInterval) {
+        clearInterval(window.adminUsersRefreshInterval);
+    }
 
     window.adminUsersRefreshInterval = setInterval(() => {
         // Only fetch if admin-users tab is active and visible
@@ -347,7 +426,7 @@ function startAdminUsersAutoRefresh() {
         } else {
             stopAdminUsersAutoRefresh();
         }
-    }, 8000); // silent auto-refresh every 8 seconds
+    }, 30000); // silent auto-refresh every 30 seconds
 }
 
 function stopAdminUsersAutoRefresh() {
@@ -516,10 +595,143 @@ window.adminGenerateCompensationKey = async function (email, dailyLimit = 1000, 
 let loadedAdminTicketsList = [];
 let activeAdminTicketId = null;
 window.adminSupportRefreshInterval = null;
+let adminSupportWS = null;
+
+function updateLocalAdminTicketData(eventData) {
+    if (!loadedAdminTicketsList) loadedAdminTicketsList = [];
+
+    const path = eventData.path;
+    const data = eventData.data;
+
+    if (path === "/") {
+        if (data && typeof data === 'object') {
+            if (Object.keys(data).every(k => k.startsWith("TKT-"))) {
+                loadedAdminTicketsList = Object.values(data).filter(t => t && t.ticketId);
+            } else {
+                Object.assign(loadedAdminTicketsList, data);
+            }
+        }
+    } else {
+        const parts = path.split("/").filter(Boolean);
+        if (parts.length > 0) {
+            const ticketId = parts[0];
+            let ticket = loadedAdminTicketsList.find(t => t.ticketId === ticketId);
+            
+            if (!ticket) {
+                if (parts.length === 1 && data && data.ticketId) {
+                    ticket = data;
+                    loadedAdminTicketsList.push(ticket);
+                } else {
+                    return;
+                }
+            }
+
+            if (parts.length === 1) {
+                if (data === null) {
+                    loadedAdminTicketsList = loadedAdminTicketsList.filter(t => t.ticketId !== ticketId);
+                } else {
+                    Object.assign(ticket, data);
+                }
+            } else if (parts.length >= 2 && parts[1] === "replies") {
+                if (!ticket.replies) ticket.replies = {};
+                if (parts.length === 3) {
+                    const replyId = parts[2];
+                    if (data === null) {
+                        delete ticket.replies[replyId];
+                    } else {
+                        ticket.replies[replyId] = data;
+                    }
+                } else if (parts.length === 2) {
+                    if (data === null) {
+                        ticket.replies = {};
+                    } else {
+                        Object.assign(ticket.replies, data);
+                    }
+                }
+            } else if (parts.length === 2 && parts[1] === "status") {
+                ticket.status = data;
+            } else if (parts.length === 2 && parts[1] === "lastActivity") {
+                ticket.lastActivity = data;
+            }
+        }
+    }
+
+    loadedAdminTicketsList.sort((a, b) => {
+        return (b.lastActivity || b.createdAt || 0) - (a.lastActivity || a.createdAt || 0);
+    });
+}
+
+async function connectAdminSupportWebSocket() {
+    if (adminSupportWS) {
+        closeAdminSupportWebSocket();
+    }
+
+    const user = window.firebaseAuth.currentUser;
+    if (!user) return;
+
+    try {
+        const idToken = await user.getIdToken(false);
+        const wsBase = window.API.GC_SUPPORT_BASE.replace(/^http/, 'ws');
+        const wsUrl = `${wsBase}/ws-admin-tickets?auth=${encodeURIComponent(idToken)}`;
+
+        console.log("🔌 Connecting to Admin Support WebSocket...");
+        const ws = new WebSocket(wsUrl);
+        adminSupportWS = ws;
+
+        ws.onopen = () => {
+            console.log("✅ Admin Support WebSocket connected");
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.type === "tickets_update") {
+                    console.log("📥 Admin tickets update received in real-time:", msg);
+                    if (msg.event === "put" || msg.event === "patch") {
+                        updateLocalAdminTicketData(msg.data);
+                        renderAdminSupportTable();
+
+                        if (activeAdminTicketId) {
+                            const activeTicket = loadedAdminTicketsList.find(t => t.ticketId === activeAdminTicketId);
+                            if (activeTicket) {
+                                updateAdminModalState(activeTicket);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing Admin WS message:", e);
+            }
+        };
+
+        ws.onclose = (e) => {
+            console.log("🔌 Admin Support WebSocket closed.", e.code, e.reason);
+        };
+
+        ws.onerror = (err) => {
+            console.error("❌ Admin Support WebSocket error:", err);
+        };
+    } catch (err) {
+        console.error("Error establishing Admin Support WebSocket:", err);
+    }
+}
+
+function closeAdminSupportWebSocket() {
+    if (adminSupportWS) {
+        console.log("🔌 Closing Admin Support WebSocket...");
+        try {
+            adminSupportWS.close();
+        } catch (_) {}
+        adminSupportWS = null;
+    }
+}
 
 function startAdminSupportAutoRefresh() {
-    if (window.adminSupportRefreshInterval) return;
+    connectAdminSupportWebSocket();
 
+    if (window.adminSupportRefreshInterval) {
+        clearInterval(window.adminSupportRefreshInterval);
+    }
     window.adminSupportRefreshInterval = setInterval(() => {
         const supportTab = document.getElementById('admin-support');
         const adminPage = document.getElementById('page-admin');
@@ -527,11 +739,14 @@ function startAdminSupportAutoRefresh() {
         const isAdminPageActive = adminPage && !adminPage.classList.contains('hide');
 
         if (isSupportTabActive && isAdminPageActive && window.isUserAuthenticated) {
-            silentReloadAdminSupport();
+            if (!adminSupportWS || adminSupportWS.readyState !== WebSocket.OPEN) {
+                console.log("🔄 Admin WSS not connected. Reconnecting...");
+                connectAdminSupportWebSocket();
+            }
         } else {
             stopAdminSupportAutoRefresh();
         }
-    }, 6000); // refresh every 6 seconds
+    }, 15000);
 }
 
 function stopAdminSupportAutoRefresh() {
@@ -539,6 +754,7 @@ function stopAdminSupportAutoRefresh() {
         clearInterval(window.adminSupportRefreshInterval);
         window.adminSupportRefreshInterval = null;
     }
+    closeAdminSupportWebSocket();
 }
 
 async function loadAdminSupport() {
@@ -797,24 +1013,4 @@ function updateAdminModalState(ticket) {
     }, 50);
 }
 
-async function silentReloadAdminSupport() {
-    try {
-        const res = await fetch(`${window.API.GC_SUPPORT_BASE}/admin/ticket/list`, {
-            headers: { 'Authorization': `Bearer ${await getAuthToken()}` }
-        });
-        if (!res.ok) return;
-        const tickets = await res.json();
-        loadedAdminTicketsList = tickets || [];
 
-        renderAdminSupportTable();
-
-        if (activeAdminTicketId) {
-            const activeTicket = loadedAdminTicketsList.find(t => t.ticketId === activeAdminTicketId);
-            if (activeTicket) {
-                updateAdminModalState(activeTicket);
-            }
-        }
-    } catch (e) {
-        // silent fail
-    }
-}

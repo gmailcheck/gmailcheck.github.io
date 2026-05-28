@@ -15,6 +15,7 @@
 	const selectMode = document.getElementById('select-mode-app2');
 	const statsInput = document.getElementById('stats-input-app2');
 	const statsOutput = document.getElementById('stats-output-app2');
+	const pageApp2 = document.getElementById('page-app2');
 
 	if (!textarea || !btnGenerate) return;
 
@@ -354,6 +355,13 @@
 					statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
 					statusEl.style.color = '#af86fc';
 
+					if (tasksList) {
+						tasksList.scrollTo({
+							top: tasksList.scrollHeight,
+							behavior: 'smooth'
+						});
+					}
+
 					const len = username.length;
 					// Limit exponent to 30 to avoid 32-bit integer overflow in bitwise shifts
 					const maxExponent = Math.min(len - 1, 30);
@@ -456,6 +464,13 @@
 							});
 
 							completedTasks++;
+
+							if (tasksList) {
+								tasksList.scrollTo({
+									top: tasksList.scrollHeight,
+									behavior: 'smooth'
+								});
+							}
 
 							// If all tasks completed, display all action buttons
 							if (completedTasks === totalInputEmails) {

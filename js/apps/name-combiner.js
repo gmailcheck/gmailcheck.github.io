@@ -13,6 +13,7 @@
 	const selectMode = document.getElementById('select-mode-app3');
 	const statsInput = document.getElementById('stats-input-app3');
 	const statsOutput = document.getElementById('stats-output-app3');
+	const pageApp3 = document.getElementById('page-app3');
 
 	if (!textarea || !btnGenerate) return;
 
@@ -316,6 +317,13 @@
 		statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Permuting...';
 		statusEl.style.color = '#af86fc';
 
+		if (tasksList) {
+			tasksList.scrollTo({
+				top: tasksList.scrollHeight,
+				behavior: 'smooth'
+			});
+		}
+
 		// Start Web Worker
 		const blob = new Blob([workerCode], { type: 'application/javascript' });
 		const workerURL = URL.createObjectURL(blob);
@@ -351,6 +359,13 @@
 				progressEl.style.width = `${progress}%`;
 				statsEl.textContent = `${combinationsBuffer.length.toLocaleString()} / ${finalCombinationsCount.toLocaleString()} combinations (${speed.toLocaleString()}/s)`;
 				statsOutput.textContent = `${combinationsBuffer.length.toLocaleString()} variation(s)`;
+
+				if (tasksList) {
+					tasksList.scrollTo({
+						top: tasksList.scrollHeight,
+						behavior: 'smooth'
+					});
+				}
 
 				if (combinationsBuffer.length >= finalCombinationsCount) {
 					// Exceeded limit: stop early

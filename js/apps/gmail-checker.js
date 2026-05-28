@@ -14,6 +14,7 @@
 	const btnDownloadAll = document.getElementById('btn-download-all-app1');
 	const selectServerContainer = document.getElementById('select-server-container-app1');
 	const selectServer = document.getElementById('select-server-app1');
+	const pageApp1 = document.getElementById('page-app1');
 
 	// Stats Elements
 	const statsInput = document.getElementById('stats-input-app1');
@@ -616,6 +617,13 @@
 				progressEl.style.width = '30%';
 				statsEl.textContent = 'Contacting secure worker API...';
 
+				if (tasksList) {
+					tasksList.scrollTo({
+						top: tasksList.scrollHeight,
+						behavior: 'smooth'
+					});
+				}
+
 				try {
 					let response;
 					if (idToken) {
@@ -722,6 +730,13 @@
 				completedChunks++;
 				updateCounters();
 
+				if (tasksList) {
+					tasksList.scrollTo({
+						top: tasksList.scrollHeight,
+						behavior: 'smooth'
+					});
+				}
+
 				if (completedChunks === chunks.length) {
 					// Entire Verification completed
 					isRunning = false;
@@ -734,7 +749,7 @@
 						if (b) b.classList.remove('active');
 					});
 					if (filterAll) filterAll.classList.add('active');
-					renderResultsList();
+					renderResultsList(true);
 
 					selectServerContainer.classList.add('hide');
 					btnExecute.classList.add('hide');
@@ -898,7 +913,7 @@
 	}
 
 	// Optimized dynamic rendering of checked emails
-	function renderResultsList() {
+	function renderResultsList(scrollToBottom = false) {
 		const container = document.getElementById('tasks-list-app1');
 		if (results.length === 0) return;
 
@@ -1023,6 +1038,12 @@
 
 		// Initial render
 		displayResults();
+
+		if (scrollToBottom) {
+			setTimeout(() => {
+				container.scrollTop = filtered.length * remToPx(ITEM_HEIGHT_REM);
+			}, 50);
+		}
 	}
 
 	// Copy active filtered results
