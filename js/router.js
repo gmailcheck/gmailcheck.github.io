@@ -193,7 +193,7 @@ window.getPathById = function (id) {
 }
 
 window.renderMenu = function () {
-	const sidebarBottom = document.getElementById('side-bar-bottom');
+	const sidebarBottom = document.getElementById('side-bar-bottom-content');
 	if (!sidebarBottom) return;
 	sidebarBottom.innerHTML = '';
 
