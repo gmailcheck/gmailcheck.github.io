@@ -118,7 +118,7 @@ input {
 }
 
 body {
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 .container {
@@ -127,15 +127,15 @@ body {
     height: 100vh;
     width: 100dvw;
     height: 100dvh;
-    min-height: 720px;
+    min-height: 650px;
     background-color: var(--bg-primary);
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .side-bar {
     display: flex;
     flex-direction: column;
-    width: 250px;
+    width: 300px;
     height: 100%;
     position: relative;
 }
@@ -165,6 +165,12 @@ body {
     min-height: 0;
     border-right: 1px solid var(--border-color);
     padding: 5px;
+}
+
+.side-bar-bottom-content {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 15px;
 }
 
 /* Style untuk menu items */
@@ -1195,12 +1201,12 @@ body[data-rds-mode="mobile"] .container {
 
 /* Sidebar transformed to beautiful floating slide-in drawer */
 body[data-rds-mode="mobile"] .side-bar {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     height: 100vh;
     height: 100dvh;
-    width: 280px;
+    min-height: 720px;
     z-index: 1000;
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
@@ -1213,13 +1219,7 @@ body[data-rds-mode="mobile"] .side-bar.open {
     transform: translateX(0);
 }
 
-body[data-rds-mode="mobile"] .main {
-    width: 100vw;
-    width: 100dvw;
-    height: 100vh;
-    height: 100dvh;
-    flex: 1;
-}
+
 
 /* Hide notifications in top bar on mobile to fit search/logo */
 body[data-rds-mode="mobile"] #top-bar-notification-container {
@@ -1364,12 +1364,12 @@ body[data-rds-mode="tablet"] .container {
 
 /* Sidebar transformed to floating slide-in drawer on tablets */
 body[data-rds-mode="tablet"] .side-bar {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     height: 100vh;
     height: 100dvh;
-    width: 290px;
+    min-height: 720px;
     z-index: 1000;
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-color);
@@ -1382,13 +1382,7 @@ body[data-rds-mode="tablet"] .side-bar.open {
     transform: translateX(0);
 }
 
-body[data-rds-mode="tablet"] .main {
-    width: 100vw;
-    width: 100dvw;
-    height: 100vh;
-    height: 100dvh;
-    flex: 1;
-}
+
 
 body[data-rds-mode="tablet"] #top-bar-notification-container {
     display: none !important;
@@ -5227,7 +5221,6 @@ body[data-rds-mode="tablet"] .container.home-active #btn-toggle-sidebar {
 /* Table Responsive */
 #page-admin .table-responsive {
     border-radius: 12px;
-    overflow: hidden;
     border: 1px solid var(--border-color);
 }
 
