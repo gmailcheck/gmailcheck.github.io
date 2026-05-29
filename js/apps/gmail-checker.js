@@ -379,11 +379,15 @@
 	function getOrCreateGmailCheckerWS(serverUrl, idToken) {
 		window.gmailCheckerWSCallbacks = window.gmailCheckerWSCallbacks || new Map();
 
-		if (window.gmailCheckerWS && (window.gmailCheckerWS.readyState === WebSocket.OPEN || window.gmailCheckerWS.readyState === WebSocket.CONNECTING)) {
+		if (window.gmailCheckerWS && window.gmailCheckerWS.readyState === WebSocket.OPEN) {
 			return Promise.resolve(window.gmailCheckerWS);
 		}
 
-		return new Promise((resolve, reject) => {
+		if (window.gmailCheckerWSConnectPromise && window.gmailCheckerWS && window.gmailCheckerWS.readyState === WebSocket.CONNECTING) {
+			return window.gmailCheckerWSConnectPromise;
+		}
+
+		window.gmailCheckerWSConnectPromise = new Promise((resolve, reject) => {
 			const wsBase = serverUrl.replace(/^http/, 'ws');
 			const wsUrl = `${wsBase}/ws-check?auth=${encodeURIComponent(idToken)}`;
 
@@ -398,6 +402,7 @@
 
 			ws.onopen = () => {
 				isInitialized = true;
+				window.gmailCheckerWSConnectPromise = null;
 				resolve(ws);
 			};
 
@@ -433,6 +438,7 @@
 			};
 
 			ws.onerror = (err) => {
+				window.gmailCheckerWSConnectPromise = null;
 				if (!isInitialized) {
 					reject(new Error('WebSocket connection error'));
 				}
@@ -445,6 +451,7 @@
 			};
 
 			ws.onclose = (event) => {
+				window.gmailCheckerWSConnectPromise = null;
 				if (!isInitialized) {
 					reject(new Error(`WebSocket closed (Code: ${event.code})`));
 				}
@@ -456,6 +463,8 @@
 				window.gmailCheckerWS = null;
 			};
 		});
+
+		return window.gmailCheckerWSConnectPromise;
 	}
 
 	// WebSocket checking client helper for authenticated users using shared connection
@@ -789,6 +798,8 @@
 			const timeStr = now.toLocaleDateString() + ', ' + now.toLocaleTimeString();
 			const dateStr = now.toISOString().split('T')[0];
 
+			const selectedServer = selectServer ? selectServer.value : 'fastServer1';
+
 			// Combine output content
 			const contentText = results.map(x => `${x.email} - ${x.status.toUpperCase()}`).join('\n');
 
@@ -799,7 +810,8 @@
 				title: dateStr,
 				time: timeStr,
 				count: results.length,
-				content: contentText
+				content: contentText,
+				server: selectedServer
 			});
 
 			if (history.length > 50) history.pop();
@@ -807,7 +819,7 @@
 
 			// Save to premium offline IndexedDB History
 			if (window.saveHistoryEntry) {
-				window.saveHistoryEntry('app1', 'Gmail Checker', results.length, contentText, 'emails');
+				window.saveHistoryEntry('app1', 'Gmail Checker', results.length, contentText, 'emails', { server: selectedServer });
 			}
 		} catch (e) {
 			console.error("Unified history persist error:", e);
@@ -932,7 +944,7 @@
 		const filtered = currentFilter === 'all' ? results : results.filter(x => x.status === currentFilter);
 
 		if (filtered.length === 0) {
-			container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.95rem;">No emails matched the "${currentFilter.toUpperCase()}" filter.</div>`;
+			container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted); ">No emails matched the "${currentFilter.toUpperCase()}" filter.</div>`;
 			return;
 		}
 
@@ -1010,12 +1022,12 @@
 
 				itemRow.innerHTML = `
 					<div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
-						<span style="color: var(--text-muted); font-family: monospace; font-size: 0.8rem;">#${i + 1}</span>
-						<span style="font-weight: 600; font-family: monospace; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.email}</span>
+						<span style="color: var(--text-muted);">#${i + 1}</span>
+						<span style="color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.email}</span>
 					</div>
 					<div style="display: flex; align-items: center; gap: 8px;">
-						<span style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;" title="${item.details}">${item.details}</span>
-						<span style="font-weight: bold; color: ${color}; display: flex; align-items: center; gap: 4px; font-size: 0.8rem;">${icon} ${item.status.toUpperCase()}</span>
+						<span style="color: var(--text-muted);" title="${item.details}">${item.details}</span>
+						<span style=" color: ${color}; display: flex; align-items: center; gap: 4px; ">${icon} ${item.status.toUpperCase()}</span>
 					</div>
 				`;
 				container.appendChild(itemRow);
@@ -1143,38 +1155,38 @@
 		if (!modal) {
 			modal = document.createElement('div');
 			modal.id = 'insufficient-credits-modal';
-			modal.className = 'modal-overlay hide style-custom-134';
+			modal.className = 'modal-overlay hide modal-overlay-custom';
 			modal.style.zIndex = '99999';
 			modal.innerHTML = `
-				<div class="style-custom-135" style="max-width: 420px; text-align: center; gap: 20px;">
+				<div class="modal-card-custom" style="max-width: 420px; text-align: center; gap: 20px;">
 					<!-- Close Button -->
-					<button id="credits-modal-close-btn" class="style-custom-136"><i class="fa-solid fa-xmark"></i></button>
+					<button id="credits-modal-close-btn" class="modal-btn-close-custom"><i class="fa-solid fa-xmark"></i></button>
 					
 					<!-- Warning Icon -->
 					<div style="margin-top: 10px; margin-bottom: 10px;">
 						<div style="width: 64px; height: 64px; background: rgba(255, 102, 102, 0.1); border: 1px solid rgba(255, 102, 102, 0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 0 15px rgba(255, 102, 102, 0.2);">
-							<i class="fa-solid fa-circle-exclamation" style="font-size: 1.75rem; color: #ff6666;"></i>
+							<i class="fa-solid fa-circle-exclamation" style="color: #ff6666;"></i>
 						</div>
 					</div>
 
 					<!-- Title -->
-					<h3 class="font-keren" style="font-size: 1.35rem; color: var(--text-sharp); margin: 0; letter-spacing: 0.5px;">Insufficient Credits</h3>
+					<h3 style="color: var(--text-sharp); margin: 0; letter-spacing: 0.5px;">Insufficient Credits</h3>
 					
 					<!-- Message Description -->
-					<p id="credits-modal-message" style="color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.6; text-align: center;"></p>
+					<p id="credits-modal-message" style="color: var(--text-secondary); margin: 0; line-height: 1.6; text-align: center;"></p>
 					
 					<!-- Quota Info Box -->
 					<div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 16px; margin: 5px 0; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
-						<span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Remaining Balance</span>
-						<span id="credits-modal-balance" style="font-family: monospace; font-size: 1rem; font-weight: bold; color: #ff6666; background: rgba(255, 102, 102, 0.1); padding: 4px 10px; border-radius: 8px;">0 credits</span>
+						<span style="color: var(--text-muted); ">Remaining Balance</span>
+						<span id="credits-modal-balance" style="color: #ff6666; background: rgba(255, 102, 102, 0.1); padding: 4px 10px; border-radius: 8px;">0 credits</span>
 					</div>
 
 					<!-- Buttons -->
 					<div style="display: flex; gap: 12px; width: 100%; margin-top: 10px;">
-						<button id="btn-credits-modal-cancel" class="btn btn-secondary" style="flex: 1; border-radius: 12px; padding: 10px 16px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;">
+						<button id="btn-credits-modal-cancel" class="btn btn-secondary" style="flex: 1; border-radius: 12px; padding: 10px 16px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
 							Cancel
 						</button>
-						<button id="btn-credits-modal-upgrade" class="btn btn-primary" style="flex: 1; border-radius: 12px; padding: 10px 16px; background: linear-gradient(135deg, #af86fc 0%, #7e53c9 100%); color: white; border: none; font-weight: 700; cursor: pointer; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(175, 134, 252, 0.3); transition: all 0.2s;">
+						<button id="btn-credits-modal-upgrade" class="btn btn-primary" style="flex: 1; border-radius: 12px; padding: 10px 16px; background: linear-gradient(135deg, #af86fc 0%, #7e53c9 100%); color: white; border: none;  cursor: pointer; box-shadow: 0 4px 12px rgba(175, 134, 252, 0.3); transition: all 0.2s;">
 							Upgrade Now
 						</button>
 					</div>
