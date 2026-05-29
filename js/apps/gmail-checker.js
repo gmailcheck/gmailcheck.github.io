@@ -332,13 +332,13 @@
 		}
 	}
 
-	// Fetch helper with absolute 10-second timeout per User Plan
-	function fetchWithTimeout(url, options, timeoutMs = 10000) {
+	// Fetch helper with timeout per User Plan
+	function fetchWithTimeout(url, options, timeoutMs = 180000) {
 		return new Promise((resolve, reject) => {
 			const controller = new AbortController();
 			const timeoutId = setTimeout(() => {
 				controller.abort();
-				reject(new Error('Timeout (10s)'));
+				reject(new Error(`Timeout (${Math.round(timeoutMs / 1000)}s)`));
 			}, timeoutMs);
 
 			const combinedSignal = options.signal;
