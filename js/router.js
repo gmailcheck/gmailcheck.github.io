@@ -7,19 +7,19 @@ window.sidebarMode = 'dashboard'; // 'dashboard' or 'developer'
 window.developerMenuItems = [
 	{ id: 'dev-keys', name: 'Manage API Keys', icon: 'fas fa-key', pageLabel: 'Manage API Keys' },
 	{ id: 'dev-create', name: 'Create API Key', icon: 'fas fa-plus-square', pageLabel: 'Create API Key' },
-	{ id: 'dev-credits', name: 'Credits', icon: 'fas fa-coins', pageLabel: 'API Credits' },
 	{ id: 'dev-stats', name: 'Stats', icon: 'fas fa-chart-bar', pageLabel: 'API Usage Stats' },
+	{ id: 'dev-credits', name: 'Credits', icon: 'fas fa-coins', pageLabel: 'API Credits' },
 	{ id: 'dev-add', name: 'Buy Credits', icon: 'fas fa-shopping-cart', pageLabel: 'Buy Credits' },
 	{ id: 'dev-purchases', name: 'Purchase History', icon: 'fas fa-file-invoice-dollar', pageLabel: 'Purchase History' }
 ];
 
 // Documentation Sub-menu Items
 window.documentationMenuItems = [
+	{ id: 'doc-payments', name: 'Billing & Payments', icon: 'fas fa-credit-card', pageLabel: 'Docs: Billing & Payments' },
+	{ id: 'doc-api-key', name: 'Developer API Key', icon: 'fas fa-key', pageLabel: 'Docs: Developer API Key' },
 	{ id: 'doc-gmail-checker', name: 'Gmail Checker', icon: 'fas fa-shield-halved', pageLabel: 'Docs: Gmail Checker' },
 	{ id: 'doc-dot-tricks', name: 'Gmail Dot Tricks', icon: 'fas fa-wand-magic-sparkles', pageLabel: 'Docs: Gmail Dot Tricks' },
 	{ id: 'doc-name-combiner', name: 'Name Combiner', icon: 'fas fa-shuffle', pageLabel: 'Docs: Name Combiner' },
-	{ id: 'doc-api-key', name: 'Developer API Key', icon: 'fas fa-key', pageLabel: 'Docs: Developer API Key' },
-	{ id: 'doc-payments', name: 'Billing & Payments', icon: 'fas fa-credit-card', pageLabel: 'Docs: Billing & Payments' },
 	{ id: 'doc-email-extractor', name: 'Email Extractor', icon: 'fas fa-filter', pageLabel: 'Docs: Email Extractor' },
 	{ id: 'doc-notepad', name: 'Notepad', icon: 'fas fa-notes-medical', pageLabel: 'Docs: Notepad' },
 	{ id: 'doc-history', name: 'History', icon: 'fas fa-clock-rotate-left', pageLabel: 'Docs: Result History' }
@@ -387,17 +387,17 @@ window.setActiveMenu = function (menuId, pushState = true) {
 		return;
 	}
 
-	// Re-route legacy/default documentation access to doc-gmail-checker
+	// Re-route legacy/default documentation access to doc-api-key
 	if (menuId === 'documentation') {
 		window.sidebarMode = 'documentation';
-		window.setActiveMenu('doc-gmail-checker', pushState);
+		window.setActiveMenu('doc-payments', pushState);
 		return;
 	}
 
 	const devMenuIds = ['dev-keys', 'dev-create', 'dev-credits', 'dev-stats', 'dev-add', 'dev-purchases'];
 	const isDevMenu = devMenuIds.includes(menuId);
 
-	const docMenuIds = ['doc-gmail-checker', 'doc-dot-tricks', 'doc-name-combiner', 'doc-api-key', 'doc-payments', 'doc-email-extractor', 'doc-notepad', 'doc-history'];
+	const docMenuIds = ['doc-payments', 'doc-api-key', 'doc-gmail-checker', 'doc-dot-tricks', 'doc-name-combiner', 'doc-email-extractor', 'doc-notepad', 'doc-history'];
 	const isDocMenu = docMenuIds.includes(menuId);
 
 	// Check authentication before entering protected pages (documentation is public!)
