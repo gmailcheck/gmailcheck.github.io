@@ -1,0 +1,493 @@
+/* ==========================================================================
+   APP LAYOUTS, VIRTUAL SCROLLERS & NOTEPADS
+   ========================================================================== */
+
+
+.app-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.app-x55-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.app-instruction {
+    color: var(--text-muted);
+}
+
+.task-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-input);
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.task-card:hover {
+    border-color: #af86fc;
+    box-shadow: 0 4px 12px rgba(175, 134, 252, 0.1);
+}
+
+.task-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.task-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-muted);
+}
+
+/* App containers vertical stacking */
+body[data-rds-mode="mobile"] .app-x55-container {
+    overflow-y: auto;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* App 1 (Gmail Checker) active results filter buttons layout */
+body[data-rds-mode="mobile"] .filter-button-group {
+    justify-content: flex-start;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.filter-buttons-wrapper {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-filter-pill-app {
+    border-radius: 100px;
+    padding: 6px 12px;
+}
+
+.btn-app-quick-fix {
+    background: linear-gradient(135deg, #ffcc00 0%, #d4a000 100%);
+    border: none;
+    box-shadow: 0 2px 8px rgba(212, 160, 0, 0.3);
+    color: #000 !important;
+
+    margin-bottom: 5px;
+}
+
+.btn-app-stop {
+    display: none;
+}
+
+.btn-app-clear {
+    border-color: rgba(255, 77, 77, 0.2);
+    color: #ff6666;
+    margin-bottom: 5px;
+}
+
+.btn-app-copy {
+    border-color: #af86fc;
+    color: #af86fc;
+    margin-bottom: 15px;
+}
+
+.app-stats-value-primary {
+    color: var(--text-sharp);
+
+}
+
+.app-stats-icon-live {
+    color: #66ffd9;
+    margin-right: 4px;
+}
+
+.app-stats-value-live {
+    color: #66ffd9;
+
+}
+
+.app-stats-icon-verify {
+    color: #ffd700;
+    margin-right: 4px;
+}
+
+.app-stats-value-verify {
+    color: #ffd700;
+
+}
+
+.app-stats-icon-disabled {
+    color: #ff00bf;
+    margin-right: 4px;
+}
+
+.app-stats-value-disabled {
+    color: #ff00bf;
+
+}
+
+.app-stats-icon-unregistered {
+    color: #00b7ff;
+    margin-right: 4px;
+
+}
+
+.app-stats-value-unregistered {
+    color: #00b7ff;
+}
+
+.app-stats-icon-bad {
+    color: #ff00bf;
+    margin-right: 4px;
+}
+
+.app-stats-value-bad {
+    color: #ff00bf;
+
+}
+
+.app-stats-icon-failed {
+    color: #ff4d4d;
+    margin-right: 4px;
+}
+
+.app-stats-value-failed {
+    color: #ff4d4d;
+
+}
+
+.app-stats-total-header {
+    align-items: center;
+    color: var(--text-sharp);
+    display: flex;
+    flex: 1;
+
+    gap: 8px;
+    justify-content: center;
+    text-align: center;
+}
+
+.app-stats-total-value {
+    color: #af86fc;
+
+}
+
+.app2-layout-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.app-instruction-accent-cyan {
+    align-items: center;
+    color: #00f0ff;
+    display: flex;
+
+
+    gap: 6px;
+    letter-spacing: 0.5px;
+}
+
+.app-textarea-cyan {
+    background: transparent;
+    border: none;
+    color: #00f0ff;
+
+    height: 100%;
+    min-height: 250px;
+    outline: none;
+    padding: 15px;
+    resize: none;
+    width: 100%;
+}
+
+.app2-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.btn-app2-clear {
+    border-color: rgba(255, 77, 77, 0.2);
+    color: #ff6666;
+}
+
+.app2-stats-value-primary {
+    color: var(--text-secondary);
+
+}
+
+.app2-results-panel {
+    align-self: stretch;
+    backdrop-filter: blur(10px);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex: 2.2;
+    flex-direction: column;
+    gap: 18px;
+    padding: 25px;
+}
+
+.app2-results-header {
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: space-between;
+    padding-bottom: 15px;
+}
+
+.app2-results-title-group {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    gap: 12px;
+    min-width: 200px;
+}
+
+.app2-results-count-badge {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+    color: var(--text-muted);
+
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+
+.btn-app2-copy-results {
+    align-items: center;
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    width: auto;
+}
+
+.btn-app2-download-results {
+    align-items: center;
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    width: auto;
+}
+
+.btn-app2-back {
+    align-items: center;
+    background: transparent;
+    border-color: rgba(255, 77, 77, 0.2);
+    color: #ff6666;
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    width: auto;
+}
+
+.app2-results-scroller {
+    flex: 1;
+    height: 380px;
+}
+
+.app2-results-footer {
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    display: flex;
+
+    justify-content: space-between;
+    padding-top: 12px;
+}
+
+.app2-notepad-list-panel {
+    backdrop-filter: blur(10px);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 25px;
+}
+
+.btn-app2-new-note {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+}
+
+.app2-notepad-search-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.app2-notepad-search-icon {
+    color: var(--text-muted);
+    position: absolute;
+    right: 12px;
+    top: 12px;
+}
+
+.app2-notes-scroller {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 380px;
+    min-height: 200px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.history-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.history-cards-scroller {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding: 20px 5px;
+}
+
+.history-detail-modal-app-badge {
+    color: #af86fc;
+
+
+}
+
+.history-detail-modal-content-scroller {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* History Page Styling */
+.history-tabs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.btn-filter-pill {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-sizing: border-box;
+}
+
+.btn-filter-pill:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-sharp);
+    border-color: rgba(175, 134, 252, 0.3);
+    transform: translateX(4px);
+}
+
+.btn-filter-pill.active {
+    background: linear-gradient(135deg, rgba(175, 134, 252, 0.15) 0%, rgba(126, 83, 201, 0.15) 100%);
+    border-color: #af86fc;
+    color: #af86fc;
+    box-shadow: 0 4px 15px rgba(175, 134, 252, 0.1);
+}
+
+.btn-filter-pill.active i {
+    color: #af86fc !important;
+}
+
+.history-item-card.app2 {
+    border-left: 4px solid #00f0ff;
+}
+
+.history-badge.app2 {
+    background: rgba(0, 240, 255, 0.15);
+    color: #00f0ff;
+    border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+/* --- Support Tickets Single Container & Tabs --- */
+.support-ticket-container {
+    backdrop-filter: blur(12px);
+    background: var(--bg-card, var(--bg-secondary));
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.2));
+    padding: 35px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.support-tabs {
+    margin-bottom: 10px !important;
+}
+
+.support-tab-content {
+    animation: fadeInTab 0.4s ease-out;
+}
+
+.support-tab-content.hide {
+    display: none !important;
+}
+
+.support-tab-content.active {
+    display: block;
+}
+
+@keyframes fadeInTab {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -10,6 +10,7 @@ window.applyAuthUIState = function (user) {
 	const userEmailDisplay = document.getElementById('user-email-display');
 	const userAvatarIcon = document.getElementById('user-avatar-icon');
 	const userAvatarImg = document.getElementById('user-avatar-img');
+	const dbUserAvatarCircle = document.getElementById('db-user-avatar-circle');
 
 	// Resolve target menu based on current URL path
 	let currentPath = window.location.pathname;
@@ -29,12 +30,12 @@ window.applyAuthUIState = function (user) {
 			userEmailDisplay.textContent = user.email;
 			userEmailDisplay.setAttribute('title', user.email);
 		}
-		
+
 		const popoverName = document.getElementById('profile-popover-name-display');
 		const popoverEmail = document.getElementById('profile-popover-email-display');
 		const popoverAvatarImg = document.getElementById('profile-popover-avatar-img');
 		const popoverAvatarIcon = document.getElementById('profile-popover-avatar-icon');
-		
+
 		if (popoverName) popoverName.textContent = user.displayName || user.email.split('@')[0];
 		if (popoverEmail) popoverEmail.textContent = user.email;
 
@@ -48,6 +49,14 @@ window.applyAuthUIState = function (user) {
 			if (popoverAvatarImg) {
 				popoverAvatarImg.src = user.photoURL;
 				popoverAvatarImg.classList.remove('hide');
+			}
+
+			if (dbUserAvatarCircle) {
+				if (dbUserAvatarCircle.tagName === 'IMG') {
+					dbUserAvatarCircle.src = user.photoURL;
+				} else {
+					dbUserAvatarCircle.style.backgroundImage = `url("${user.photoURL}")`;
+				}
 			}
 		} else {
 			if (userAvatarIcon) userAvatarIcon.classList.remove('hide');

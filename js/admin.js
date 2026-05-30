@@ -181,7 +181,7 @@ function initAdminPanel() {
                 if (result.success) {
                     const expiryLabel = expiryDays ? `${expiryDays} days from now` : 'Lifetime';
                     resultEl.style.display = 'block';
-                    resultEl.innerHTML = `✅ <strong>Key generated:</strong><br><br>${result.apiKey}<br><br><span style="color: var(--text-muted); font-size: 0.72rem;">Daily limit: ${dailyLimit} req/day &nbsp;|&nbsp; Expiry: ${expiryLabel}</span>`;
+                    resultEl.innerHTML = `✅ <strong>Key generated:</strong><br><br>${result.apiKey}<br><br><span style="color: var(--text-muted); ">Daily limit: ${dailyLimit} req/day &nbsp;|&nbsp; Expiry: ${expiryLabel}</span>`;
                     window.showAppNotification('success', '🔑 Compensation key generated successfully!');
                 } else {
                     window.showAppNotification('danger', result.error || 'Failed to generate key');
@@ -453,7 +453,7 @@ function renderAdminUsersTable() {
             const bOnline = isOnline(b);
             if (aOnline && !bOnline) return -1;
             if (!aOnline && bOnline) return 1;
-            
+
             // Fallback: order by last active timestamp (newest active first)
             const aTime = a.lastSeen || 0;
             const bTime = b.lastSeen || 0;
@@ -494,25 +494,25 @@ function renderAdminUsersTable() {
     tbody.innerHTML = '';
     sortedUsers.forEach(u => {
         const tr = document.createElement('tr');
-        
+
         // Format registration date
         const regDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A';
         const emailColHtml = `
             <div style="display: flex; flex-direction: column;">
-                <span style="font-weight: bold; color: var(--text-sharp);">${u.email}</span>
-                <small style="color: var(--text-muted); font-size: 10px; margin-top: 2px;">Reg: ${regDate}</small>
+                <span style=" color: var(--text-sharp);">${u.email}</span>
+                <small style="color: var(--text-muted); margin-top: 2px;">Reg: ${regDate}</small>
             </div>
         `;
 
         // Format last seen with glowing "Online" indicator if u.status === 'online'
         let lastSeenHtml = '';
         if (u.status === 'online') {
-            lastSeenHtml = `<span style="color: #66ffd9; font-weight: bold; display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #66ffd9; box-shadow: 0 0 8px #66ffd9;"></span>Online</span>`;
+            lastSeenHtml = `<span style="color: #66ffd9;  display: inline-flex; align-items: center; gap: 6px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #66ffd9; box-shadow: 0 0 8px #66ffd9;"></span>Online</span>`;
         } else {
             if (!u.lastSeen) {
                 lastSeenHtml = `<span style="color: var(--text-muted);">Never</span>`;
             } else {
-                lastSeenHtml = `<span style="color: var(--text-muted); font-size: 11px;">${new Date(u.lastSeen).toLocaleString()}</span>`;
+                lastSeenHtml = `<span style="color: var(--text-muted); ">${new Date(u.lastSeen).toLocaleString()}</span>`;
             }
         }
 
@@ -520,11 +520,11 @@ function renderAdminUsersTable() {
 
         tr.innerHTML = `
             <td>${emailColHtml}</td>
-            <td style="text-transform: capitalize; font-weight: bold;">${planLabel}</td>
+            <td style="text-transform: capitalize; ">${planLabel}</td>
             <td>${u.subscription_expiry ? new Date(u.subscription_expiry).toLocaleDateString() : 'Lifetime'}</td>
-            <td style="font-family: monospace;">${u.api_usage.toLocaleString()} / ${(u.api_credits !== undefined ? u.api_credits : u.api_quota).toLocaleString()}</td>
+            <td>${u.api_usage.toLocaleString()} / ${(u.api_credits !== undefined ? u.api_credits : u.api_quota).toLocaleString()}</td>
             <td>${lastSeenHtml}</td>
-            <td><span style="background: ${u.role === 'admin' ? 'rgba(175, 134, 252, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${u.role === 'admin' ? '#af86fc' : 'var(--text-muted)'}; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase;">${u.role}</span></td>
+            <td><span style="background: ${u.role === 'admin' ? 'rgba(175, 134, 252, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${u.role === 'admin' ? '#af86fc' : 'var(--text-muted)'}; padding: 2px 8px; border-radius: 4px;  text-transform: uppercase;">${u.role}</span></td>
             <td>-</td>
         `;
         tbody.appendChild(tr);
@@ -557,7 +557,7 @@ async function loadAdminPayments() {
                 <td>${p.email || 'N/A'}</td>
                 <td>${p.productName || p.productId || 'N/A'}</td>
                 <td>${p.price_amount_usd ? '$' + p.price_amount_usd : 'N/A'}</td>
-                <td style="font-family: monospace; font-size: 11px;">${p.invoice_id || 'N/A'}</td>
+                <td>${p.invoice_id || 'N/A'}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -616,7 +616,7 @@ function updateLocalAdminTicketData(eventData) {
         if (parts.length > 0) {
             const ticketId = parts[0];
             let ticket = loadedAdminTicketsList.find(t => t.ticketId === ticketId);
-            
+
             if (!ticket) {
                 if (parts.length === 1 && data && data.ticketId) {
                     ticket = data;
@@ -721,7 +721,7 @@ function closeAdminSupportWebSocket() {
         console.log("🔌 Closing Admin Support WebSocket...");
         try {
             adminSupportWS.close();
-        } catch (_) {}
+        } catch (_) { }
         adminSupportWS = null;
     }
 }
@@ -792,10 +792,10 @@ function renderAdminSupportTable() {
 
     loadedAdminTicketsList.forEach(t => {
         const tr = document.createElement('tr');
-        
+
         const subject = t.message ? t.message.substring(0, 45) + (t.message.length > 45 ? '...' : '') : 'No message';
         const categoryLabel = t.type ? t.type.toUpperCase() : 'GENERAL';
-        
+
         const statusLower = t.status.toLowerCase();
         const isResolved = statusLower === 'resolved' || statusLower === 'closed';
         const hasAdminReply = t.replies && Object.values(t.replies).some(r => r.sender === 'Admin');
@@ -821,25 +821,25 @@ function renderAdminSupportTable() {
         const lastActivityStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         tr.innerHTML = `
-            <td style="font-family: monospace; font-weight: bold; color: var(--text-sharp);">${t.ticketId}</td>
+            <td style="color: var(--text-sharp);">${t.ticketId}</td>
             <td>
                 <div style="display: flex; flex-direction: column;">
-                    <span style="font-weight: bold;">${t.username}</span>
-                    <small style="color: var(--text-muted); font-size: 10px;">${t.email || ''}</small>
+                    <span style="">${t.username}</span>
+                    <small style="color: var(--text-muted); ">${t.email || ''}</small>
                 </div>
             </td>
             <td>
                 <div style="display: flex; flex-direction: column;">
-                    <span style="font-weight: 500;">${subject}</span>
-                    <small style="color: #af86fc; font-size: 10px; font-weight: bold; text-transform: uppercase;">Category: ${categoryLabel}</small>
+                    <span style="">${subject}</span>
+                    <small style="color: #af86fc;  text-transform: uppercase;">Category: ${categoryLabel}</small>
                 </div>
             </td>
             <td>
-                <span style="color: ${statusColor}; background: ${statusBg}; border: 1px solid ${statusBorder}; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; font-family: 'Orbitron', monospace; letter-spacing: 0.5px;">${statusText}</span>
+                <span style="color: ${statusColor}; background: ${statusBg}; border: 1px solid ${statusBorder}; padding: 2px 8px; border-radius: 20px;   letter-spacing: 0.5px;">${statusText}</span>
             </td>
-            <td style="font-size: 11px; color: var(--text-muted);">${lastActivityStr}</td>
+            <td style="color: var(--text-muted);">${lastActivityStr}</td>
             <td>
-                <button class="btn btn-primary btn-open-ticket" data-id="${t.ticketId}" style="width: auto; padding: 4px 10px; font-size: 10px; border-radius: 4px;">
+                <button class="btn btn-primary btn-open-ticket" data-id="${t.ticketId}" style="width: auto; padding: 4px 10px; border-radius: 4px;">
                     <i class="fa-solid fa-reply"></i> Reply
                 </button>
             </td>
@@ -864,7 +864,7 @@ function openAdminTicketDetails(ticket) {
 
 function updateAdminModalState(ticket) {
     document.getElementById('admin-ticket-modal-id').textContent = ticket.ticketId;
-    
+
     const statusLower = ticket.status.toLowerCase();
     const isResolved = statusLower === 'resolved' || statusLower === 'closed';
     const hasAdminReply = ticket.replies && Object.values(ticket.replies).some(r => r.sender === 'Admin');
@@ -944,7 +944,6 @@ function updateAdminModalState(ticket) {
         bubble.style.padding = '12px 16px';
         bubble.style.borderRadius = '15px';
         bubble.style.lineHeight = '1.4';
-        bubble.style.fontSize = '0.9rem';
         bubble.style.display = 'flex';
         bubble.style.flexDirection = 'column';
         bubble.style.gap = '8px';
@@ -978,11 +977,11 @@ function updateAdminModalState(ticket) {
         }
 
         bubble.innerHTML = `
-            <div style="font-size: 0.65rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase; font-family: 'Orbitron', monospace; display: flex; justify-content: space-between; gap: 25px;">
+            <div style="color: var(--text-muted);  text-transform: uppercase;  display: flex; justify-content: space-between; gap: 25px;">
                 <span>${isAdmin ? '💼 You (Admin)' : '👤 ' + msg.sender}</span>
                 <span>${msgTimeStr}</span>
             </div>
-            <div style="word-break: break-word; font-family: 'RobotoMono', monospace; font-size: 0.85rem;">${msg.message || ''}</div>
+            <div style="word-break: break-word;  ">${msg.message || ''}</div>
             ${imgHtml}
         `;
 
@@ -1000,8 +999,6 @@ function updateAdminModalState(ticket) {
         banner.style.border = '1px solid rgba(102, 255, 217, 0.2)';
         banner.style.color = '#66ffd9';
         banner.style.borderRadius = '10px';
-        banner.style.fontSize = '0.85rem';
-        banner.style.fontFamily = 'RobotoMono, monospace';
         banner.innerHTML = `<i class="fa-solid fa-lock" style="margin-right: 5px;"></i> This ticket has been marked as RESOLVED.`;
         chatHistory.appendChild(banner);
     } else {

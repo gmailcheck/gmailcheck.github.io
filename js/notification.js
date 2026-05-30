@@ -14,8 +14,8 @@ let notificationTimeout = null;
 			border-radius: 8px;
 			background-color: var(--bg-secondary) !important;
 			color: var(--text-primary) !important;
-			font-size: 0.9rem;
-			font-weight: 500;
+			
+			
 			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 			border-left: 4px solid transparent;
 			animation: slideInDown 0.3s ease-out forwards;
@@ -31,7 +31,7 @@ let notificationTimeout = null;
 			background: transparent;
 			border: none;
 			color: var(--text-muted);
-			font-size: 1.2rem;
+			
 			cursor: pointer;
 			margin-left: 12px;
 			transition: color 0.2s;
@@ -59,11 +59,11 @@ window.showAppNotification = function (type, message, durationMs = null) {
 	}
 
 	if (type === 'warning') {
-		icon = '<i class="fa-solid fa-triangle-exclamation" style="font-size: 1.25rem; color: var(--text-sharp); margin-right: 12px; flex-shrink: 0;"></i>';
+		icon = '<i class="fa-solid fa-triangle-exclamation" style="color: var(--text-sharp); margin-right: 12px; flex-shrink: 0;"></i>';
 	} else if (type === 'danger') {
-		icon = '<i class="fa-solid fa-circle-exclamation" style="font-size: 1.25rem; color: var(--text-sharp); margin-right: 12px; flex-shrink: 0;"></i>';
+		icon = '<i class="fa-solid fa-circle-exclamation" style="color: var(--text-sharp); margin-right: 12px; flex-shrink: 0;"></i>';
 	} else if (type === 'success') {
-		icon = '<i class="fa-solid fa-circle-check" style="font-size: 1.25rem; color: var(--text-sharp); margin-right: 12px; flex-shrink: 0;"></i>';
+		icon = '<i class="fa-solid fa-circle-check" style="color: var(--text-sharp); margin-right: 12px; flex-shrink: 0;"></i>';
 	}
 
 	container.innerHTML = `
@@ -129,29 +129,29 @@ window.playSuccessChime = function () {
 		const AudioContext = window.AudioContext || window.webkitAudioContext;
 		if (!AudioContext) throw new Error("AudioContext not supported");
 		const context = new AudioContext();
-		
+
 		// Create synthesizers
 		const osc1 = context.createOscillator();
 		const osc2 = context.createOscillator();
 		const gain = context.createGain();
-		
+
 		// High fidelity modern electronic chime frequencies
 		osc1.type = 'sine';
 		osc1.frequency.setValueAtTime(587.33, context.currentTime); // D5
 		osc1.frequency.exponentialRampToValueAtTime(880.00, context.currentTime + 0.15); // A5
-		
+
 		osc2.type = 'triangle';
 		osc2.frequency.setValueAtTime(880.00, context.currentTime); // A5
 		osc2.frequency.exponentialRampToValueAtTime(1174.66, context.currentTime + 0.15); // D6
-		
+
 		// Gentle gain curve for beautiful fading sustain
 		gain.gain.setValueAtTime(0.12, context.currentTime);
 		gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.6);
-		
+
 		osc1.connect(gain);
 		osc2.connect(gain);
 		gain.connect(context.destination);
-		
+
 		osc1.start();
 		osc2.start();
 		osc1.stop(context.currentTime + 0.6);
@@ -161,7 +161,7 @@ window.playSuccessChime = function () {
 		try {
 			const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-200.wav');
 			audio.volume = 0.3;
-			audio.play().catch(() => {});
-		} catch (ex) {}
+			audio.play().catch(() => { });
+		} catch (ex) { }
 	}
 };

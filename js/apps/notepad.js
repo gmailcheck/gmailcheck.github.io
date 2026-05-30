@@ -83,8 +83,8 @@ async function refreshNotesList() {
 
     if (filtered.length === 0) {
         listContainer.innerHTML = `
-            <div style="text-align: center; padding: 25px 10px; color: var(--text-muted); font-size: 0.8rem; font-family: 'RobotoMono'; border: 1px dashed var(--border-color); border-radius: 12px; background: rgba(255,255,255,0.01);">
-                <i class="fa-solid fa-folder-open" style="font-size: 1.5rem; color: var(--border-color); margin-bottom: 8px; display: block;"></i>
+            <div style="text-align: center; padding: 25px 10px; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: 12px; background: rgba(255,255,255,0.01);">
+                <i class="fa-solid fa-folder-open" style="color: var(--border-color); margin-bottom: 8px; display: block;"></i>
                 No notes found
             </div>
         `;
@@ -114,14 +114,14 @@ async function refreshNotesList() {
 
         item.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; width:100%;">
-                <span style="font-weight: bold; color: var(--text-sharp); font-family: 'Orbitron', monospace; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+                <span style=" color: var(--text-sharp);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
                     ${escapeHTML(note.title) || 'Untitled Note'}
                 </span>
-                <span style="font-size: 0.68rem; color: var(--text-muted); font-family: 'RobotoMono'; white-space: nowrap;">
+                <span style="color: var(--text-muted);  white-space: nowrap;">
                     ${formattedTime}
                 </span>
             </div>
-            <p style="color: var(--text-secondary); font-size: 0.75rem; margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 ${escapeHTML(snippet)}
             </p>
         `;

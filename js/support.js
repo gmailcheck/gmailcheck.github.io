@@ -15,6 +15,7 @@
 		const btnSubmit = document.getElementById('btn-submit-ticket');
 		const btnRefresh = document.getElementById('btn-refresh-tickets');
 		const listContainer = document.getElementById('tickets-list-container');
+		const createTabContent = document.getElementById('support-create-tab');
 
 		// File Selectors for Creation Form
 		const createImagesInput = document.getElementById('support-images-input');
@@ -43,6 +44,99 @@
 		let selectedCreateFiles = [];
 		let selectedReplyFiles = [];
 		let pollingInterval = null;
+
+		function updatePendingFormState(hasPending) {
+			let warningEl = document.getElementById('support-pending-warning');
+			if (warningEl) warningEl.remove();
+
+			if (hasPending) {
+				warningEl = document.createElement('div');
+				warningEl.id = 'support-pending-warning';
+				warningEl.className = 'pending-ticket-warning';
+				warningEl.style.background = 'rgba(255, 102, 102, 0.08)';
+				warningEl.style.border = '1px solid rgba(255, 102, 102, 0.25)';
+				warningEl.style.color = '#ff6666';
+				warningEl.style.padding = '16px';
+				warningEl.style.borderRadius = '8px';
+				warningEl.style.marginBottom = '20px';
+				warningEl.style.display = 'flex';
+				warningEl.style.alignItems = 'flex-start';
+				warningEl.style.gap = '12px';
+				warningEl.style.fontSize = '0.9rem';
+				warningEl.style.lineHeight = '1.4';
+				warningEl.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+
+				warningEl.innerHTML = `
+					<i class="fa-solid fa-triangle-exclamation" style="margin-top: 3px; font-size: 1.1rem; color: #ff6666;"></i>
+					<div>
+						<strong style="display: block; margin-bottom: 4px; color: #ff8888;">Pending Support Ticket Active</strong>
+						You already have an active pending support ticket. Please wait for our team to resolve or reply to your existing ticket in the <strong>"Your Support Tickets"</strong> tab before creating a new one.
+					</div>
+				`;
+
+				if (createTabContent) {
+					createTabContent.insertBefore(warningEl, createTabContent.firstChild);
+				}
+
+				inputSubject.disabled = true;
+				selectCategory.disabled = true;
+				selectPriority.disabled = true;
+				textareaMessage.disabled = true;
+				btnTriggerCreateImages.disabled = true;
+				btnSubmit.disabled = true;
+				btnSubmit.style.opacity = '0.5';
+				btnSubmit.style.cursor = 'not-allowed';
+				btnSubmit.title = 'You have an active pending ticket';
+
+				inputSubject.style.opacity = '0.6';
+				selectCategory.style.opacity = '0.6';
+				selectPriority.style.opacity = '0.6';
+				textareaMessage.style.opacity = '0.6';
+				btnTriggerCreateImages.style.opacity = '0.6';
+				btnTriggerCreateImages.style.cursor = 'not-allowed';
+			} else {
+				inputSubject.disabled = false;
+				selectCategory.disabled = false;
+				selectPriority.disabled = false;
+				textareaMessage.disabled = false;
+				btnTriggerCreateImages.disabled = false;
+				btnSubmit.disabled = false;
+				btnSubmit.style.opacity = '1';
+				btnSubmit.style.cursor = 'pointer';
+				btnSubmit.title = '';
+
+				inputSubject.style.opacity = '1';
+				selectCategory.style.opacity = '1';
+				selectPriority.style.opacity = '1';
+				textareaMessage.style.opacity = '1';
+				btnTriggerCreateImages.style.opacity = '1';
+				btnTriggerCreateImages.style.cursor = 'pointer';
+			}
+		}
+
+		// Support Tab Switching Logic
+		const supportTabs = pageSupport.querySelectorAll('.db-tab-btn[data-tab^="support-"]');
+		const supportContents = pageSupport.querySelectorAll('.support-tab-content');
+
+		supportTabs.forEach(tab => {
+			tab.addEventListener('click', () => {
+				// Remove active from all tabs and hide content
+				supportTabs.forEach(t => t.classList.remove('active'));
+				supportContents.forEach(c => {
+					c.classList.add('hide');
+					c.classList.remove('active');
+				});
+
+				// Add active to clicked and show content
+				tab.classList.add('active');
+				const targetId = tab.getAttribute('data-tab');
+				const targetContent = document.getElementById(targetId);
+				if (targetContent) {
+					targetContent.classList.remove('hide');
+					targetContent.classList.add('active');
+				}
+			});
+		});
 
 		// Helper: Get Current User Info
 		function getUserInfo() {
@@ -122,7 +216,7 @@
 
 					div.innerHTML = `
 						<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
-						<button type="button" style="position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.6); border: none; color: white; font-size: 0.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Hapus">
+						<button type="button" style="position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.6); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Hapus">
 							<i class="fa-solid fa-xmark"></i>
 						</button>
 					`;
@@ -179,7 +273,7 @@
 
 					div.innerHTML = `
 						<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
-						<button type="button" style="position: absolute; top: 2px; right: 2px; width: 15px; height: 15px; border-radius: 50%; background: rgba(0,0,0,0.7); border: none; color: white; font-size: 0.55rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Hapus">
+						<button type="button" style="position: absolute; top: 2px; right: 2px; width: 15px; height: 15px; border-radius: 50%; background: rgba(0,0,0,0.7); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Hapus">
 							<i class="fa-solid fa-xmark"></i>
 						</button>
 					`;
@@ -203,8 +297,8 @@
 			if (!silent) {
 				listContainer.innerHTML = `
 					<div style="text-align: center; padding: 40px; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 15px;">
-						<i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: #af86fc;"></i>
-						<span style="font-family: 'RobotoMono', monospace; font-size: 0.85rem;">Connecting to Cloud Support...</span>
+						<i class="fa-solid fa-circle-notch fa-spin" style="color: #af86fc;"></i>
+						<span style=" ">Connecting to Cloud Support...</span>
 					</div>
 				`;
 			}
@@ -217,6 +311,10 @@
 				const tickets = await response.json();
 				renderTicketsList(tickets);
 
+				// Check for pending tickets to update the Create Ticket form
+				const hasPending = tickets.some(t => t.status.toLowerCase() === 'pending');
+				updatePendingFormState(hasPending);
+
 				// Update live chat if open
 				if (activeTicketId) {
 					const activeTicket = tickets.find(t => t.ticketId === activeTicketId);
@@ -226,12 +324,13 @@
 				}
 			} catch (err) {
 				console.error(err);
+				updatePendingFormState(false);
 				if (!silent) {
 					listContainer.innerHTML = `
 						<div style="text-align: center; padding: 40px; color: #ff6666; display: flex; flex-direction: column; align-items: center; gap: 15px;">
-							<i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem;"></i>
-							<span style="font-family: 'RobotoMono', monospace; font-size: 0.85rem;">Failed to synchronize support ticket data.</span>
-							<button class="btn" id="btn-retry-tickets" style="width: auto; padding: 6px 12px; font-size: 0.8rem; border-color: #ff6666; color: #ff6666; background: transparent;">Retry Connection</button>
+							<i class="fa-solid fa-triangle-exclamation" style=""></i>
+							<span style=" ">Failed to synchronize support ticket data.</span>
+							<button class="btn" id="btn-retry-tickets" style="width: auto; padding: 6px 12px; border-color: #ff6666; color: #ff6666; background: transparent;">Retry Connection</button>
 						</div>
 					`;
 					const btnRetry = document.getElementById('btn-retry-tickets');
@@ -249,8 +348,8 @@
 			if (!tickets || tickets.length === 0) {
 				listContainer.innerHTML = `
 					<div style="text-align: center; padding: 40px; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 15px;">
-						<i class="fa-solid fa-folder-open" style="font-size: 3rem; color: var(--border-color);"></i>
-						<span style="font-family: 'RobotoMono', monospace; font-size: 0.9rem;">No active support tickets found. Create a new one on the left.</span>
+						<i class="fa-solid fa-folder-open" style="color: var(--border-color);"></i>
+						<span style=" ">No active support tickets found. Create a new one on the left.</span>
 					</div>
 				`;
 				return;
@@ -316,15 +415,15 @@
 				card.innerHTML = `
 					<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
 						<div style="display: flex; align-items: center; gap: 8px;">
-							<span style="font-family: 'Orbitron', monospace; font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">${ticket.ticketId}</span>
-							<span style="font-size: 0.7rem; color: var(--text-muted); font-family: 'RobotoMono', monospace;">${dateStr}</span>
+							<span style="  color: var(--text-muted);">${ticket.ticketId}</span>
+							<span style="color: var(--text-muted); ">${dateStr}</span>
 						</div>
-						<span style="font-size: 0.7rem; font-weight: bold; color: ${statusColor}; background: ${statusBg}; border: 1px solid ${statusBorder}; padding: 2px 8px; border-radius: 20px; font-family: 'Orbitron', monospace; letter-spacing: 0.5px;">${statusText}</span>
+						<span style=" color: ${statusColor}; background: ${statusBg}; border: 1px solid ${statusBorder}; padding: 2px 8px; border-radius: 20px;  letter-spacing: 0.5px;">${statusText}</span>
 					</div>
-					<h4 style="margin: 0; color: var(--text-sharp); font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${ticket.message}</h4>
-					<div style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid var(--border-color); padding-top: 8px; font-size: 0.75rem;">
+					<h4 style="margin: 0; color: var(--text-sharp);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${ticket.message}</h4>
+					<div style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid var(--border-color); padding-top: 8px; ">
 						<span style="color: var(--text-muted);"><i class="fa-solid fa-tags" style="margin-right: 4px;"></i> Category: ${prioText}</span>
-						<span style="color: var(--text-muted); font-size: 0.7rem;">
+						<span style="color: var(--text-muted); ">
 							<i class="fa-solid fa-message" style="margin-right: 3px;"></i> ${ticket.replies ? Object.keys(ticket.replies).length + 1 : 1} messages
 						</span>
 					</div>
@@ -448,8 +547,6 @@
 				banner.style.border = '1px solid rgba(102, 255, 217, 0.2)';
 				banner.style.color = '#66ffd9';
 				banner.style.borderRadius = '10px';
-				banner.style.fontSize = '0.85rem';
-				banner.style.fontFamily = 'RobotoMono, monospace';
 				banner.innerHTML = `<i class="fa-solid fa-lock" style="margin-right: 5px;"></i> This ticket has been marked as RESOLVED.`;
 				modalChat.appendChild(banner);
 			} else if (!hasAdminReply) {
@@ -462,8 +559,6 @@
 				banner.style.border = '1px solid rgba(175, 134, 252, 0.2)';
 				banner.style.color = '#af86fc';
 				banner.style.borderRadius = '10px';
-				banner.style.fontSize = '0.85rem';
-				banner.style.fontFamily = 'RobotoMono, monospace';
 				banner.innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Waiting for support agent response before you can reply.`;
 				modalChat.appendChild(banner);
 			} else {
@@ -493,7 +588,6 @@
 				bubble.style.padding = '12px 16px';
 				bubble.style.borderRadius = '15px';
 				bubble.style.lineHeight = '1.4';
-				bubble.style.fontSize = '0.9rem';
 				bubble.style.display = 'flex';
 				bubble.style.flexDirection = 'column';
 				bubble.style.gap = '8px';
@@ -528,11 +622,11 @@
 				}
 
 				bubble.innerHTML = `
-					<div style="font-size: 0.65rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase; font-family: 'Orbitron', monospace; display: flex; justify-content: space-between; gap: 25px;">
+					<div style="color: var(--text-muted);  text-transform: uppercase;  display: flex; justify-content: space-between; gap: 25px;">
 						<span>${isAdmin ? '💼 Staff Specialist' : '👤 You'}</span>
 						<span>${timeStr}</span>
 					</div>
-					<div style="word-break: break-word; font-family: 'RobotoMono', monospace; font-size: 0.85rem;">${msg.message || ''}</div>
+					<div style="word-break: break-word;  ">${msg.message || ''}</div>
 					${imgHtml}
 				`;
 
@@ -590,8 +684,13 @@
 				selectPriority.value = 'medium';
 				selectedCreateFiles = [];
 				renderCreateImagesPreview();
-
 				loadUserTickets();
+
+				// Switch to history tab on successful submit
+				const historyTabBtn = pageSupport.querySelector('.db-tab-btn[data-tab="support-history-tab"]');
+				if (historyTabBtn) {
+					historyTabBtn.click();
+				}
 
 			} catch (err) {
 				console.error(err);

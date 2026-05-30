@@ -51,11 +51,11 @@ window.menuItems = [
 		hasSubmenu: true,
 		isOpen: false,
 		submenu: [
-			{ id: 'app1', name: 'Gmail Checker', icon: '', pageLabel: 'Gmail Checker', path: '/gmail-checker' },
-			{ id: 'app2', name: 'Gmail Dot Tricks', icon: '', pageLabel: 'Gmail Dot Tricks', path: '/gmail-dot-tricks' },
-			{ id: 'app3', name: 'Name Combiner', icon: '', pageLabel: 'Name Combiner', path: '/name-combiner' },
-			{ id: 'app4', name: 'Email Extractor', icon: '', pageLabel: 'Email Extractor & Remove Duplicates', path: '/email-extractor' },
-			{ id: 'app5', name: 'Notepad', icon: '', pageLabel: 'Notepad', path: '/notepad' },
+			{ id: 'app1', name: 'Gmail Checker', icon: 'fas fa-shield-halved', pageLabel: 'Gmail Checker', path: '/gmail-checker' },
+			{ id: 'app2', name: 'Gmail Dot Tricks', icon: 'fas fa-wand-magic-sparkles', pageLabel: 'Gmail Dot Tricks', path: '/gmail-dot-tricks' },
+			{ id: 'app3', name: 'Name Combiner', icon: 'fas fa-shuffle', pageLabel: 'Name Combiner', path: '/name-combiner' },
+			{ id: 'app4', name: 'Email Extractor', icon: 'fas fa-filter', pageLabel: 'Email Extractor & Remove Duplicates', path: '/email-extractor' },
+			{ id: 'app5', name: 'Notepad', icon: 'fas fa-notes-medical', pageLabel: 'Notepad', path: '/notepad' },
 		]
 	},
 	{
@@ -205,7 +205,7 @@ window.renderMenu = function () {
 		backDiv.style.marginBottom = '12px';
 		backDiv.style.paddingBottom = '12px';
 		backDiv.style.cursor = 'pointer';
-		backDiv.innerHTML = `<i class="fas fa-chevron-left" style="color: #af86fc; font-size: 0.8rem; margin-right: 8px;"></i><span style="font-weight: bold; color: #af86fc; font-family: 'Orbitron', monospace;">Dashboard</span>`;
+		backDiv.innerHTML = `<i class="fas fa-chevron-left" style="color: #af86fc; margin-right: 8px;"></i><span style=" color: #af86fc; ">Dashboard</span>`;
 		backDiv.addEventListener('click', () => {
 			window.sidebarMode = 'dashboard';
 			window.setActiveMenu('dashboard');
@@ -228,7 +228,7 @@ window.renderMenu = function () {
 		backDiv.style.cursor = 'pointer';
 
 		const backLabel = window.isUserAuthenticated ? 'Dashboard' : 'Home';
-		backDiv.innerHTML = `<i class="fas fa-chevron-left" style="color: #af86fc; font-size: 0.8rem; margin-right: 8px;"></i><span style="font-weight: bold; color: #af86fc; font-family: 'Orbitron', monospace;">${backLabel}</span>`;
+		backDiv.innerHTML = `<i class="fas fa-chevron-left" style="color: #af86fc; margin-right: 8px;"></i><span style=" color: #af86fc; ">${backLabel}</span>`;
 		backDiv.addEventListener('click', () => {
 			if (window.isUserAuthenticated) {
 				window.sidebarMode = 'dashboard';
@@ -262,7 +262,7 @@ window.renderMenu = function () {
 				const parentBtn = createMenuItem(menu.id, menu.name, menu.icon, true);
 				const arrowSpan = document.createElement('span');
 				arrowSpan.className = `arrow ${menu.isOpen ? 'rotate' : ''}`;
-				arrowSpan.innerHTML = '<i class="fas fa-chevron-right" style="font-size: 8px"></i>';
+				arrowSpan.innerHTML = '<i class="fas fa-chevron-right"></i>';
 				parentBtn.appendChild(arrowSpan);
 
 				parentBtn.addEventListener('click', (e) => {
@@ -550,7 +550,6 @@ window.toggleDocTab = function (lang) {
 		if (btn) {
 			btn.style.background = 'transparent';
 			btn.style.color = 'var(--text-muted)';
-			btn.style.fontWeight = 'normal';
 		}
 	});
 
@@ -558,7 +557,6 @@ window.toggleDocTab = function (lang) {
 	if (activeBtn) {
 		activeBtn.style.background = 'linear-gradient(135deg, #af86fc, #7e53c9)';
 		activeBtn.style.color = 'white';
-		activeBtn.style.fontWeight = 'bold';
 	}
 }
 

@@ -488,18 +488,18 @@ function initApp() {
 		function updateNotifPermissionStatusUI() {
 			if (!notifStatusEl) return;
 			if (!('Notification' in window)) {
-				notifStatusEl.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;"><i class="fa-solid fa-ban"></i> Not Supported</span>';
+				notifStatusEl.innerHTML = '<span style="color: var(--text-muted); "><i class="fa-solid fa-ban"></i> Not Supported</span>';
 				return;
 			}
 
 			const status = Notification.permission;
 			if (status === 'granted') {
-				notifStatusEl.innerHTML = '<span style="background: rgba(102, 255, 217, 0.1); color: #66ffd9; border: 1px solid rgba(102, 255, 217, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> Enabled</span>';
+				notifStatusEl.innerHTML = '<span style="background: rgba(102, 255, 217, 0.1); color: #66ffd9; border: 1px solid rgba(102, 255, 217, 0.2); padding: 5px 12px; border-radius: 20px; "><i class="fa-solid fa-circle-check"></i> Enabled</span>';
 			} else if (status === 'denied') {
-				notifStatusEl.innerHTML = '<span style="background: rgba(255, 77, 77, 0.1); color: #ff6666; border: 1px solid rgba(255, 77, 77, 0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;"><i class="fa-solid fa-circle-xmark"></i> Blocked</span>';
+				notifStatusEl.innerHTML = '<span style="background: rgba(255, 77, 77, 0.1); color: #ff6666; border: 1px solid rgba(255, 77, 77, 0.2); padding: 5px 12px; border-radius: 20px; "><i class="fa-solid fa-circle-xmark"></i> Blocked</span>';
 			} else { // default
-				notifStatusEl.innerHTML = `<button id="btn-request-notif-pref" style="background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.3); color: #00f0ff; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: bold; border-radius: 8px; padding: 6px 14px; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-bell"></i> Request Permission</button>`;
-				
+				notifStatusEl.innerHTML = `<button id="btn-request-notif-pref" style="background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.3); color: #00f0ff; border-radius: 8px; padding: 6px 14px; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-bell"></i> Request Permission</button>`;
+
 				const btnRequest = document.getElementById('btn-request-notif-pref');
 				if (btnRequest) {
 					btnRequest.addEventListener('click', () => {

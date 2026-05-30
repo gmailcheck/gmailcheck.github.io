@@ -1,0 +1,748 @@
+/* ==========================================================================
+   INPUTS, FORMS, TABLES & WHITELISTS
+   ========================================================================== */
+
+
+/* Transisi halus agar pergantian tema terasa premium */
+body,
+.side-bar,
+.side-bar-bottom,
+.top-bar,
+.page-name,
+.content,
+.menu-item,
+.submenu-item,
+.dashboard-card,
+select,
+input {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* ==========================================================================
+   GLOBAL PROFESSIONAL INPUT & SELECT STYLES (PREMIUM)
+   ========================================================================== */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select,
+.db-input {
+    width: 100%;
+    padding: 12px 16px !important;
+    background-color: var(--bg-input, var(--bg-primary)) !important;
+    border: 1px solid var(--border-input, var(--border-color)) !important;
+    color: var(--text-primary) !important;
+    border-radius: 10px !important;
+
+    outline: none !important;
+    box-sizing: border-box !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Focused inputs get a beautiful premium glow */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus,
+.db-input:focus {
+    border-color: #af86fc !important;
+    box-shadow: 0 0 0 3px rgba(175, 134, 252, 0.15) !important;
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Placeholder styling */
+input::placeholder,
+.db-input::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.65 !important;
+}
+
+.email-input {
+    position: relative;
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-input);
+    border-radius: 5px;
+}
+
+body[data-rds-mode="mobile"] .email-input {
+    width: 100%;
+}
+
+body[data-rds-mode="tablet"] .container {
+    position: relative;
+    overflow: hidden;
+}
+
+/* App containers vertical stacking with comfortable tablet proportions */
+body[data-rds-mode="tablet"] .app-x55-container {
+    overflow-y: auto;
+    flex-direction: column;
+    gap: 15px;
+}
+
+body[data-rds-mode="tablet"] .email-input {
+    width: 100%;
+}
+
+body[data-rds-mode="tablet"] .controls {
+    width: 100%;
+    height: auto;
+    flex: none;
+    padding: 15px;
+    gap: 12px;
+}
+
+body[data-rds-mode="tablet"] .control-title {
+    display: none;
+}
+
+body[data-rds-mode="tablet"] .results-container {
+    width: 100%;
+}
+
+/* Support view stacking for tablet */
+body[data-rds-mode="tablet"] #page-support>div {
+    flex-direction: column;
+    gap: 25px;
+}
+
+body[data-rds-mode="tablet"] #page-support>div>div {
+    width: 100% !important;
+    flex: none !important;
+}
+
+/* Pricing cards wrapping support */
+body[data-rds-mode="tablet"] .pricing-card {
+    max-width: 45%;
+    min-width: 320px;
+}
+
+/* ── TABLET: Fullscreen Viewport Optimizations ───────────────────────────── */
+
+/* Content area: fills screen minus topbar with comfortable padding */
+body[data-rds-mode="tablet"] .content {
+    height: calc(100dvh - 60px);
+    overflow-y: auto;
+    padding: 16px 18px 24px;
+    box-sizing: border-box;
+}
+
+/* History list: auto-calc leaves room for header, search, and filter pills */
+body[data-rds-mode="tablet"] #history-list-container {
+    height: calc(100dvh - 240px) !important;
+    max-height: none !important;
+}
+
+/* App result panels */
+body[data-rds-mode="tablet"] .results-container,
+body[data-rds-mode="tablet"] #results-container-app2,
+body[data-rds-mode="tablet"] #results-container-app3 {
+    height: calc(100dvh - 190px);
+    overflow-y: auto;
+}
+
+/* Tasks list inside dashboards */
+body[data-rds-mode="tablet"] .tasks-list {
+    height: calc(100dvh - 270px);
+    overflow-y: auto;
+}
+
+/* History detail modal: near-fullscreen on tablet */
+body[data-rds-mode="tablet"] #history-details-modal>div {
+    width: calc(100% - 40px) !important;
+    max-width: 700px !important;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    border-radius: 20px;
+    padding: 24px 20px 28px;
+    box-sizing: border-box;
+    gap: 18px;
+}
+
+/* Modal content box: taller on tablet */
+body[data-rds-mode="tablet"] #history-modal-content {
+    height: calc(100dvh - 360px) !important;
+    max-height: none !important;
+}
+
+/* Line numbers gutter for history modal content on tablet */
+body[data-rds-mode="tablet"] #history-modal-content {
+    counter-reset: history-line-num;
+}
+
+body[data-rds-mode="tablet"] #history-modal-content>div:not([style*="height"]) {
+    counter-increment: history-line-num;
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+}
+
+body[data-rds-mode="tablet"] #history-modal-content>div:not([style*="height"])::before {
+    content: counter(history-line-num);
+    display: inline-block;
+    min-width: 3rem;
+    padding-right: 0.6rem;
+    text-align: right;
+    line-height: 1.2rem;
+    color: rgba(175, 134, 252, 0.45);
+
+    user-select: none;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(175, 134, 252, 0.15);
+    margin-right: 0.5rem;
+}
+
+/* Generic modals on tablet: comfortable modal sizing */
+body[data-rds-mode="tablet"] .modal-overlay>div {
+    width: calc(100% - 40px) !important;
+    max-width: 720px !important;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    border-radius: 20px;
+    box-sizing: border-box;
+}
+
+/* History two-column layout: single column on tablet */
+body[data-rds-mode="tablet"] .history-layout-columns {
+    flex-direction: column !important;
+    gap: 20px !important;
+}
+
+body[data-rds-mode="tablet"] .history-layout-columns>div {
+    flex: none !important;
+    width: 100% !important;
+}
+
+/* Responsive Documentation Adjustments (RDS Compliant) */
+body[data-rds-mode="tablet"] .doc-wrapper {
+    padding: 20px 15px;
+    gap: 20px;
+}
+
+.checkout-form-crypto {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px 0;
+    text-align: center;
+}
+
+.table-scroll-container {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.settings-keys-table {
+    border-collapse: collapse;
+
+    min-width: 600px;
+    text-align: left;
+    width: 100%;
+}
+
+.table-header-row {
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.table-header-cell-center {
+    padding: 12px 10px;
+    text-align: center;
+}
+
+.table-body-cell-loading {
+    color: var(--text-muted);
+    padding: 30px;
+    text-align: center;
+}
+
+.settings-stats-table {
+    border-collapse: collapse;
+
+    min-width: 650px;
+    text-align: left;
+    width: 100%;
+}
+
+.table-header-cell-right {
+    padding: 12px 10px;
+    text-align: right;
+}
+
+.modal-overlay-whitelist {
+    align-items: center;
+    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    left: 0;
+    padding: 16px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.modal-card-whitelist {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    max-width: 600px;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+.modal-btn-close-whitelist {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    height: 32px;
+    justify-content: center;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    width: 32px;
+    z-index: 2;
+}
+
+.whitelist-modal-header {
+    border-bottom: 1px solid var(--border-color);
+    padding: 28px 28px 20px;
+}
+
+.whitelist-modal-header-title-row {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.whitelist-modal-icon-wrapper {
+    align-items: center;
+    background: linear-gradient(135deg, rgba(175, 134, 252, 0.2), rgba(126, 83, 201, 0.2));
+    border: 1px solid rgba(175, 134, 252, 0.3);
+    border-radius: 12px;
+    display: flex;
+    flex-shrink: 0;
+    height: 40px;
+    justify-content: center;
+    width: 40px;
+}
+
+.whitelist-modal-icon {
+    color: #af86fc;
+}
+
+.whitelist-modal-title {
+    color: var(--text-sharp);
+    margin: 0;
+}
+
+.whitelist-modal-key-label {
+    color: var(--text-muted);
+
+    margin: 0;
+}
+
+.whitelist-modal-info-box {
+    background: rgba(175, 134, 252, 0.06);
+    border: 1px solid rgba(175, 134, 252, 0.12);
+    border-radius: 10px;
+    color: var(--text-secondary);
+
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+    padding: 9px 12px;
+}
+
+.whitelist-modal-info-icon {
+    color: #af86fc;
+    margin-right: 6px;
+}
+
+.whitelist-tabs-wrapper {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    width: fit-content;
+}
+
+.btn-whitelist-tab-active {
+    background: linear-gradient(135deg, #af86fc, #7e53c9);
+    border: none;
+    border-radius: 9px;
+    color: white;
+    cursor: pointer;
+
+
+    padding: 7px 20px;
+}
+
+.btn-whitelist-tab-inactive {
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    padding: 7px 20px;
+}
+
+.whitelist-modal-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.whitelist-panel-ip {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px 28px;
+}
+
+.whitelist-panel-section-title {
+    color: var(--text-secondary);
+
+
+    letter-spacing: 0.5px;
+}
+
+.whitelist-count-badge-ip {
+    background: rgba(175, 134, 252, 0.1);
+    border: 1px solid rgba(175, 134, 252, 0.2);
+    border-radius: 20px;
+    color: #af86fc;
+
+    padding: 3px 12px;
+}
+
+.whitelist-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 52px;
+}
+
+.whitelist-add-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.whitelist-modal-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-sharp);
+    flex: 1;
+
+    outline: none;
+    padding: 11px 14px;
+}
+
+.btn-whitelist-add-ip {
+    background: linear-gradient(135deg, #af86fc 0%, #7e53c9 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+
+    padding: 10px 18px;
+    white-space: nowrap;
+}
+
+.btn-whitelist-detect-ip {
+    align-items: center;
+    align-self: flex-start;
+    background: none;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+
+    gap: 6px;
+    padding: 6px 12px;
+}
+
+.btn-whitelist-clear-all {
+    align-items: center;
+    background: transparent;
+    border: 1px solid rgba(255, 77, 77, 0.25);
+    border-radius: 10px;
+    color: #ff6666;
+    cursor: pointer;
+    display: flex;
+
+    gap: 8px;
+    justify-content: center;
+    padding: 10px;
+    width: 100%;
+}
+
+.whitelist-panel-domain {
+    display: none;
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px 28px;
+}
+
+.whitelist-count-badge-domain {
+    background: rgba(0, 240, 255, 0.08);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 20px;
+    color: #00f0ff;
+
+    padding: 3px 12px;
+}
+
+.btn-whitelist-add-domain {
+    background: linear-gradient(135deg, #00f0ff 0%, #0095c8 100%);
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    cursor: pointer;
+
+    padding: 10px 18px;
+    white-space: nowrap;
+}
+
+.whitelist-domain-info-text {
+    color: var(--text-muted);
+
+    line-height: 1.4;
+    margin: 0;
+}
+
+.whitelist-domain-info-icon {
+    color: #00f0ff;
+    margin-right: 4px;
+}
+
+.whitelist-code-highlight {
+    background: rgba(0, 240, 255, 0.08);
+    border-radius: 4px;
+    padding: 1px 5px;
+}
+
+.app-input-container-cyan {
+    background: var(--bg-primary);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.app2-select-trick {
+    background-color: var(--bg-primary);
+    border-color: var(--border-input);
+    color: var(--text-primary);
+    outline: none;
+    padding: 8px 10px;
+    text-align: left;
+    width: 100%;
+}
+
+.app2-input-username {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-sharp);
+
+    outline: none;
+    padding: 8px 12px;
+    width: 100%;
+}
+
+.app2-results-input-preview {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-sharp);
+    flex: 1;
+    outline: none;
+}
+
+.app2-notepad-search-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-sharp);
+
+    outline: none;
+    padding: 10px 35px 10px 12px;
+    width: 100%;
+}
+
+.history-detail-modal-input-field {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-sharp);
+    flex: 1;
+
+    outline: none;
+    padding: 12px;
+}
+
+/* Premium Dashboard & Admin Tables */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-top: 15px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.db-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    text-align: left;
+    min-width: 800px;
+}
+
+.db-table thead {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.db-table th {
+    padding: 14px 18px;
+    color: var(--text-sharp);
+
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.db-table td {
+    padding: 14px 18px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.db-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.db-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.db-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Table Responsive */
+#page-admin .table-responsive {
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.admin-form-card {
+    background: rgba(175, 134, 252, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.admin-form-card:hover {
+    border-color: rgba(175, 134, 252, 0.3);
+    box-shadow: 0 8px 24px rgba(175, 134, 252, 0.03);
+}
+
+.admin-form-card h4 {
+    color: var(--text-sharp);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 10px;
+}
+
+.admin-form-card input.db-input,
+.admin-form-card select.db-input,
+.admin-form-card textarea.db-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-input);
+    color: var(--text-input);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    outline: none;
+    transition: all 0.25s ease;
+}
+
+.admin-form-card input.db-input:focus,
+.admin-form-card select.db-input:focus,
+.admin-form-card textarea.db-input:focus {
+    border-color: #af86fc;
+    box-shadow: 0 0 0 3px rgba(175, 134, 252, 0.15);
+}
+
+/* Button overrides inside Admin */
+.admin-form-card .btn-primary {
+    background: linear-gradient(135deg, #af86fc, #7e53c9);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(175, 134, 252, 0.2);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.admin-form-card .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(175, 134, 252, 0.3);
+}
+
+/* ==========================================================================
+   PREMIUM PREFERENCES PAGE TOGGLE SWITCHES
+   ========================================================================== */
+
+.pref-switch input:checked+.pref-slider {
+    background-color: #00f0ff !important;
+}
+
+.pref-switch input:focus+.pref-slider {
+    box-shadow: 0 0 1px #00f0ff;
+}
+
+.pref-switch input:checked+.pref-slider:before {
+    transform: translateX(22px);
+}
+
+/* Compact Table Mode Override */
+body.compact-table td {
+    padding: 8px 10px !important;
+}

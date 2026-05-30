@@ -1,0 +1,1223 @@
+/* ==========================================================================
+   SIDEBAR NAVIGATION AND PROFILE LAYOUTS
+   ========================================================================== */
+
+
+.side-bar {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    height: 100vh;
+    /* Viewport height fallback */
+    height: 100dvh;
+    /* Dynamic viewport height */
+    position: relative;
+    box-sizing: border-box;
+}
+
+.side-bar-top {
+    display: flex;
+    align-items: center;
+    height: 100px;
+    padding: 15px;
+    cursor: pointer;
+    gap: 12px;
+    flex-shrink: 0;
+    /* Header doesn't shrink */
+}
+
+.side-bar-top img {
+    width: 50px;
+    height: 50px;
+    background-color: var(--border-color);
+    border-radius: 8px;
+}
+
+.side-bar-bottom {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    /* Enable vertical scroll ONLY for menu list */
+    padding-right: 4px;
+    /* Space for the custom scrollbar */
+}
+
+/* Custom super-slim scrollbar for sidebar menu navigation */
+.side-bar-bottom::-webkit-scrollbar {
+    width: 4px;
+}
+
+.side-bar-bottom::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.side-bar-bottom::-webkit-scrollbar-thumb {
+    background: rgba(175, 134, 252, 0.15);
+    border-radius: 10px;
+}
+
+.side-bar-bottom::-webkit-scrollbar-thumb:hover {
+    background: rgba(175, 134, 252, 0.3);
+}
+
+.side-bar-bottom-content {
+    padding: 10px;
+}
+
+/* Style untuk menu items */
+.menu-item {
+    padding: 6px 12px;
+    margin: 5px 0px;
+    cursor: pointer;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-sidebar);
+}
+
+.menu-item:hover {
+    background-color: var(--bg-sidebar-hover);
+}
+
+
+/* Style untuk menu aktif */
+.menu-item.active {
+    background: linear-gradient(135deg, #005a9c 0%, #00a4b4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+:root.dark .menu-item.active {
+    background: linear-gradient(135deg, #af86fc 0%, #00fcfc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.menu-item.active i {
+    color: var(--text-sharp);
+}
+
+.menu-item>i:not(.fa-chevron-left),
+.submenu-item>i:not(.fa-chevron-left) {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    margin-right: 4px;
+    font-size: 11px;
+
+    /* Slate Grey Theme (like fa-cog) */
+    background-color: rgba(164, 176, 190, 0.08);
+    color: #a4b0be;
+}
+
+:root.dark .menu-item>i:not(.fa-chevron-left),
+:root.dark .submenu-item>i:not(.fa-chevron-left) {
+    background-color: rgba(164, 176, 190, 0.12);
+}
+
+/* Micro-animations: Scale icon slightly on hover */
+.menu-item:hover>i:not(.fa-chevron-left),
+.submenu-item:hover>i:not(.fa-chevron-left) {
+    transform: scale(1.1);
+}
+
+/* --- CURATED PREMIUM BRANDED MENU ICONS --- */
+
+/* 1. Home Item */
+#menu-home>i {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+    color: #3b82f6 !important;
+}
+#menu-home.active>i {
+    background-color: rgba(59, 130, 246, 0.16) !important;
+    color: #2563eb !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2) !important;
+}
+:root.dark #menu-home.active>i {
+    background-color: rgba(96, 165, 250, 0.2) !important;
+    color: #60a5fa !important;
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.25) !important;
+}
+
+/* 2. Dashboard Item */
+#menu-dashboard>i {
+    background-color: rgba(99, 102, 241, 0.08) !important;
+    color: #6366f1 !important;
+}
+#menu-dashboard.active>i {
+    background-color: rgba(99, 102, 241, 0.16) !important;
+    color: #4f46e5 !important;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.2) !important;
+}
+:root.dark #menu-dashboard.active>i {
+    background-color: rgba(129, 140, 248, 0.2) !important;
+    color: #818cf8 !important;
+    box-shadow: 0 0 10px rgba(129, 140, 248, 0.25) !important;
+}
+
+/* 3. Apps Parent Item */
+#menu-apps>i {
+    background-color: rgba(168, 85, 247, 0.08) !important;
+    color: #a855f7 !important;
+}
+#menu-apps.active>i {
+    background-color: rgba(168, 85, 247, 0.16) !important;
+    color: #9333ea !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.2) !important;
+}
+:root.dark #menu-apps.active>i {
+    background-color: rgba(192, 132, 252, 0.2) !important;
+    color: #c084fc !important;
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.25) !important;
+}
+
+/* Apps Submenu Items */
+/* Gmail Checker */
+#submenu-app1>i {
+    background-color: rgba(16, 185, 129, 0.08) !important;
+    color: #10b981 !important;
+}
+#submenu-app1.active>i {
+    background-color: rgba(16, 185, 129, 0.16) !important;
+    color: #059669 !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+}
+:root.dark #submenu-app1.active>i {
+    background-color: rgba(52, 211, 153, 0.2) !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.25) !important;
+}
+
+/* Gmail Dot Tricks */
+#submenu-app2>i {
+    background-color: rgba(245, 158, 11, 0.08) !important;
+    color: #f59e0b !important;
+}
+#submenu-app2.active>i {
+    background-color: rgba(245, 158, 11, 0.16) !important;
+    color: #d97706 !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.2) !important;
+}
+:root.dark #submenu-app2.active>i {
+    background-color: rgba(251, 191, 36, 0.2) !important;
+    color: #fbbf24 !important;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.25) !important;
+}
+
+/* Name Combiner */
+#submenu-app3>i {
+    background-color: rgba(6, 182, 212, 0.08) !important;
+    color: #06b6d4 !important;
+}
+#submenu-app3.active>i {
+    background-color: rgba(6, 182, 212, 0.16) !important;
+    color: #0891b2 !important;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2) !important;
+}
+:root.dark #submenu-app3.active>i {
+    background-color: rgba(34, 211, 238, 0.2) !important;
+    color: #22d3ee !important;
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.25) !important;
+}
+
+/* Email Extractor */
+#submenu-app4>i {
+    background-color: rgba(20, 184, 166, 0.08) !important;
+    color: #14b8a6 !important;
+}
+#submenu-app4.active>i {
+    background-color: rgba(20, 184, 166, 0.16) !important;
+    color: #0d9488 !important;
+    box-shadow: 0 0 10px rgba(20, 184, 166, 0.2) !important;
+}
+:root.dark #submenu-app4.active>i {
+    background-color: rgba(45, 212, 191, 0.2) !important;
+    color: #2dd4bf !important;
+    box-shadow: 0 0 10px rgba(45, 212, 191, 0.25) !important;
+}
+
+/* Notepad */
+#submenu-app5>i {
+    background-color: rgba(99, 102, 241, 0.08) !important;
+    color: #6366f1 !important;
+}
+#submenu-app5.active>i {
+    background-color: rgba(99, 102, 241, 0.16) !important;
+    color: #4f46e5 !important;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.2) !important;
+}
+:root.dark #submenu-app5.active>i {
+    background-color: rgba(129, 140, 248, 0.2) !important;
+    color: #818cf8 !important;
+    box-shadow: 0 0 10px rgba(129, 140, 248, 0.25) !important;
+}
+
+/* 4. Admin Panel */
+#menu-admin>i {
+    background-color: rgba(239, 68, 68, 0.08) !important;
+    color: #ef4444 !important;
+}
+#menu-admin.active>i {
+    background-color: rgba(239, 68, 68, 0.16) !important;
+    color: #dc2626 !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.2) !important;
+}
+:root.dark #menu-admin.active>i {
+    background-color: rgba(248, 113, 113, 0.2) !important;
+    color: #f87171 !important;
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.25) !important;
+}
+
+/* 5. History */
+#menu-history>i {
+    background-color: rgba(100, 116, 139, 0.08) !important;
+    color: #64748b !important;
+}
+#menu-history.active>i {
+    background-color: rgba(100, 116, 139, 0.16) !important;
+    color: #475569 !important;
+    box-shadow: 0 0 10px rgba(100, 116, 139, 0.2) !important;
+}
+:root.dark #menu-history.active>i {
+    background-color: rgba(148, 163, 184, 0.2) !important;
+    color: #94a3b8 !important;
+    box-shadow: 0 0 10px rgba(148, 163, 184, 0.25) !important;
+}
+
+/* 6. Docs */
+#menu-documentation>i {
+    background-color: rgba(5, 150, 105, 0.08) !important;
+    color: #059669 !important;
+}
+#menu-documentation.active>i {
+    background-color: rgba(5, 150, 105, 0.16) !important;
+    color: #047857 !important;
+    box-shadow: 0 0 10px rgba(5, 150, 105, 0.2) !important;
+}
+:root.dark #menu-documentation.active>i {
+    background-color: rgba(52, 211, 153, 0.2) !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.25) !important;
+}
+
+/* 7. Support */
+#menu-support>i {
+    background-color: rgba(217, 119, 6, 0.08) !important;
+    color: #d97706 !important;
+}
+#menu-support.active>i {
+    background-color: rgba(217, 119, 6, 0.16) !important;
+    color: #b45309 !important;
+    box-shadow: 0 0 10px rgba(217, 119, 6, 0.2) !important;
+}
+:root.dark #menu-support.active>i {
+    background-color: rgba(251, 146, 60, 0.2) !important;
+    color: #fb923c !important;
+    box-shadow: 0 0 10px rgba(251, 146, 60, 0.25) !important;
+}
+
+/* 8. Notifications */
+#notif-container>i {
+    background-color: rgba(234, 179, 8, 0.08) !important;
+    color: #eab308 !important;
+}
+#notif-container.active>i {
+    background-color: rgba(234, 179, 8, 0.16) !important;
+    color: #ca8a04 !important;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.2) !important;
+}
+:root.dark #notif-container.active>i {
+    background-color: rgba(250, 204, 21, 0.2) !important;
+    color: #facc15 !important;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.25) !important;
+}
+
+/* 9. Get API Key Button */
+#sidebar-developer-btn>i {
+    background-color: rgba(168, 85, 247, 0.08) !important;
+    color: #a855f7 !important;
+}
+#sidebar-developer-btn.active>i {
+    background-color: rgba(168, 85, 247, 0.16) !important;
+    color: #9333ea !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.2) !important;
+}
+:root.dark #sidebar-developer-btn.active>i {
+    background-color: rgba(192, 132, 252, 0.2) !important;
+    color: #c084fc !important;
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.25) !important;
+}
+
+/* 10. Settings Button */
+#sidebar-settings-btn>i {
+    background-color: rgba(75, 85, 99, 0.08) !important;
+    color: #4b5563 !important;
+}
+#sidebar-settings-btn.active>i {
+    background-color: rgba(75, 85, 99, 0.16) !important;
+    color: #374151 !important;
+    box-shadow: 0 0 10px rgba(75, 85, 99, 0.2) !important;
+}
+:root.dark #sidebar-settings-btn.active>i {
+    background-color: rgba(156, 163, 175, 0.2) !important;
+    color: #9ca3af !important;
+    box-shadow: 0 0 10px rgba(156, 163, 175, 0.25) !important;
+}
+
+/* --- DEVELOPER MODULE SUBMENU ITEMS --- */
+#menu-dev-keys>i {
+    background-color: rgba(245, 158, 11, 0.08) !important;
+    color: #f59e0b !important;
+}
+#menu-dev-keys.active>i {
+    background-color: rgba(245, 158, 11, 0.16) !important;
+    color: #d97706 !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.2) !important;
+}
+:root.dark #menu-dev-keys.active>i {
+    background-color: rgba(251, 191, 36, 0.2) !important;
+    color: #fbbf24 !important;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.25) !important;
+}
+
+#menu-dev-create>i {
+    background-color: rgba(16, 185, 129, 0.08) !important;
+    color: #10b981 !important;
+}
+#menu-dev-create.active>i {
+    background-color: rgba(16, 185, 129, 0.16) !important;
+    color: #059669 !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+}
+:root.dark #menu-dev-create.active>i {
+    background-color: rgba(52, 211, 153, 0.2) !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.25) !important;
+}
+
+#menu-dev-credits>i {
+    background-color: rgba(234, 179, 8, 0.08) !important;
+    color: #eab308 !important;
+}
+#menu-dev-credits.active>i {
+    background-color: rgba(234, 179, 8, 0.16) !important;
+    color: #ca8a04 !important;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.2) !important;
+}
+:root.dark #menu-dev-credits.active>i {
+    background-color: rgba(250, 204, 21, 0.2) !important;
+    color: #facc15 !important;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.25) !important;
+}
+
+#menu-dev-stats>i {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+    color: #3b82f6 !important;
+}
+#menu-dev-stats.active>i {
+    background-color: rgba(59, 130, 246, 0.16) !important;
+    color: #2563eb !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2) !important;
+}
+:root.dark #menu-dev-stats.active>i {
+    background-color: rgba(96, 165, 250, 0.2) !important;
+    color: #60a5fa !important;
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.25) !important;
+}
+
+#menu-dev-add>i {
+    background-color: rgba(168, 85, 247, 0.08) !important;
+    color: #a855f7 !important;
+}
+#menu-dev-add.active>i {
+    background-color: rgba(168, 85, 247, 0.16) !important;
+    color: #9333ea !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.2) !important;
+}
+:root.dark #menu-dev-add.active>i {
+    background-color: rgba(192, 132, 252, 0.2) !important;
+    color: #c084fc !important;
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.25) !important;
+}
+
+#menu-dev-purchases>i {
+    background-color: rgba(16, 185, 129, 0.08) !important;
+    color: #10b981 !important;
+}
+#menu-dev-purchases.active>i {
+    background-color: rgba(16, 185, 129, 0.16) !important;
+    color: #059669 !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+}
+:root.dark #menu-dev-purchases.active>i {
+    background-color: rgba(52, 211, 153, 0.2) !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.25) !important;
+}
+
+/* --- DOCUMENTATION SUBMENU ITEMS --- */
+[id^="menu-doc-"]>i {
+    background-color: rgba(5, 150, 105, 0.08) !important;
+    color: #059669 !important;
+}
+[id^="menu-doc-"].active>i {
+    background-color: rgba(5, 150, 105, 0.16) !important;
+    color: #047857 !important;
+    box-shadow: 0 0 10px rgba(5, 150, 105, 0.2) !important;
+}
+:root.dark [id^="menu-doc-"].active>i {
+    background-color: rgba(52, 211, 153, 0.2) !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.25) !important;
+}
+
+
+/* Menu item dengan submenu */
+.menu-item.has-submenu {
+    position: relative;
+}
+
+/* Icon panah untuk submenu */
+.menu-item .arrow {
+    margin-left: auto;
+    font-size: 10px;
+    transition: transform 0.3s ease;
+}
+
+.menu-item .arrow.rotate {
+    transform: rotate(90deg);
+}
+
+/* Submenu item */
+.submenu-item {
+    padding: 6px 12px;
+    margin: 5px 0;
+    cursor: pointer;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-sidebar);
+}
+
+.submenu-item:hover {
+    background-color: var(--bg-submenu-hover);
+}
+
+.submenu-item.active {
+    background: linear-gradient(135deg, #005a9c 0%, #00a4b4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+:root.dark .submenu-item.active {
+    background: linear-gradient(135deg, #af86fc 0%, #00fcfc 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Sidebar Footer & User Profile Card */
+.side-bar-footer {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    /* Footer doesn't shrink */
+}
+
+/* Anonymous & Home Page Mode styling */
+.container.anonim:not(.doc-active) #side-bar,
+.container.home-active #side-bar {
+    display: none !important;
+}
+
+/* Profile Popover Panel */
+.profile-popover {
+    position: absolute;
+    bottom: 75px;
+    left: 10px;
+    width: calc(100% - 20px);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s ease;
+    padding: 20px 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.profile-popover.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.profile-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.profile-popover-logo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-popover-logo img {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+}
+
+.profile-popover-logo span {
+
+
+    color: var(--text-sharp);
+    letter-spacing: 0.5px;
+}
+
+.profile-popover-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.profile-popover-close:hover {
+    color: var(--text-sharp);
+}
+
+.profile-popover-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+}
+
+.profile-popover-avatar-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    padding: 2px;
+    background: linear-gradient(135deg, #4285f4, #ea4335, #fbbc05, #34a853);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.profile-popover-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--bg-primary);
+}
+
+.profile-popover-avatar-icon {
+    color: var(--text-muted);
+}
+
+.profile-popover-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-popover-name {
+
+    color: var(--text-sharp);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.profile-popover-email {
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.profile-popover-badge {
+
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: var(--bg-sidebar-hover);
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.profile-popover-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.profile-popover-btn {
+    width: 100%;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.profile-popover-btn:hover {
+    background-color: var(--bg-sidebar-hover);
+    color: var(--text-sharp);
+    border-color: #af86fc;
+}
+
+.profile-popover-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--text-muted);
+    margin-top: 5px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+}
+
+.profile-popover-footer-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.profile-popover-footer-link:hover {
+    color: var(--text-sharp);
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+		   RESPONSIVE DESIGN SYSTEM (RDS) - MOBILE & TABLET CUSTOM STYLING
+		   ========================================================================== */
+
+/* --- BACKDROP FOR DRAWER SIDEBAR --- */
+.sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- HAMBURGER MENU BUTTON --- */
+.btn-toggle-sidebar {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-sharp);
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.btn-toggle-sidebar:hover {
+    background-color: var(--bg-sidebar-hover);
+}
+
+.btn-toggle-sidebar:active {
+    transform: scale(0.92);
+}
+
+/* ==========================================
+		   1. MOBILE MODE (body[data-rds-mode="mobile"])
+		   ========================================== */
+body[data-rds-mode="mobile"] .btn-toggle-sidebar {
+    display: inline-flex;
+}
+
+/* Sidebar transformed to beautiful floating slide-in drawer */
+body[data-rds-mode="mobile"] .side-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 75%;
+    z-index: 1000;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.25);
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-rds-mode="mobile"] .side-bar.open {
+    transform: translateX(0);
+}
+
+/* ==========================================
+		   2. TABLET MODE (body[data-rds-mode="tablet"])
+		   ========================================== */
+body[data-rds-mode="tablet"] .btn-toggle-sidebar {
+    display: inline-flex;
+}
+
+/* Sidebar transformed to floating slide-in drawer on tablets */
+body[data-rds-mode="tablet"] .side-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 50%;
+    z-index: 1000;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 8px 0 35px rgba(0, 0, 0, 0.22);
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-rds-mode="tablet"] .side-bar.open {
+    transform: translateX(0);
+}
+
+/* ==========================================================================
+   CLEANED INLINE STYLES FROM index.html
+   ========================================================================== */
+
+.anon-logo img,
+.side-bar-top img {
+    border-radius: 8px;
+    height: 30px;
+    width: 30px;
+}
+
+.top-bar-logo-text,
+.sidebar-logo-text {
+    background: linear-gradient(135deg, #00f0ff 0%, #0095c8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-pending-payment-banner {
+    align-items: center;
+    background: rgba(255, 165, 0, 0.15);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 0 15px 15px 15px;
+    padding: 10px 15px;
+    transition: all 0.2s;
+}
+
+.sidebar-pending-payment-spinner {
+    color: #ffa500;
+}
+
+.sidebar-pending-payment-text {
+    color: #ffa500;
+
+
+    letter-spacing: 1px;
+}
+
+.sidebar-pending-api-banner {
+    align-items: center;
+    background: rgba(0, 240, 255, 0.15);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 0 15px 15px 15px;
+    padding: 10px 15px;
+    transition: all 0.2s;
+}
+
+.sidebar-pending-api-spinner {
+    color: #00f0ff;
+}
+
+.sidebar-pending-api-text {
+    color: #00f0ff;
+
+
+    letter-spacing: 1px;
+}
+
+.sidebar-user-avatar-wrapper {
+    align-items: center;
+    border-radius: 50%;
+    display: flex;
+    height: 32px;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    width: 32px;
+}
+
+.sidebar-user-avatar-img {
+    border-radius: 50%;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+.sidebar-btn-logout {
+    align-items: center;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    margin-left: 5px;
+    padding: 4px;
+}
+
+.app-sidebar-desc {
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+[data-rds-mode="mobile"] .app-sidebar-desc,
+[data-rds-mode="tablet"] .app-sidebar-desc {
+    display: none !important;
+}
+
+.app-sidebar-section-title {
+    color: var(--text-sharp);
+
+    margin-bottom: 4px;
+}
+
+.app-sidebar-select {
+    background-color: var(--bg-primary);
+    border-color: var(--border-input);
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    margin-top: 10px;
+    outline: none;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.app-sidebar-stats-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-input);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: auto;
+    padding: 12px;
+}
+
+.history-sidebar-filters {
+    backdrop-filter: blur(10px);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 320px;
+    padding: 30px;
+}
+
+.history-sidebar-title {
+    align-items: center;
+    color: var(--text-sharp);
+    display: flex;
+    gap: 10px;
+    margin: 0;
+}
+
+.history-sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.history-sidebar-section-title {
+    color: var(--text-secondary);
+
+}
+
+.history-sidebar-search-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-sharp);
+
+    outline: none;
+    padding: 12px;
+    width: 100%;
+}
+
+.history-sidebar-date-group {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 140px;
+}
+
+.history-sidebar-select {
+    background-color: var(--bg-primary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    outline: none;
+    padding: 10px;
+    text-align: left;
+}
+
+.history-sidebar-limit-group {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 140px;
+    position: relative;
+}
+
+.history-sidebar-notes-area {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-sharp);
+
+    height: 120px;
+    outline: none;
+    padding: 12px;
+    resize: none;
+    width: 100%;
+}
+
+.history-sidebar-actions {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-history-sidebar-action {
+    align-items: center;
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    width: auto;
+}
+
+.history-sidebar-badge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+/* Hide auth-only sidebar elements for anonymous visitors */
+.container.anonim #sidebar-developer-btn,
+.container.anonim #sidebar-settings-btn,
+.container.anonim #user-profile-card-trigger,
+.container.anonim #sidebar-pending-payment-notif,
+.container.anonim #sidebar-pending-api-notif {
+    display: none !important;
+}
+
+/* Hide anonymous hamburger toggle by default */
+#btn-toggle-sidebar-anon {
+    display: none !important;
+}
+
+/* Display anonymous hamburger toggle on mobile and tablet documentation views */
+body[data-rds-mode="mobile"] .container.doc-active #btn-toggle-sidebar-anon,
+body[data-rds-mode="tablet"] .container.doc-active #btn-toggle-sidebar-anon {
+    display: inline-flex !important;
+}
+
+/* Hide hamburger on Home page only (router adds .home-active to .container) */
+body[data-rds-mode="mobile"] .container.home-active #btn-toggle-sidebar,
+body[data-rds-mode="tablet"] .container.home-active #btn-toggle-sidebar {
+    display: none !important;
+}
+
+/* ==========================================================================
+   SIDEBAR NOTIFICATIONS POPUP DROPDOWN (PREMIUM OVERRIDE)
+   ========================================================================== */
+
+#notif-container {
+    position: relative;
+    /* Ensure it is a positioning context */
+}
+
+.sidebar-notif-dropdown {
+    position: absolute !important;
+    bottom: 50px !important;
+    left: -12px !important;
+    /* Offset the padding of the menu-item to align perfectly */
+    width: 276px !important;
+    /* Fixed width to fill the sidebar width beautifully */
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+    z-index: 1000 !important;
+    padding: 16px !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    text-align: left !important;
+    cursor: default !important;
+    box-sizing: border-box !important;
+    display: flex;
+    /* Changed from display: flex !important so that .hide can override it */
+    flex-direction: column !important;
+    gap: 12px !important;
+
+    /* Elegant glassmorphism backdrop if supported */
+    backdrop-filter: blur(10px);
+}
+
+.sidebar-notif-dropdown.hide {
+    display: none !important;
+}
+
+/* Slim Premium Scrollbar for Notifications Dropdown */
+.sidebar-notif-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-notif-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-notif-dropdown::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
+
+.sidebar-notif-dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+.sidebar-notif-dropdown-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 4px !important;
+}
+
+.sidebar-notif-dropdown-title {
+    margin: 0 !important;
+
+
+    color: var(--text-sharp) !important;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-notif-mark-read-btn {
+    background: rgba(175, 134, 252, 0.08) !important;
+    border: none !important;
+    color: #af86fc !important;
+    cursor: pointer !important;
+    padding: 4px 10px !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+}
+
+.sidebar-notif-mark-read-btn:hover {
+    background: rgba(175, 134, 252, 0.15) !important;
+    color: #c5a3ff !important;
+}
+
+.sidebar-notif-badge {
+    background: #ff4757 !important;
+    color: white !important;
+    border-radius: 10px !important;
+    padding: 2px 7px !important;
+
+    margin-left: auto !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 5px rgba(255, 71, 87, 0.4);
+}
+
+/* Accordion cards inside list */
+.sidebar-notif-dropdown #notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Custom premium hover states for accordion cards */
+.sidebar-notif-dropdown #notif-list>div {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+}
+
+.sidebar-notif-dropdown #notif-list>div:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}

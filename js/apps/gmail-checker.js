@@ -51,6 +51,17 @@
 	let isRunning = false;
 	let abortController = null;
 	let sanitizerWorker = null;
+	let syncTimeout = null;
+
+	function triggerCreditsSync() {
+		if (syncTimeout) clearTimeout(syncTimeout);
+		syncTimeout = setTimeout(() => {
+			if (typeof window.loadDashboardData === 'function') {
+				// Paksa fetch ulang (jangan pakai cache UI)
+				window.loadDashboardData(true);
+			}
+		}, 500); // Naikkan delay jadi 500ms agar memberi waktu Firebase DB sinkronisasi
+	}
 
 	// Dynamic script loading for JSZip
 	function loadJSZip(callback) {
@@ -482,6 +493,10 @@
 					const onAbort = () => {
 						if (window.gmailCheckerWSCallbacks.has(batchId)) {
 							window.gmailCheckerWSCallbacks.delete(batchId);
+							// [TAMBAHAN]: Beritahu Backend untuk STOP dan REFUND!
+							if (window.gmailCheckerWS && window.gmailCheckerWS.readyState === WebSocket.OPEN) {
+								window.gmailCheckerWS.send(JSON.stringify({ type: "cancel_batch", batchId: batchId }));
+							}
 							reject(new Error('Aborted'));
 						}
 					};
@@ -547,8 +562,10 @@
 		resultsContainer.classList.remove('hide');
 		tasksList.innerHTML = '';
 
-		btnExecute.style.display = 'none';
-		btnStop.style.display = 'inline-flex';
+		btnExecute.classList.add('hide');
+		btnClear.classList.add('hide');
+		btnAddDomain.classList.add('hide');
+		btnStop.classList.remove('hide');
 		btnCopy.classList.add('hide');
 		btnDownload.classList.add('hide');
 		btnDownloadAll.classList.add('hide');
@@ -664,8 +681,8 @@
 							// Abort other tasks and stop checker running state
 							if (abortController) abortController.abort();
 							isRunning = false;
-							btnExecute.style.display = 'inline-flex';
-							btnStop.style.display = 'none';
+							btnExecute.classList.remove('hide'); // Ubah dari style.display
+							btnStop.classList.add('hide');       // Ubah dari style.display
 
 							progressEl.style.width = '100%';
 							progressEl.style.background = 'linear-gradient(90deg, #ff6666 0%, #ff3333 100%)';
@@ -681,10 +698,11 @@
 
 					const data = await response.json();
 					if (!Array.isArray(data) || data.length === 0) {
-						throw new Error(data?.error || 'Empty response or Server overloaded');
+						throw new Error(data?.error || 'Server overloaded');
 					}
 
 					// Parse API Status
+					let batchFailedCount = 0;
 					data.forEach(item => {
 						let status = (item.status || 'bad').toLowerCase();
 						if (isFastServer) {
@@ -692,6 +710,10 @@
 						} else {
 							const allowed = ['live', 'verify', 'disabled', 'unregistered', 'bad'];
 							if (!allowed.includes(status)) status = 'bad';
+						}
+
+						if (status === 'failed') {
+							batchFailedCount++;
 						}
 
 						results.push({
@@ -711,13 +733,20 @@
 								status: 'failed',
 								details: 'No response from verification server'
 							});
+							batchFailedCount++;
 						}
 					});
+
+					// [TAMBAHAN] Beri notifikasi ringan jika 1 batch gagal total (agar user tidak bingung kenapa kreditnya tidak kurang)
+					if (batchFailedCount === chunk.length && chunk.length > 0) {
+						window.showAppNotification('warning', `<strong>Notice:</strong> Provider gagal memvalidasi batch #${index + 1}. Kredit Anda otomatis dikembalikan.`);
+					}
 
 					progressEl.style.width = '100%';
 					progressEl.style.background = 'linear-gradient(90deg, #66ffd9 0%, #00ffff 100%)';
 					statusEl.innerHTML = '<span style="color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> Success</span>';
 					statsEl.textContent = `Completed batch. Found ${chunk.length} entries.`;
+					triggerCreditsSync();
 
 				} catch (err) {
 					console.error("Batch failure:", err);
@@ -734,6 +763,7 @@
 							details: err.message || 'API Connection Error'
 						});
 					});
+					triggerCreditsSync();
 				}
 
 				completedChunks++;
@@ -749,8 +779,8 @@
 				if (completedChunks === chunks.length) {
 					// Entire Verification completed
 					isRunning = false;
-					btnExecute.style.display = 'inline-flex';
-					btnStop.style.display = 'none';
+					btnExecute.classList.remove('hide');
+					btnStop.classList.add('hide');
 
 					// Auto switch to 'All' tab on completion
 					currentFilter = 'all';
@@ -781,6 +811,7 @@
 
 					// Persist unified history for dashboard
 					saveUnifiedHistory();
+					triggerCreditsSync();
 				}
 
 				next();
@@ -832,15 +863,17 @@
 			abortController.abort();
 		}
 		isRunning = false;
-		btnExecute.style.display = 'inline-flex';
-		btnStop.style.display = 'none';
+		btnExecute.classList.remove('hide');
+		btnStop.classList.add('hide');
 		window.showAppNotification('danger', '<strong>Cancelled:</strong> Verification process was stopped by user.');
+		triggerCreditsSync();
 	});
 
 	// Back/Reset button
 	btnBack.addEventListener('click', function () {
 		isRunning = false;
 		if (abortController) abortController.abort();
+		triggerCreditsSync();
 
 		resultsContainer.classList.add('hide');
 		inputContainer.classList.remove('hide');
@@ -1001,20 +1034,20 @@
 				itemRow.style.boxSizing = 'border-box';
 				itemRow.style.margin = '0 0 0.5rem 0'; // Bottom margin for gap (8px / 16)
 
-				let color = '#ff6666'; // bad (tomato red)
-				let icon = '<i class="fa-solid fa-circle-xmark"></i>';
+				let color = '#ff00bf'; // bad (tomato red)
+				let icon = '<i class="fa-solid fa-circle-xmark app-stats-icon-bad"></i>';
 				if (item.status === 'live') {
 					color = '#66ffd9';
-					icon = '<i class="fa-solid fa-circle-check"></i>';
+					icon = '<i class="fa-solid fa-circle-check app-stats-icon-live"></i>';
 				} else if (item.status === 'verify') {
 					color = '#ffd700';
-					icon = '<i class="fa-solid fa-circle-question"></i>';
+					icon = '<i class="fa-solid fa-circle-question app-stats-icon-verify"></i>';
 				} else if (item.status === 'disabled') {
-					color = '#ff6347';
-					icon = '<i class="fa-solid fa-circle-minus"></i>';
+					color = '#ff00bf';
+					icon = '<i class="fa-solid fa-circle-minus app-stats-icon-disabled"></i>';
 				} else if (item.status === 'unregistered') {
-					color = '#00f0ff';
-					icon = '<i class="fa-solid fa-user-xmark"></i>';
+					color = '#00b7ff';
+					icon = '<i class="fa-solid fa-user-xmark app-stats-icon-unregistered"></i>';
 				} else if (item.status === 'failed') {
 					color = '#ff4d4d';
 					icon = '<i class="fa-solid fa-circle-exclamation"></i>';

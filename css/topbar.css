@@ -1,0 +1,118 @@
+/* ==========================================================================
+   TOPBAR AND NOTIFICATION COMPONENTS
+   ========================================================================== */
+
+
+.top-bar {
+    height: 100px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.anon-logo {
+    flex: 1;
+}
+
+/* Hide top bar logo when sidebar is visible (not on Home and not Anonymous, or on Doc page) */
+.container:not(.anonim):not(.home-active) .anon-logo,
+.container.doc-active .anon-logo {
+    display: none !important;
+}
+
+.top-bar-anon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 10px;
+}
+
+.anon-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.anon-logo img {
+    border-radius: 8px;
+    height: 30px;
+    width: 30px;
+}
+
+.top-bar-logo-text {
+    color: var(--text-sharp);
+    font-size: 20px;
+    letter-spacing: 0.5px;
+}
+
+.anon-nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 35px;
+}
+
+.anon-nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+
+
+    transition: color 0.2s ease;
+}
+
+.anon-nav-link:hover {
+    color: var(--text-sharp);
+}
+
+
+
+/* Hide notifications in top bar on mobile to fit search/logo */
+body[data-rds-mode="mobile"] #top-bar-notification-container {
+    display: none !important;
+}
+
+
+
+body[data-rds-mode="tablet"] #top-bar-notification-container {
+    display: none !important;
+}
+
+.top-bar-notification-container {
+    left: 50%;
+    max-width: 650px;
+    pointer-events: none;
+    position: absolute;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    z-index: 100;
+}
+
+.top-bar-content {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.top-bar-logo-img {
+    height: 32px;
+    width: 32px;
+}
+
+.top-bar-logo-text {
+
+
+
+    letter-spacing: 0.5px;
+}
+
+body[data-rds-mode="mobile"] .anon-logo span {
+    display: none !important;
+}

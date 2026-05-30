@@ -3,7 +3,8 @@
     font-family: 'Orbitron';
     /* Pastikan file Orbitron-VariableFont_wght.ttf sudah ditaruh di folder fonts */
     src: url('../fonts/Orbitron/Orbitron-VariableFont_wght.ttf') format('truetype');
-    font-weight: 400 900; /* Rentang otomatis dari Regular (400) sampai Black (900) */
+    font-weight: 400 900;
+    /* Rentang otomatis dari Regular (400) sampai Black (900) */
     font-style: normal;
     font-display: swap;
 }
@@ -13,7 +14,8 @@
     font-family: 'RobotoMono';
     /* Pastikan file RobotoMono-VariableFont_wght.ttf sudah ditaruh di folder fonts */
     src: url('../fonts/Roboto_Mono/RobotoMono-VariableFont_wght.ttf') format('truetype');
-    font-weight: 100 700; /* Rentang otomatis dari Regular (100) sampai bold (700) */
+    font-weight: 100 700;
+    /* Rentang otomatis dari Regular (100) sampai bold (700) */
     font-style: normal;
     font-display: swap;
 }
@@ -22,7 +24,8 @@
     font-family: 'RobotoMono';
     /* Pastikan file RobotoMono-Italic-VariableFont_wght.ttf sudah ditaruh di folder fonts */
     src: url('../fonts/Roboto_Mono/RobotoMono-Italic-VariableFont_wght.ttf') format('truetype');
-    font-weight: 100 700; /* Rentang otomatis dari Regular (100) sampai bold (700) */
+    font-weight: 100 700;
+    /* Rentang otomatis dari Regular (100) sampai bold (700) */
     font-style: italic;
     font-display: swap;
 }

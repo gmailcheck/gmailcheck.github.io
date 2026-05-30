@@ -198,9 +198,9 @@ window.loadDashboardData = async function (force = false) {
 			if (badge) {
 				badge.textContent = tier;
 				if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
-					badge.style.color = '#af86fc';
-					badge.style.background = 'rgba(175, 134, 252, 0.1)';
-					badge.style.borderColor = 'rgba(175, 134, 252, 0.2)';
+					badge.style.color = '#00ccffff';
+					badge.style.background = 'rgba(0, 204, 255, 0.1)';
+					badge.style.borderColor = 'rgba(0, 204, 255, 0.2)';
 				} else {
 					badge.style.color = 'var(--text-muted)';
 					badge.style.background = 'rgba(255, 255, 255, 0.05)';
@@ -210,27 +210,43 @@ window.loadDashboardData = async function (force = false) {
 
 			const userBadgeDisplay = document.getElementById('user-badge-display');
 			if (userBadgeDisplay) userBadgeDisplay.textContent = tier;
+			if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
+				userBadgeDisplay.style.color = '#00ccffff';
+				userBadgeDisplay.style.background = 'rgba(0, 204, 255, 0.1)';
+				userBadgeDisplay.style.borderColor = 'rgba(0, 204, 255, 0.2)';
+			} else {
+				userBadgeDisplay.style.color = 'var(--text-muted)';
+				userBadgeDisplay.style.background = 'rgba(255, 255, 255, 0.05)';
+				userBadgeDisplay.style.borderColor = 'var(--border-color)';
+			}
+
 			const popoverBadgeDisplay = document.getElementById('profile-popover-badge-display');
 			if (popoverBadgeDisplay) popoverBadgeDisplay.textContent = tier;
+			if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
+				popoverBadgeDisplay.style.color = '#00ccffff';
+				popoverBadgeDisplay.style.background = 'rgba(0, 204, 255, 0.1)';
+				popoverBadgeDisplay.style.borderColor = 'rgba(0, 204, 255, 0.2)';
+			} else {
+				popoverBadgeDisplay.style.color = 'var(--text-muted)';
+				popoverBadgeDisplay.style.background = 'rgba(255, 255, 255, 0.05)';
+				popoverBadgeDisplay.style.borderColor = 'var(--border-color)';
+			}
 
 			// UPDATE SUBSCRIPTION EXPIRY ACTIVE PERIOD STATS
 			const subExpiryDisplay = document.getElementById('db-subscription-expiry');
 			if (subExpiryDisplay) {
-				if (tier === 'PRO' || tier === 'ULTRA') {
+				if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
 					if (profile.subscription_expiry) {
 						const expDate = new Date(profile.subscription_expiry);
 						subExpiryDisplay.textContent = expDate.toLocaleDateString();
-						subExpiryDisplay.style.color = expDate <= new Date() ? '#ff6666' : '#379e56ff';
+						subExpiryDisplay.style.color = expDate <= new Date() ? '#ff6666' : '#0095c8';
 					} else {
 						subExpiryDisplay.textContent = 'Lifetime';
-						subExpiryDisplay.style.color = '#379e56ff';
+						subExpiryDisplay.style.color = '#0095c8';
 					}
-				} else if (tier === 'ADMIN') {
-					subExpiryDisplay.textContent = 'Admin Console';
-					subExpiryDisplay.style.color = '#af86fc';
 				} else {
 					subExpiryDisplay.textContent = 'lifetime';
-					subExpiryDisplay.style.color = '#379e56ff';
+					subExpiryDisplay.style.color = '#0095c8';
 				}
 			}
 
@@ -410,24 +426,23 @@ window.loadDashboardData = async function (force = false) {
 						item.style.border = '1px solid var(--border-color)';
 						item.style.borderRadius = '10px';
 						item.style.padding = '8px 12px';
-						item.style.fontSize = '0.8rem';
 
 						const label = data.productName || 'Subscription Plan';
-						const dateStr = data.created_at ? new Date(data.created_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
+						const dateStr = data.completed_at ? new Date(data.completed_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
 
 						let actionBtnHtml = '';
 						if (data.isUsed) {
-							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
+							actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
 						} else if (data.payment_status === 'finished') {
-							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
+							actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
 						} else {
-							const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.7rem;font-weight:bold;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
+							const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
 							actionBtnHtml = `
 								<div style="display:flex;align-items:center;gap:6px">
-									<span style="color:#ffd700;font-size:0.75rem;text-transform:capitalize;margin-right:2px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px"></i>${data.payment_status || 'Pending'}</span>
+									<span style="color:#ffd700;text-transform:capitalize;margin-right:2px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px"></i>${data.payment_status || 'Pending'}</span>
 									${payBtn}
-									<button class="btn-refresh-invoice-status" data-invoice="${invoiceId}" title="Check status" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.7rem;transition:all 0.2s"><i class="fa-solid fa-rotate"></i></button>
-									<button class="btn-cancel-invoice" data-invoice="${invoiceId}" title="Cancel invoice" style="background:rgba(255,102,102,0.15);color:#ff6666;border:1px solid rgba(255,102,102,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.7rem;transition:all 0.2s"><i class="fa-solid fa-trash"></i></button>
+									<button class="btn-refresh-invoice-status" data-invoice="${invoiceId}" title="Check status" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-rotate"></i></button>
+									<button class="btn-cancel-invoice" data-invoice="${invoiceId}" title="Cancel invoice" style="background:rgba(255,102,102,0.15);color:#ff6666;border:1px solid rgba(255,102,102,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-trash"></i></button>
 								</div>
 							`;
 						}
@@ -437,23 +452,22 @@ window.loadDashboardData = async function (force = false) {
 							const usdValue = data.price_amount_usd ? ` (~$${data.price_amount_usd})` : '';
 							let txLink = '';
 							if (data.payin_hash) {
-								let explorerUrl = `https://blockchair.com/search?q=${data.payin_hash}`;
 								const curr = data.pay_currency.toLowerCase();
 								if (curr === 'trx' || curr === 'usdttrc20') explorerUrl = `https://tronscan.org/#/transaction/${data.payin_hash}`;
 								else if (curr === 'bnbbsc' || curr === 'usdtbsc') explorerUrl = `https://bscscan.com/tx/${data.payin_hash}`;
 								else if (curr === 'eth' || curr === 'usdt' || curr === 'usdterc20') explorerUrl = `https://etherscan.io/tx/${data.payin_hash}`;
 								else if (curr === 'matic' || curr === 'usdtmatic') explorerUrl = `https://polygonscan.com/tx/${data.payin_hash}`;
 								else if (curr === 'sol') explorerUrl = `https://solscan.io/tx/${data.payin_hash}`;
-								txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;font-size:0.65rem;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-cube" style="color:#00f0ff"></i> Block Explorer</a></div>`;
+								txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-link" style="margin-right:5px;"></i> See on Block Explorer</a></div>`;
 							}
-							const addrHtml = data.pay_address ? `<br><span style="font-size:0.65rem;color:var(--text-muted)">To: ${data.pay_address.slice(0, 20)}...</span>` : '';
-							paymentDetailsHtml = `<div style="font-size:0.7rem;color:#00f0ff;margin-top:4px;font-family:'RobotoMono',monospace"><span style="text-transform:uppercase;font-weight:bold">${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
+							const addrHtml = data.pay_address ? `<br><span style="color:var(--text-muted); margin-top:5px;">Address: ${data.pay_address.slice(0, 20)}...</span>` : '';
+							paymentDetailsHtml = `<div style="color:var(--text-muted);font-size:14px;" ><span style="text-transform:uppercase;"><i class="fa-solid fa-money-check-dollar" style="color:#ff9900;margin-right:5px"></i> ${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
 						}
 
 						item.innerHTML = `
-							<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">
-								<span style="font-weight:bold;color:var(--text-sharp);font-size:0.8rem">${label}</span>
-								<span style="font-size:0.7rem;color:var(--text-muted);font-family:'RobotoMono',monospace">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
+							<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start">
+								<span style="color:var(--text-sharp); font-weight:bold;" class="font-roboto">${label}</span>
+								<span style="color:var(--text-muted);font-size:14px;font-weight:light;">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
 								${paymentDetailsHtml}
 							</div>
 							<div>${actionBtnHtml}</div>
@@ -578,24 +592,23 @@ window.loadDashboardData = async function (force = false) {
 						item.style.border = '1px solid var(--border-color)';
 						item.style.borderRadius = '10px';
 						item.style.padding = '8px 12px';
-						item.style.fontSize = '0.8rem';
 
-						const label = data.productName || (data.product_id === 'api_100k' ? '100,000 Requests Credits' : (data.product_id === 'api_200k' ? '200,000 Requests Credits' : 'API Credits'));
-						const dateStr = data.created_at ? new Date(data.created_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
+						const label = data.productName;
+						const dateStr = data.completed_at ? new Date(data.completed_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
 
 						let actionBtnHtml = '';
 						if (data.isUsed) {
-							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
+							actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
 						} else if (data.payment_status === 'finished') {
-							actionBtnHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;"><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
+							actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
 						} else {
-							const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.7rem;font-weight:bold;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
+							const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
 							actionBtnHtml = `
 								<div style="display:flex;align-items:center;gap:6px">
-									<span style="color:#ffd700;font-size:0.75rem;text-transform:capitalize;margin-right:2px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px"></i>${data.payment_status || 'Pending'}</span>
+									<span style="color:#ffd700;text-transform:capitalize;margin-right:2px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px"></i>${data.payment_status || 'Pending'}</span>
 									${payBtn}
-									<button class="btn-refresh-invoice-status" data-invoice="${invoiceId}" title="Check status" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.7rem;transition:all 0.2s"><i class="fa-solid fa-rotate"></i></button>
-									<button class="btn-cancel-invoice" data-invoice="${invoiceId}" title="Cancel invoice" style="background:rgba(255,102,102,0.15);color:#ff6666;border:1px solid rgba(255,102,102,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.7rem;transition:all 0.2s"><i class="fa-solid fa-trash"></i></button>
+									<button class="btn-refresh-invoice-status" data-invoice="${invoiceId}" title="Check status" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-rotate"></i></button>
+									<button class="btn-cancel-invoice" data-invoice="${invoiceId}" title="Cancel invoice" style="background:rgba(255,102,102,0.15);color:#ff6666;border:1px solid rgba(255,102,102,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-trash"></i></button>
 								</div>
 							`;
 						}
@@ -612,16 +625,16 @@ window.loadDashboardData = async function (force = false) {
 								else if (curr === 'eth' || curr === 'usdt' || curr === 'usdterc20') explorerUrl = `https://etherscan.io/tx/${data.payin_hash}`;
 								else if (curr === 'matic' || curr === 'usdtmatic') explorerUrl = `https://polygonscan.com/tx/${data.payin_hash}`;
 								else if (curr === 'sol') explorerUrl = `https://solscan.io/tx/${data.payin_hash}`;
-								txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;font-size:0.65rem;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-cube" style="color:#00f0ff"></i> Block Explorer</a></div>`;
+								txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-cube" style="color:#00f0ff"></i> Block Explorer</a></div>`;
 							}
-							const addrHtml = data.pay_address ? `<br><span style="font-size:0.65rem;color:var(--text-muted)">To: ${data.pay_address.slice(0, 20)}...</span>` : '';
-							paymentDetailsHtml = `<div style="font-size:0.7rem;color:#00f0ff;margin-top:4px;font-family:'RobotoMono',monospace"><span style="text-transform:uppercase;font-weight:bold">${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
+							const addrHtml = data.pay_address ? `<br><span style="color:var(--text-muted)">Address: ${data.pay_address.slice(0, 20)}...</span>` : '';
+							paymentDetailsHtml = `<div style="color:#00f0ff;margin-top:4px;"><span style="text-transform:uppercase;">${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
 						}
 
 						item.innerHTML = `
 							<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">
-								<span style="font-weight:bold;color:var(--text-sharp);font-size:0.8rem">${label}</span>
-								<span style="font-size:0.7rem;color:var(--text-muted);font-family:'RobotoMono',monospace">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
+								<span style="color:var(--text-sharp);">${label}</span>
+								<span style="color:var(--text-muted);">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
 								${paymentDetailsHtml}
 							</div>
 							<div>${actionBtnHtml}</div>
@@ -766,8 +779,17 @@ window.loadDashboardData = async function (force = false) {
 				? Math.min(100, Math.round((availableCredits / maxDailyCredits) * 100))
 				: 100;
 
-			if (appUsageLabel) appUsageLabel.textContent = `Available Balance: ${availableCredits.toLocaleString()}`;
-			if (appQuotaBar) appQuotaBar.style.width = `${quotaPct}%`;
+			if (appUsageLabel) appUsageLabel.textContent = `Credits: ${availableCredits.toLocaleString()}`;
+			if (appQuotaBar) {
+				appQuotaBar.style.width = `${quotaPct}%`;
+				if (quotaPct <= 50) {
+					appQuotaBar.style.background = 'linear-gradient(90deg, #ff4d4d 0%, #ff1a1a 100%)';
+					appQuotaBar.style.boxShadow = '0 0 10px rgba(255, 77, 77, 0.4)';
+				} else {
+					appQuotaBar.style.background = '';
+					appQuotaBar.style.boxShadow = '';
+				}
+			}
 			if (appRemaining) appRemaining.textContent = availableCredits.toLocaleString();
 
 			// Developer Dashboard Credits (Global API Credits)
@@ -800,7 +822,7 @@ window.loadDashboardData = async function (force = false) {
 			const devQuotaBar = document.getElementById('dev-quota-bar');
 			const devRemaining = document.getElementById('dev-remaining-requests');
 
-			if (devUsageLabel) devUsageLabel.textContent = `Available Balance: ${apiAvailable.toLocaleString()}`;
+			if (devUsageLabel) devUsageLabel.textContent = `Credits: ${apiAvailable.toLocaleString()}`;
 			if (devQuotaBar) devQuotaBar.style.width = `100%`; // Static 100% since it's just a balance now
 			if (devRemaining) devRemaining.textContent = apiAvailable.toLocaleString();
 
@@ -894,7 +916,6 @@ async function loadOwnedKeysList(idToken) {
 
 			const row = document.createElement('tr');
 			row.style.borderBottom = '1px solid var(--border-color)';
-			row.style.fontSize = '0.9rem';
 			row.style.color = 'var(--text-primary)';
 
 			const isAllowedType = k.type === 'api_key' || k.type === 'compensation';
@@ -903,24 +924,24 @@ async function loadOwnedKeysList(idToken) {
 			const domainList = k.allowedDomains ? (Array.isArray(k.allowedDomains) ? k.allowedDomains : Object.keys(k.allowedDomains)) : [];
 
 			row.innerHTML = `
-				<td style="padding: 15px 10px; color: var(--text-sharp); font-weight: bold; font-family: 'Orbitron', sans-serif;">
+				<td style="padding: 15px 10px; color: var(--text-sharp);">
 					${k.projectName || "API Key"}
 				</td>
-				<td style="padding: 15px 10px; font-family: 'RobotoMono'; font-weight: bold;">
+				<td style="padding: 15px 10px;  ">
 					<div style="display: flex; align-items: center; gap: 8px;">
 						<span class="db-key-value" data-full-key="${k.key}">${k.key.slice(0, 12)}...</span>
-						<button class="btn-copy-tbl" data-key="${k.key}" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; font-size: 0.8rem;" title="Copy Full Key"><i class="fa-solid fa-copy"></i></button>
+						<button class="btn-copy-tbl" data-key="${k.key}" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px;" title="Copy Full Key"><i class="fa-solid fa-copy"></i></button>
 					</div>
 				</td>
 				<td style="padding: 15px 10px; color: var(--text-secondary);">${createdStr}</td>
 				<td style="padding: 12px 10px; text-align: center;">
-					${isAllowedType ? `<button class="btn-wl-manage" data-key="${k.key}" data-tab="ip" style="background:rgba(175,134,252,0.08);border:1px solid rgba(175,134,252,0.25);color:#af86fc;border-radius:8px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'RobotoMono';white-space:nowrap"><i class="fa-solid fa-network-wired" style="margin-right:4px"></i>${(ipList.length > 0) ? ipList.length + ' IP(s)' : 'None'}</button>` : '<span style="color:var(--text-muted);font-size:0.75rem">&#8212;</span>'}
+					${isAllowedType ? `<button class="btn-wl-manage" data-key="${k.key}" data-tab="ip" style="background:rgba(175,134,252,0.08);border:1px solid rgba(175,134,252,0.25);color:#af86fc;border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-network-wired" style="margin-right:4px"></i>${(ipList.length > 0) ? ipList.length + ' IP(s)' : 'None'}</button>` : '<span style="color:var(--text-muted);">&#8212;</span>'}
 				</td>
 				<td style="padding: 12px 10px; text-align: center;">
-					${isAllowedType ? `<button class="btn-wl-manage" data-key="${k.key}" data-tab="domain" style="background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.2);color:#00f0ff;border-radius:8px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'RobotoMono';white-space:nowrap"><i class="fa-solid fa-globe" style="margin-right:4px"></i>${(domainList.length > 0) ? domainList.length + ' Domain(s)' : 'None'}</button>` : '<span style="color:var(--text-muted);font-size:0.75rem">&#8212;</span>'}
+					${isAllowedType ? `<button class="btn-wl-manage" data-key="${k.key}" data-tab="domain" style="background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.2);color:#00f0ff;border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap"><i class="fa-solid fa-globe" style="margin-right:4px"></i>${(domainList.length > 0) ? domainList.length + ' Domain(s)' : 'None'}</button>` : '<span style="color:var(--text-muted);">&#8212;</span>'}
 				</td>
 				<td style="padding: 12px 10px; text-align: center;">
-					${isApiKey ? `<button class="btn-delete-key-tbl" data-key="${k.key}" style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.2);color:#ff6666;border-radius:8px;padding:4px 10px;font-size:0.75rem;cursor:pointer;font-family:'RobotoMono';"><i class="fa-solid fa-trash"></i></button>` : '<span style="color:var(--text-muted);font-size:0.75rem">&#8212;</span>'}
+					${isApiKey ? `<button class="btn-delete-key-tbl" data-key="${k.key}" style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.2);color:#ff6666;border-radius:8px;padding:4px 10px;cursor:pointer;"><i class="fa-solid fa-trash"></i></button>` : '<span style="color:var(--text-muted);">&#8212;</span>'}
 				</td>
 			`;
 
@@ -1033,7 +1054,7 @@ async function renderDevStatsCards(keys = []) {
 	if (developerKeys.length === 0) {
 		container.innerHTML = `
 			<div style="width: 100%; padding: 40px; text-align: center; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px;">
-				<i class="fa-solid fa-chart-bar" style="font-size: 2.5rem; color: var(--border-color); margin-bottom: 15px; display: block;"></i>
+				<i class="fa-solid fa-chart-bar" style="color: var(--border-color); margin-bottom: 15px; display: block;"></i>
 				No API Keys found. Stats will appear here once you generate an API Key.
 			</div>
 		`;
@@ -1071,55 +1092,55 @@ async function renderDevStatsCards(keys = []) {
 		const expiresStr = k.expiresAt === 'lifetime' || s.expiresAt === 'lifetime' ? 'Lifetime' : new Date(k.expiresAt || s.expiresAt).toLocaleDateString();
 
 		html += `
-			<div class="pricing-card" style="flex: 1; min-width: 300px; max-width: 48%; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; gap: 20px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; box-sizing: border-box; margin-bottom: 10px;">
+			<div class="pricing-card" style="width:100%; min-width: 300px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; gap: 20px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; box-sizing: border-box; margin-bottom: 10px;">
 				<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
 					<div style="display: flex; align-items: center; gap: 12px;">
-						<div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(175, 134, 252, 0.1); display: flex; align-items: center; justify-content: center; color: #af86fc; font-size: 1.2rem;">
+						<div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(175, 134, 252, 0.1); display: flex; align-items: center; justify-content: center; color: #af86fc; ">
 							<i class="fa-solid fa-key"></i>
 						</div>
 						<div>
-							<h4 style="margin: 0; font-family: 'Orbitron', sans-serif; font-size: 1rem; color: var(--text-sharp);">${k.type === 'compensation' ? 'Compensation Key' : 'API Key'} #${index + 1}</h4>
-							<span style="font-size: 0.75rem; color: var(--text-muted); font-family: 'RobotoMono', monospace;">${maskedKey}</span>
+							<h4 style="margin: 0;color: var(--text-sharp);">${k.type === 'compensation' ? 'Compensation Key' : 'API Key'} #${index + 1}</h4>
+							<span style="color: var(--text-muted); ">${maskedKey}</span>
 						</div>
 					</div>
 				</div>
 				
-				<div style="background: rgba(0,0,0,0.15); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); display: flex; flex-direction: column; gap: 12px;">
+				<div style="background: var(--bg-primary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
 					<div style="display: flex; justify-content: space-between; align-items: center;">
-						<span style="font-size: 0.85rem; color: var(--text-muted);">${k.type === 'compensation' ? 'Total Key Usage' : 'Total Usage Count'}</span>
-						<span style="font-family: 'Orbitron', monospace; font-size: 1.25rem; font-weight: bold; color: #66ffd9; text-shadow: 0 0 8px rgba(102, 255, 217, 0.2);">
+						<span style="color: var(--text-muted);">${k.type === 'compensation' ? 'Total Key Usage' : 'Total Usage Count'}</span>
+						<span style=" color: #66ffd9; text-shadow: 0 0 8px rgba(102, 255, 217, 0.2);">
 							${totalUsage.toLocaleString()}
 						</span>
 					</div>
 
 					${k.type === 'compensation' ? `
 					<div style="display: flex; justify-content: space-between; align-items: center;">
-						<span style="font-size: 0.85rem; color: var(--text-muted);">Daily Key Usage</span>
-						<span style="font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: bold; color: #00f0ff;">
+						<span style="color: var(--text-muted);">Daily Key Usage</span>
+						<span style=" color: #00f0ff;">
 							${dailyKeyUsage.toLocaleString()} / ${dailyLimit.toLocaleString()}
 						</span>
 					</div>
 					` : ''}
 
 					<div style="display: flex; justify-content: space-between; align-items: center;">
-						<span style="font-size: 0.85rem; color: var(--text-muted);">Created At</span>
-						<span style="font-size: 0.8rem; color: var(--text-secondary);">
+						<span style="color: var(--text-muted);">Created At</span>
+						<span style="color: var(--text-secondary);">
 							${new Date(k.createdAt).toLocaleDateString()}
 						</span>
 					</div>
 
 					${k.type === 'compensation' ? `
 					<div style="display: flex; justify-content: space-between; align-items: center;">
-						<span style="font-size: 0.85rem; color: var(--text-muted);">Expires At</span>
-						<span style="font-size: 0.8rem; color: #af86fc; font-weight: bold;">
+						<span style="color: var(--text-muted);">Expires At</span>
+						<span style="color: #af86fc; ">
 							${expiresStr}
 						</span>
 					</div>
 
 					<div style="display: flex; justify-content: space-between; align-items: center;">
-						<span style="font-size: 0.85rem; color: var(--text-muted);">Daily Reset In</span>
-						<span style="font-family: 'Orbitron', monospace; font-size: 0.95rem; font-weight: bold; color: #ffad33; display: flex; align-items: center; gap: 6px;">
-							<i class="fa-solid fa-clock-rotate-left fa-spin" style="font-size: 0.8rem; --fa-animation-duration: 4s;"></i>
+						<span style="color: var(--text-muted);">Daily Reset In</span>
+						<span style=" color: #ffad33; display: flex; align-items: center; gap: 6px;">
+							<i class="fa-solid fa-clock-rotate-left fa-spin" style="--fa-animation-duration: 4s;"></i>
 							<span class="dev-reset-countdown-timer" data-reset-time="${new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0, 0)).getTime()}">--:--:--</span>
 						</span>
 					</div>
@@ -1150,7 +1171,7 @@ window.renderCreditsTab = function () {
 	if (compKeys.length > 0) {
 		compHtml = `
 			<div style="margin-top: 25px; display: flex; flex-direction: column; gap: 15px; width: 100%; border-top: 1px solid var(--border-color); padding-top: 25px;">
-				<h4 style="margin: 0; font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: #af86fc; display: flex; align-items: center; gap: 8px;">
+				<h4 style="margin: 0; color: #af86fc; display: flex; align-items: center; gap: 8px;">
 					<i class="fa-solid fa-gift"></i> Compensation Keys & Limits
 				</h4>
 				<div style="display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box;">
@@ -1161,16 +1182,16 @@ window.renderCreditsTab = function () {
 			compHtml += `
 				<div style="background: rgba(0,0,0,0.15); padding: 18px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
 					<div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
-						<span style="font-family: 'Orbitron', sans-serif; font-size: 0.82rem; color: var(--text-sharp); font-weight: bold;">
+						<span style=" color: var(--text-sharp); ">
 							${k.projectName || 'Compensation Key'}
 						</span>
-						<span style="font-family: 'RobotoMono', monospace; font-size: 0.72rem; color: var(--text-muted);">
+						<span style=" color: var(--text-muted);">
 							${maskedKey}
 						</span>
 					</div>
 					<div style="text-align: right;">
-						<span style="display: block; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Daily Limit</span>
-						<span style="font-family: 'Orbitron', monospace; font-size: 1.15rem; font-weight: bold; color: #66ffd9;">
+						<span style="display: block; color: var(--text-muted); text-transform: uppercase;">Daily Limit</span>
+						<span style=" color: #66ffd9;">
 							${dailyLimit.toLocaleString()} / day
 						</span>
 					</div>
@@ -1184,31 +1205,31 @@ window.renderCreditsTab = function () {
 	}
 
 	container.innerHTML = `
-		<div class="pricing-card" style="flex: 1; min-width: 320px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; display: flex; flex-direction: column; gap: 24px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; width: 100%; box-sizing: border-box;">
+		<div style="flex: 1; min-width: 320px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; display: flex; flex-direction: column; gap: 24px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; width: 100%; box-sizing: border-box;">
 			<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
 				<div style="display: flex; align-items: center; gap: 12px;">
-					<div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(0,240,255,0.1); display: flex; align-items: center; justify-content: center; color: #00f0ff; font-size: 1.4rem;">
+					<div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(0,240,255,0.1); display: flex; align-items: center; justify-content: center; color: #00f0ff; ">
 						<i class="fa-solid fa-coins"></i>
 					</div>
 					<div>
-						<h4 style="margin: 0; font-family: 'Orbitron', sans-serif; font-size: 1.25rem; color: var(--text-sharp);">Credits</h4>
-						<span style="font-size: 0.8rem; color: var(--text-muted); font-family: 'RobotoMono', monospace;">Lifetime Non-Expiring API Credits</span>
+						<h4 style="margin: 0; color: var(--text-sharp);">API Credits</h4>
+						<span style="color: var(--text-muted); ">Lifetime Non-Expiring API Credits</span>
 					</div>
 				</div>
 			</div>
 			
-			<div style="background: rgba(0,0,0,0.2); padding: 35px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-				<span style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; font-weight: bold; letter-spacing: 1.5px;">Available Credits</span>
-				<div style="font-size: 3rem; font-weight: bold; color: #66ffd9; font-family: 'Orbitron', monospace; text-shadow: 0 0 15px rgba(102, 255, 217, 0.4);">
+			<div style="background: var(--bg-primary); padding: 35px 20px; border-radius: 16px; border: 1px solid var(--border-color); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+				<span style="display: block; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase;  letter-spacing: 1.5px;">API Credits</span>
+				<div style="font-size: 35px; font-family: Arial, Helvetica, sans-serif; color: #66ffd9;  text-shadow: 0 0 15px rgba(102, 255, 217, 0.4);">
 					${totalAvailable.toLocaleString()}
 				</div>
-				<span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; font-family: 'RobotoMono', monospace;">
-					(${freeCredits.toLocaleString()} Free + ${premiumCredits.toLocaleString()} Premium)
+				<span style="display: block; color: var(--text-muted); margin-top: 8px; ">
+					(${freeCredits.toLocaleString()} - Daily Bonus + ${premiumCredits.toLocaleString()} - Purchased)
 				</span>
 			</div>
 
 			<div style="display: flex; justify-content: center; margin-top: 10px;">
-				<button class="btn btn-primary" onclick="window.setActiveMenu('dev-add', true)" style="padding: 14px 28px; border-radius: 14px; font-weight: bold; display: flex; align-items: center; gap: 10px; font-family: 'Orbitron', sans-serif; box-shadow: 0 4px 15px rgba(175, 134, 252, 0.3);">
+				<button class="btn btn-primary" onclick="window.setActiveMenu('dev-add', true)" style="padding: 14px 28px; border-radius: 14px;  display: flex; align-items: center; gap: 10px;box-shadow: 0 4px 15px rgba(175, 134, 252, 0.3);">
 					<i class="fa-solid fa-cart-shopping"></i> Buy Credits
 				</button>
 			</div>
@@ -1258,19 +1279,19 @@ async function loadUsageHistory() {
 
 	// Populate beautiful structured simulation history log entries that feel extremely high fidelity!
 	tableBody.innerHTML = `
-		<tr style="border-bottom: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-primary);">
+		<tr style="border-bottom: 1px solid var(--border-color); color: var(--text-primary);">
 			<td style="padding: 15px 10px; color: var(--text-secondary);">${new Date().toLocaleString()}</td>
-			<td style="padding: 15px 10px; font-family: 'RobotoMono'; font-weight: bold;">${(window.APIKEY || 'FREE_KEY').slice(0, 8)}...</td>
+			<td style="padding: 15px 10px;  ">${(window.APIKEY || 'FREE_KEY').slice(0, 8)}...</td>
 			<td style="padding: 15px 10px;">150 emails</td>
 			<td style="padding: 15px 10px; color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> 89 Live / 12 Disabled / 4 Failed</td>
-			<td style="padding: 15px 10px; text-align: right; font-weight: bold; color: var(--text-secondary);">Advanced 1</td>
+			<td style="padding: 15px 10px; text-align: right;  color: var(--text-secondary);">Advanced 1</td>
 		</tr>
-		<tr style="border-bottom: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-primary);">
+		<tr style="border-bottom: 1px solid var(--border-color); color: var(--text-primary);">
 			<td style="padding: 15px 10px; color: var(--text-secondary);">${new Date(Date.now() - 3600000).toLocaleString()}</td>
-			<td style="padding: 15px 10px; font-family: 'RobotoMono'; font-weight: bold;">${(window.APIKEY || 'FREE_KEY').slice(0, 8)}...</td>
+			<td style="padding: 15px 10px;  ">${(window.APIKEY || 'FREE_KEY').slice(0, 8)}...</td>
 			<td style="padding: 15px 10px;">10 emails</td>
 			<td style="padding: 15px 10px; color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> 10 Live / 0 Disabled</td>
-			<td style="padding: 15px 10px; text-align: right; font-weight: bold; color: var(--text-secondary);">Fast 1</td>
+			<td style="padding: 15px 10px; text-align: right;  color: var(--text-secondary);">Fast 1</td>
 		</tr>
 	`;
 
@@ -1330,13 +1351,13 @@ function switchWlTab(tab) {
 	if (tab === 'ip') {
 		panelIp.style.display = 'flex';
 		panelDomain.style.display = 'none';
-		if (tabIpBtn) { tabIpBtn.style.background = 'linear-gradient(135deg,#af86fc,#7e53c9)'; tabIpBtn.style.color = 'white'; tabIpBtn.style.fontWeight = 'bold'; }
-		if (tabDomBtn) { tabDomBtn.style.background = 'transparent'; tabDomBtn.style.color = 'var(--text-muted)'; tabDomBtn.style.fontWeight = 'normal'; }
+		if (tabIpBtn) { tabIpBtn.style.background = 'linear-gradient(135deg,#af86fc,#7e53c9)'; tabIpBtn.style.color = 'white'; }
+		if (tabDomBtn) { tabDomBtn.style.background = 'transparent'; tabDomBtn.style.color = 'var(--text-muted)'; }
 	} else {
 		panelIp.style.display = 'none';
 		panelDomain.style.display = 'flex';
-		if (tabDomBtn) { tabDomBtn.style.background = 'linear-gradient(135deg,#00f0ff,#0095c8)'; tabDomBtn.style.color = '#000'; tabDomBtn.style.fontWeight = 'bold'; }
-		if (tabIpBtn) { tabIpBtn.style.background = 'transparent'; tabIpBtn.style.color = 'var(--text-muted)'; tabIpBtn.style.fontWeight = 'normal'; }
+		if (tabDomBtn) { tabDomBtn.style.background = 'linear-gradient(135deg,#00f0ff,#0095c8)'; tabDomBtn.style.color = '#000'; }
+		if (tabIpBtn) { tabIpBtn.style.background = 'transparent'; tabIpBtn.style.color = 'var(--text-muted)'; }
 	}
 }
 
@@ -1362,11 +1383,11 @@ function renderIPList(ips, max) {
 	if (!list) return;
 	if (badge) badge.textContent = ips.length + ' / ' + max;
 	if (ips.length === 0) {
-		list.innerHTML = '<div style="padding:14px;background:var(--bg-primary);border:1px dashed var(--border-color);border-radius:10px;text-align:center;color:var(--text-muted);font-size:0.8rem">No IPs whitelisted \u2014 all IPs allowed</div>';
+		list.innerHTML = '<div style="padding:14px;background:var(--bg-primary);border:1px dashed var(--border-color);border-radius:10px;text-align:center;color:var(--text-muted);">No IPs whitelisted \u2014 all IPs allowed</div>';
 		return;
 	}
 	list.innerHTML = ips.map(function (ip) {
-		return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-network-wired" style="color:#af86fc"></i><span style="font-family:monospace;font-size:0.85rem;color:var(--text-sharp)">' + ip + '</span></div><button class="btn-wl-remove-ip" data-ip="' + ip + '" style="background:none;border:none;color:#ff6666;cursor:pointer;padding:2px 6px" title="Remove"><i class="fa-solid fa-trash-can"></i></button></div>';
+		return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-network-wired" style="color:#af86fc"></i><span style="color:var(--text-sharp)">' + ip + '</span></div><button class="btn-wl-remove-ip" data-ip="' + ip + '" style="background:none;border:none;color:#ff6666;cursor:pointer;padding:2px 6px" title="Remove"><i class="fa-solid fa-trash-can"></i></button></div>';
 	}).join('');
 	list.querySelectorAll('.btn-wl-remove-ip').forEach(function (btn) {
 		btn.addEventListener('click', function () { removeIP(btn.getAttribute('data-ip')); });
@@ -1379,11 +1400,11 @@ function renderDomainList(domains, max) {
 	if (!list) return;
 	if (badge) badge.textContent = domains.length + ' / ' + max;
 	if (domains.length === 0) {
-		list.innerHTML = '<div style="padding:14px;background:var(--bg-primary);border:1px dashed var(--border-color);border-radius:10px;text-align:center;color:var(--text-muted);font-size:0.8rem">No domains whitelisted \u2014 all origins allowed</div>';
+		list.innerHTML = '<div style="padding:14px;background:var(--bg-primary);border:1px dashed var(--border-color);border-radius:10px;text-align:center;color:var(--text-muted);">No domains whitelisted \u2014 all origins allowed</div>';
 		return;
 	}
 	list.innerHTML = domains.map(function (d) {
-		return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-globe" style="color:#00f0ff"></i><span style="font-family:monospace;font-size:0.85rem;color:var(--text-sharp)">' + d + '</span></div><button class="btn-wl-remove-domain" data-domain="' + d + '" style="background:none;border:none;color:#ff6666;cursor:pointer;padding:2px 6px" title="Remove"><i class="fa-solid fa-trash-can"></i></button></div>';
+		return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:10px;padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-globe" style="color:#00f0ff"></i><span style="color:var(--text-sharp)">' + d + '</span></div><button class="btn-wl-remove-domain" data-domain="' + d + '" style="background:none;border:none;color:#ff6666;cursor:pointer;padding:2px 6px" title="Remove"><i class="fa-solid fa-trash-can"></i></button></div>';
 	}).join('');
 	list.querySelectorAll('.btn-wl-remove-domain').forEach(function (btn) {
 		btn.addEventListener('click', function () { removeDomain(btn.getAttribute('data-domain')); });

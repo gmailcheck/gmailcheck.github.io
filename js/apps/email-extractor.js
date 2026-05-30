@@ -68,15 +68,26 @@ function runExtractor() {
     }
 
     // Populate Results
+    const inputContainer = document.getElementById('email-input-container-app5');
     const resultsContainer = document.getElementById('results-container-app5');
     const outputTextarea = document.getElementById('email-extractor-output');
+    
     if (outputTextarea) {
         outputTextarea.value = formattedOutput;
     }
 
+    if (inputContainer) {
+        inputContainer.classList.add('hide');
+    }
     if (resultsContainer) {
         resultsContainer.classList.remove('hide');
     }
+
+    // Toggle CTA sidebar buttons
+    const btnRun = document.getElementById('btn-extractor-run');
+    const btnClear = document.getElementById('btn-extractor-clear');
+    if (btnRun) btnRun.classList.add('hide');
+    if (btnClear) btnClear.classList.add('hide');
 
     // Show copy & download buttons
     const btnCopy = document.getElementById('btn-extractor-copy');
@@ -102,18 +113,27 @@ function runExtractor() {
     }
 }
 
-// Reset/Clear Extractor
+// Reset/Clear Extractor (Full clear)
 function clearExtractor() {
     const input = document.getElementById('email-extractor-input');
     const output = document.getElementById('email-extractor-output');
+    const inputContainer = document.getElementById('email-input-container-app5');
     const resultsContainer = document.getElementById('results-container-app5');
     
     if (input) input.value = '';
     if (output) output.value = '';
     
+    if (inputContainer) {
+        inputContainer.classList.remove('hide');
+    }
     if (resultsContainer) {
         resultsContainer.classList.add('hide');
     }
+
+    const btnRun = document.getElementById('btn-extractor-run');
+    const btnClear = document.getElementById('btn-extractor-clear');
+    if (btnRun) btnRun.classList.remove('hide');
+    if (btnClear) btnClear.classList.remove('hide');
 
     const btnCopy = document.getElementById('btn-extractor-copy');
     const btnDownload = document.getElementById('btn-extractor-download');
@@ -124,6 +144,44 @@ function clearExtractor() {
     document.getElementById('stats-extractor-unique').textContent = '0';
     document.getElementById('stats-extractor-gmail').textContent = '0';
     document.getElementById('stats-extractor-other').textContent = '0';
+
+    if (window.clearAppNotification) window.clearAppNotification();
+
+    // Synchronize custom line numbers
+    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'email-input-container-app5');
+}
+
+// Back/Reset Extractor (returns to input view without clearing input)
+function backExtractor() {
+    const output = document.getElementById('email-extractor-output');
+    const inputContainer = document.getElementById('email-input-container-app5');
+    const resultsContainer = document.getElementById('results-container-app5');
+    
+    if (output) output.value = '';
+    
+    if (inputContainer) {
+        inputContainer.classList.remove('hide');
+    }
+    if (resultsContainer) {
+        resultsContainer.classList.add('hide');
+    }
+
+    const btnRun = document.getElementById('btn-extractor-run');
+    const btnClear = document.getElementById('btn-extractor-clear');
+    if (btnRun) btnRun.classList.remove('hide');
+    if (btnClear) btnClear.classList.remove('hide');
+
+    const btnCopy = document.getElementById('btn-extractor-copy');
+    const btnDownload = document.getElementById('btn-extractor-download');
+    if (btnCopy) btnCopy.classList.add('hide');
+    if (btnDownload) btnDownload.classList.add('hide');
+
+    document.getElementById('stats-extractor-total').textContent = '0';
+    document.getElementById('stats-extractor-unique').textContent = '0';
+    document.getElementById('stats-extractor-gmail').textContent = '0';
+    document.getElementById('stats-extractor-other').textContent = '0';
+
+    if (window.clearAppNotification) window.clearAppNotification();
 
     // Synchronize custom line numbers
     window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'email-input-container-app5');
@@ -162,6 +220,9 @@ function initEmailExtractor() {
 
     const btnClear = document.getElementById('btn-extractor-clear');
     if (btnClear) btnClear.addEventListener('click', clearExtractor);
+
+    const btnBack = document.getElementById('btn-back-app5');
+    if (btnBack) btnBack.addEventListener('click', backExtractor);
 
     const btnCopy = document.getElementById('btn-extractor-copy');
     if (btnCopy) btnCopy.addEventListener('click', copyExtractedEmails);

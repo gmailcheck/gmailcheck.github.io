@@ -205,7 +205,7 @@ function initPricing() {
 	});
 
 	// 1.6 UPDATE API KEY CARDS DYNAMICALLY
-	const apiKeyIds = ['api_100k', 'api_200k', 'api_300k', 'api_400k', 'api_500k'];
+	const apiKeyIds = ['api_1M', 'api_2M', 'api_3M', 'api_4M', 'api_5M'];
 	apiKeyIds.forEach(id => {
 		const priceDisplay = document.getElementById(`display-price-${id}`);
 		const product = backendProducts[id];
@@ -290,7 +290,7 @@ function initPricing() {
 				window.showAppNotification('danger', `NOWPayments creation failed: ${err.message}`);
 			} finally {
 				btnCreateCryptoInvoice.disabled = false;
-				btnCreateCryptoInvoice.innerHTML = 'Create NOWPayments Invoice <i class="fa-solid fa-arrow-up-right-from-square" style="margin-left: 5px; font-size: 0.8rem;"></i>';
+				btnCreateCryptoInvoice.innerHTML = 'Create NOWPayments Invoice <i class="fa-solid fa-arrow-up-right-from-square" style="margin-left: 5px; "></i>';
 			}
 		});
 	}

@@ -1,0 +1,73 @@
+/* ==========================================================================
+   THEME VARIABLES AND DESIGN TOKENS
+   ========================================================================== */
+
+:root {
+    /* Light Theme Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #fafafa;
+    --bg-sidebar: #f5f5f5;
+    --bg-sidebar-hover: #e0e0e0;
+    --bg-submenu-hover: #e8e8e8;
+    --bg-card: #f9f9f9;
+    --bg-top-bar: #fafafa;
+    --bg-page-name: #f0f0f0;
+    --bg-button: #ffffff;
+
+    --text-sharp: #000000;
+    --text-primary: #5e5e5e;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --text-sidebar: #777777;
+    --text-sidebar-icon: #666666;
+
+    --border-color: #e4e3e3;
+    --border-card: #eeeeee;
+    --border-input: #dddddd;
+
+    --accent-color: #e4e3e3;
+    --accent-color-hover: #b4b4b4;
+    --accent-text: #4e4e4e;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+    /* Form controls */
+    --bg-input: #ffffff;
+    --text-input: #333333;
+}
+
+:root.dark {
+    /* Dark Theme Colors */
+    --bg-primary: #121212;
+    --bg-secondary: #1a1a1a;
+    --bg-sidebar: #181818;
+    --bg-sidebar-hover: #2a2a2a;
+    --bg-submenu-hover: #222222;
+    --bg-card: #1e1e1e;
+    --bg-top-bar: #161616;
+    --bg-page-name: #1a1a1a;
+    --bg-button: #292929;
+
+    --text-sharp: #ffffff;
+    --text-primary: #f5f5f5;
+    --text-secondary: #b0b0b0;
+    --text-muted: #777777;
+    --text-sidebar: #e0e0e0;
+    --text-sidebar-icon: #aaaaaa;
+
+    --border-color: #272727;
+    --border-card: #2d2d2d;
+    --border-input: #303030;
+
+    --accent-color: #272727;
+    --accent-color-hover: #535353;
+    --accent-text: #ffffff;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.2);
+
+    /* Form controls */
+    --bg-input: #242424;
+    --text-input: #f5f5f5;
+}

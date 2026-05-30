@@ -6,11 +6,12 @@
  * Usage: window.API.<endpoint> everywhere in JS files.
  */
 
-const isDev = false;
+const isDev = true;
 
 const _ENDPOINTS_PROD = {
     // ── Auth / Profile Service (gc-server) ──────────────────────────────────
     GC_SERVER_BASE: 'https://gc-server.blacksoftchild.workers.dev',
+    MAINTENANCE: 'https://gc-server.blacksoftchild.workers.dev/maintenance',
     PROFILE: 'https://gc-server.blacksoftchild.workers.dev/profile',
     PRODUCTS: 'https://gc-server.blacksoftchild.workers.dev/products',
     CREATE_INVOICE: 'https://gc-server.blacksoftchild.workers.dev/create-invoice',
@@ -47,6 +48,7 @@ const _ENDPOINTS_PROD = {
 const _ENDPOINTS_DEV = {
     // ── Auth / Profile Service (gc-server) ──────────────────────────────────
     GC_SERVER_BASE: 'https://sanbox-gc-server.blacksoftchild.workers.dev',
+    MAINTENANCE: 'https://sanbox-gc-server.blacksoftchild.workers.dev/maintenance',
     PROFILE: 'https://sanbox-gc-server.blacksoftchild.workers.dev/profile',
     PRODUCTS: 'https://sanbox-gc-server.blacksoftchild.workers.dev/products',
     CREATE_INVOICE: 'https://sanbox-gc-server.blacksoftchild.workers.dev/create-invoice',
