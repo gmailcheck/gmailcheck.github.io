@@ -3418,7 +3418,16 @@ try {
 						</div>
 
 						<div id="admin-ticket-modal-reply-container" class="history-detail-modal-footer">
+							<!-- Reply attachments preview -->
+							<div id="admin-ticket-modal-reply-images-preview" class="filter-buttons-wrapper"></div>
+
 							<div class="history-detail-modal-actions">
+								<input type="file" id="admin-ticket-modal-reply-images-input" multiple
+									class="display-none">
+								<button class="btn btn-history-detail-modal-close" id="admin-btn-trigger-reply-images"
+									type="button">
+									<i class="fa-solid fa-paperclip whitelist-modal-icon"></i>
+								</button>
 								<input type="text" id="admin-ticket-modal-reply-input"
 									placeholder="Type your reply to the user here..."
 									class="history-detail-modal-input-field">

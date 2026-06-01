@@ -45,6 +45,18 @@
 		let selectedReplyFiles = [];
 		let pollingInterval = null;
 
+		window.supportTicketsWS = null;
+		window.supportTicketsList = [];
+		let reconnectTimeout = null;
+
+		window.connectTicketsWS = async function (idToken) {
+			// No-op: WebSockets are disabled, using HTTP polling instead.
+		};
+
+		window.closeTicketsWS = function () {
+			// No-op: WebSockets are disabled.
+		};
+
 		function updatePendingFormState(hasPending) {
 			let warningEl = document.getElementById('support-pending-warning');
 			if (warningEl) warningEl.remove();
@@ -165,28 +177,92 @@
 			const badge = document.getElementById('user-badge-display');
 			return badge && badge.textContent === 'VIP';
 		}
+		
+		// Remove file format restrictions on input elements dynamically
+		if (createImagesInput) createImagesInput.removeAttribute('accept');
+		if (replyImagesInput) replyImagesInput.removeAttribute('accept');
+
+		// Helper: Client-Side Image Compression using HTML5 Canvas
+		async function compressImageIfNeeded(file) {
+			if (!file.type.startsWith('image/')) {
+				return file; // No compression needed for documents, archives, videos, etc.
+			}
+
+			return new Promise((resolve) => {
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					const img = new Image();
+					img.onload = () => {
+						const canvas = document.createElement('canvas');
+						let width = img.width;
+						let height = img.height;
+
+						// Limit maximum size to 1600px (preserves exceptional details while reducing file size drastically)
+						const MAX_SIZE = 1600;
+						if (width > height) {
+							if (width > MAX_SIZE) {
+								height = Math.round((height * MAX_SIZE) / width);
+								width = MAX_SIZE;
+							}
+						} else {
+							if (height > MAX_SIZE) {
+								width = Math.round((width * MAX_SIZE) / height);
+								height = MAX_SIZE;
+							}
+						}
+
+						canvas.width = width;
+						canvas.height = height;
+						const ctx = canvas.getContext('2d');
+						ctx.drawImage(img, 0, 0, width, height);
+
+						// Output progressive JPEG at 75% quality
+						canvas.toBlob((blob) => {
+							if (blob) {
+								const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+									type: "image/jpeg",
+									lastModified: Date.now()
+								});
+								console.log(`[Compression] "${file.name}" compressed: ${(file.size/1024).toFixed(1)} KB -> ${(compressedFile.size/1024).toFixed(1)} KB`);
+								// Keep whichever is smaller
+								resolve(compressedFile.size < file.size ? compressedFile : file);
+							} else {
+								resolve(file);
+							}
+						}, 'image/jpeg', 0.75);
+					};
+					img.onerror = () => resolve(file);
+					img.src = e.target.result;
+				};
+				reader.onerror = () => resolve(file);
+				reader.readAsDataURL(file);
+			});
+		}
 
 		// File Attachment Handler: Ticket Creation Form
 		if (btnTriggerCreateImages && createImagesInput) {
 			btnTriggerCreateImages.addEventListener('click', () => createImagesInput.click());
-			createImagesInput.addEventListener('change', (e) => {
+			createImagesInput.addEventListener('change', async (e) => {
 				const files = Array.from(e.target.files);
 
 				// Max limit validation
 				if (selectedCreateFiles.length + files.length > 5) {
-					window.showAppNotification('danger', '❌ <strong>Maximum 5 Images!</strong> You can only attach up to 5 screenshot images.');
+					window.showAppNotification('danger', '❌ <strong>Maximum 5 Files!</strong> You can only attach up to 5 files total.');
 					createImagesInput.value = '';
 					return;
 				}
 
-				files.forEach(file => {
-					if (!file.type.startsWith('image/')) {
-						window.showAppNotification('danger', '❌ <strong>Invalid Format!</strong> Only image files are allowed.');
-						return;
-					}
-					selectedCreateFiles.push(file);
-				});
+				btnTriggerCreateImages.disabled = true;
+				const originalHtml = btnTriggerCreateImages.innerHTML;
+				btnTriggerCreateImages.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
 
+				for (const file of files) {
+					const processedFile = await compressImageIfNeeded(file);
+					selectedCreateFiles.push(processedFile);
+				}
+
+				btnTriggerCreateImages.disabled = false;
+				btnTriggerCreateImages.innerHTML = originalHtml;
 				createImagesInput.value = '';
 				renderCreateImagesPreview();
 			});
@@ -195,7 +271,7 @@
 		function renderCreateImagesPreview() {
 			createImagesPreview.innerHTML = '';
 			if (selectedCreateFiles.length > 0) {
-				createImagesCountLabel.textContent = `${selectedCreateFiles.length} image(s) selected`;
+				createImagesCountLabel.textContent = `${selectedCreateFiles.length} file(s) selected`;
 				createImagesCountLabel.style.color = '#af86fc';
 			} else {
 				createImagesCountLabel.textContent = 'No files chosen';
@@ -203,55 +279,89 @@
 			}
 
 			selectedCreateFiles.forEach((file, index) => {
-				const reader = new FileReader();
-				reader.onload = (e) => {
-					const div = document.createElement('div');
-					div.style.position = 'relative';
-					div.style.width = '60px';
-					div.style.height = '60px';
-					div.style.borderRadius = '8px';
-					div.style.overflow = 'hidden';
-					div.style.border = '1px solid var(--border-color)';
-					div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+				const div = document.createElement('div');
+				div.style.position = 'relative';
+				div.style.width = '60px';
+				div.style.height = '60px';
+				div.style.borderRadius = '8px';
+				div.style.overflow = 'hidden';
+				div.style.border = '1px solid var(--border-color)';
+				div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+				div.style.display = 'flex';
+				div.style.alignItems = 'center';
+				div.style.justifyContent = 'center';
+				div.style.background = 'rgba(255,255,255,0.02)';
+				div.title = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+				if (file.type.startsWith('image/')) {
+					const reader = new FileReader();
+					reader.onload = (e) => {
+						div.innerHTML = `
+							<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+							<button type="button" style="position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.6); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Hapus">
+								<i class="fa-solid fa-xmark"></i>
+							</button>
+						`;
+						div.querySelector('button').addEventListener('click', () => {
+							selectedCreateFiles.splice(index, 1);
+							renderCreateImagesPreview();
+						});
+					};
+					reader.readAsDataURL(file);
+				} else {
+					let iconClass = 'fa-file-lines';
+					let iconColor = '#af86fc';
+
+					if (file.type.startsWith('video/')) {
+						iconClass = 'fa-file-video';
+						iconColor = '#66ffd9';
+					} else if (file.type === 'application/pdf') {
+						iconClass = 'fa-file-pdf';
+						iconColor = '#ff6666';
+					} else if (file.type.includes('zip') || file.type.includes('rar')) {
+						iconClass = 'fa-file-zipper';
+						iconColor = '#ffd700';
+					}
 
 					div.innerHTML = `
-						<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+						<i class="fa-solid ${iconClass}" style="font-size: 1.5rem; color: ${iconColor};"></i>
 						<button type="button" style="position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.6); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Hapus">
 							<i class="fa-solid fa-xmark"></i>
 						</button>
 					`;
-
 					div.querySelector('button').addEventListener('click', () => {
 						selectedCreateFiles.splice(index, 1);
 						renderCreateImagesPreview();
 					});
+				}
 
-					createImagesPreview.appendChild(div);
-				};
-				reader.readAsDataURL(file);
+				createImagesPreview.appendChild(div);
 			});
 		}
 
 		// File Attachment Handler: Chat Reply Form
 		if (btnTriggerReplyImages && replyImagesInput) {
 			btnTriggerReplyImages.addEventListener('click', () => replyImagesInput.click());
-			replyImagesInput.addEventListener('change', (e) => {
+			replyImagesInput.addEventListener('change', async (e) => {
 				const files = Array.from(e.target.files);
 
 				if (selectedReplyFiles.length + files.length > 5) {
-					window.showAppNotification('danger', '❌ <strong>Maximum 5 Images!</strong> You can only attach up to 5 screenshot images.');
+					window.showAppNotification('danger', '❌ <strong>Maximum 5 Files!</strong> You can only attach up to 5 files total.');
 					replyImagesInput.value = '';
 					return;
 				}
 
-				files.forEach(file => {
-					if (!file.type.startsWith('image/')) {
-						window.showAppNotification('danger', '❌ <strong>Invalid Format!</strong> Only image files are allowed.');
-						return;
-					}
-					selectedReplyFiles.push(file);
-				});
+				btnTriggerReplyImages.disabled = true;
+				const originalHtml = btnTriggerReplyImages.innerHTML;
+				btnTriggerReplyImages.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
 
+				for (const file of files) {
+					const processedFile = await compressImageIfNeeded(file);
+					selectedReplyFiles.push(processedFile);
+				}
+
+				btnTriggerReplyImages.disabled = false;
+				btnTriggerReplyImages.innerHTML = originalHtml;
 				replyImagesInput.value = '';
 				renderReplyImagesPreview();
 			});
@@ -260,85 +370,110 @@
 		function renderReplyImagesPreview() {
 			replyImagesPreview.innerHTML = '';
 			selectedReplyFiles.forEach((file, index) => {
-				const reader = new FileReader();
-				reader.onload = (e) => {
-					const div = document.createElement('div');
-					div.style.position = 'relative';
-					div.style.width = '55px';
-					div.style.height = '55px';
-					div.style.borderRadius = '8px';
-					div.style.overflow = 'hidden';
-					div.style.border = '1px solid var(--border-color)';
-					div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+				const div = document.createElement('div');
+				div.style.position = 'relative';
+				div.style.width = '55px';
+				div.style.height = '55px';
+				div.style.borderRadius = '8px';
+				div.style.overflow = 'hidden';
+				div.style.border = '1px solid var(--border-color)';
+				div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+				div.style.display = 'flex';
+				div.style.alignItems = 'center';
+				div.style.justifyContent = 'center';
+				div.style.background = 'rgba(255,255,255,0.02)';
+				div.title = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+				if (file.type.startsWith('image/')) {
+					const reader = new FileReader();
+					reader.onload = (e) => {
+						div.innerHTML = `
+							<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+							<button type="button" style="position: absolute; top: 2px; right: 2px; width: 15px; height: 15px; border-radius: 50%; background: rgba(0,0,0,0.7); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Hapus">
+								<i class="fa-solid fa-xmark"></i>
+							</button>
+						`;
+						div.querySelector('button').addEventListener('click', () => {
+							selectedReplyFiles.splice(index, 1);
+							renderReplyImagesPreview();
+						});
+					};
+					reader.readAsDataURL(file);
+				} else {
+					let iconClass = 'fa-file-lines';
+					let iconColor = '#af86fc';
+
+					if (file.type.startsWith('video/')) {
+						iconClass = 'fa-file-video';
+						iconColor = '#66ffd9';
+					} else if (file.type === 'application/pdf') {
+						iconClass = 'fa-file-pdf';
+						iconColor = '#ff6666';
+					} else if (file.type.includes('zip') || file.type.includes('rar')) {
+						iconClass = 'fa-file-zipper';
+						iconColor = '#ffd700';
+					}
 
 					div.innerHTML = `
-						<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">
+						<i class="fa-solid ${iconClass}" style="font-size: 1.3rem; color: ${iconColor};"></i>
 						<button type="button" style="position: absolute; top: 2px; right: 2px; width: 15px; height: 15px; border-radius: 50%; background: rgba(0,0,0,0.7); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Hapus">
 							<i class="fa-solid fa-xmark"></i>
 						</button>
 					`;
-
 					div.querySelector('button').addEventListener('click', () => {
 						selectedReplyFiles.splice(index, 1);
 						renderReplyImagesPreview();
 					});
+				}
 
-					replyImagesPreview.appendChild(div);
-				};
-				reader.readAsDataURL(file);
+				replyImagesPreview.appendChild(div);
 			});
 		}
 
-		// API CALL: Fetch Tickets List
+		// API CALL: Fetch Tickets List via HTTP GET
 		async function loadUserTickets(silent = false) {
 			const userInfo = getUserInfo();
 			if (!userInfo) return;
 
-			if (!silent) {
+			if (!silent && (!window.supportTicketsList || window.supportTicketsList.length === 0)) {
 				listContainer.innerHTML = `
 					<div style="text-align: center; padding: 40px; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 15px;">
 						<i class="fa-solid fa-circle-notch fa-spin" style="color: #af86fc;"></i>
-						<span style=" ">Connecting to Cloud Support...</span>
+						<span style=" ">Loading support tickets...</span>
 					</div>
 				`;
 			}
 
 			try {
-				const response = await fetch(`${API_BASE}/ticket/list?username=${userInfo.username}`);
-				if (!response.ok) {
-					throw new Error('Failed to load tickets list from server.');
-				}
-				const tickets = await response.json();
-				renderTicketsList(tickets);
+				const user = window.firebaseAuth.currentUser;
+				if (!user) return;
+				const idToken = await user.getIdToken(false);
 
-				// Check for pending tickets to update the Create Ticket form
-				const hasPending = tickets.some(t => t.status.toLowerCase() === 'pending');
-				updatePendingFormState(hasPending);
+				const response = await fetch(`${API_BASE}/ticket/list`, {
+					method: 'GET',
+					headers: {
+						'Authorization': `Bearer ${idToken}`
+					}
+				});
 
-				// Update live chat if open
-				if (activeTicketId) {
-					const activeTicket = tickets.find(t => t.ticketId === activeTicketId);
-					if (activeTicket) {
-						updateModalState(activeTicket);
+				const data = await response.json();
+				if (response.ok && data.success) {
+					window.supportTicketsList = data.tickets || [];
+					renderTicketsList(window.supportTicketsList);
+					const hasPending = window.supportTicketsList.some(t => t.status.toLowerCase() === 'pending');
+					updatePendingFormState(hasPending);
+					
+					if (activeTicketId) {
+						const activeTicket = window.supportTicketsList.find(t => t.ticketId === activeTicketId);
+						if (activeTicket) {
+							updateModalState(activeTicket);
+						}
 					}
 				}
 			} catch (err) {
-				console.error(err);
-				updatePendingFormState(false);
-				if (!silent) {
-					listContainer.innerHTML = `
-						<div style="text-align: center; padding: 40px; color: #ff6666; display: flex; flex-direction: column; align-items: center; gap: 15px;">
-							<i class="fa-solid fa-triangle-exclamation" style=""></i>
-							<span style=" ">Failed to synchronize support ticket data.</span>
-							<button class="btn" id="btn-retry-tickets" style="width: auto; padding: 6px 12px; border-color: #ff6666; color: #ff6666; background: transparent;">Retry Connection</button>
-						</div>
-					`;
-					const btnRetry = document.getElementById('btn-retry-tickets');
-					if (btnRetry) {
-						btnRetry.addEventListener('click', () => loadUserTickets());
-					}
-				}
+				console.error("Failed to load user tickets via HTTP:", err);
 			}
+
 		}
 
 		// Render tickets list on the right side
@@ -452,18 +587,28 @@
 			activeTicketId = ticket.ticketId;
 			updateModalState(ticket);
 			modal.classList.remove('hide');
+		}
 
-			// Start polling update every 5 minute
-			if (pollingInterval) clearInterval(pollingInterval);
-			pollingInterval = setInterval(() => {
-				loadUserTickets(true);
-			}, 300000);
+		// Helper: Parse raw message "[Subject] Description"
+		function parseTicketMessage(rawMessage) {
+			const match = (rawMessage || '').trim().match(/^\[(.*?)\]\s*([\s\S]*)$/);
+			if (match) {
+				return {
+					subject: match[1].trim(),
+					description: match[2].trim()
+				};
+			}
+			return {
+				subject: "Support Ticket",
+				description: (rawMessage || '').trim()
+			};
 		}
 
 		// Update modal live elements
 		function updateModalState(ticket) {
 			modalId.textContent = ticket.ticketId;
-			modalSubject.textContent = ticket.message.substring(0, 50) + (ticket.message.length > 50 ? '...' : '');
+			const parsed = parseTicketMessage(ticket.message);
+			modalSubject.textContent = parsed.subject;
 
 			const statusLower = ticket.status.toLowerCase();
 			const isResolved = statusLower === 'resolved' || statusLower === 'closed';
@@ -572,19 +717,211 @@
 			}, 50);
 		}
 
+		// Helper: Determine Attachment File Type from URL
+		function getAttachmentType(url) {
+			const cleanUrl = url.split('?')[0].split('#')[0].toLowerCase();
+			if (cleanUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/)) return 'image';
+			if (cleanUrl.match(/\.(mp4|webm|ogg|mov|avi|mkv|flv)$/)) return 'video';
+			if (cleanUrl.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|rtf)$/)) return 'document';
+			return 'other';
+		}
+
+		// Helper: Extract Clean Filename from URL
+		function getAttachmentFileName(url) {
+			try {
+				const decoded = decodeURIComponent(url);
+				const parts = decoded.split('/');
+				const lastPart = parts[parts.length - 1].split('?')[0].split('#')[0];
+				return lastPart || 'Attachment';
+			} catch (e) {
+				return 'Attachment';
+			}
+		}
+
+		// Lightbox for Fullscreen Image Preview
+		function showImageFullscreen(imgUrl) {
+			let lightbox = document.getElementById('support-lightbox');
+			if (!lightbox) {
+				lightbox = document.createElement('div');
+				lightbox.id = 'support-lightbox';
+				lightbox.style.position = 'fixed';
+				lightbox.style.top = '0';
+				lightbox.style.left = '0';
+				lightbox.style.width = '100vw';
+				lightbox.style.height = '100vh';
+				lightbox.style.background = 'rgba(10, 8, 16, 0.95)';
+				lightbox.style.display = 'flex';
+				lightbox.style.alignItems = 'center';
+				lightbox.style.justifyContent = 'center';
+				lightbox.style.zIndex = '99999';
+				lightbox.style.opacity = '0';
+				lightbox.style.transition = 'opacity 0.25s ease';
+				lightbox.style.cursor = 'zoom-out';
+
+				lightbox.innerHTML = `
+					<img id="support-lightbox-img" src="" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.25s ease;">
+					<button style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; transition: background 0.2s; border: none;" title="Close">
+						<i class="fa-solid fa-xmark"></i>
+					</button>
+				`;
+
+				lightbox.addEventListener('click', () => {
+					lightbox.style.opacity = '0';
+					lightbox.querySelector('img').style.transform = 'scale(0.95)';
+					setTimeout(() => {
+						lightbox.classList.add('hide');
+						lightbox.remove();
+					}, 250);
+				});
+
+				lightbox.querySelector('button').addEventListener('click', (e) => {
+					e.stopPropagation();
+					lightbox.click();
+				});
+
+				document.body.appendChild(lightbox);
+			}
+
+			const lightboxImg = lightbox.querySelector('#support-lightbox-img');
+			lightboxImg.src = imgUrl;
+
+			// Force layout recalculation
+			lightbox.getBoundingClientRect();
+
+			lightbox.classList.remove('hide');
+			lightbox.style.opacity = '1';
+			lightboxImg.style.transform = 'scale(1)';
+		}
+
+		// Fullscreen Document Viewer Overlay (utilizes Google Docs Viewer for doc/docx/xls/xlsx/ppt/pptx and native viewer for PDF)
+		function showDocumentViewer(docUrl) {
+			let viewerModal = document.getElementById('support-doc-viewer');
+			if (!viewerModal) {
+				viewerModal = document.createElement('div');
+				viewerModal.id = 'support-doc-viewer';
+				viewerModal.style.position = 'fixed';
+				viewerModal.style.top = '0';
+				viewerModal.style.left = '0';
+				viewerModal.style.width = '100vw';
+				viewerModal.style.height = '100vh';
+				viewerModal.style.background = 'rgba(10, 8, 16, 0.96)';
+				viewerModal.style.display = 'flex';
+				viewerModal.style.flexDirection = 'column';
+				viewerModal.style.alignItems = 'center';
+				viewerModal.style.justifyContent = 'center';
+				viewerModal.style.zIndex = '99999';
+				viewerModal.style.opacity = '0';
+				viewerModal.style.transition = 'opacity 0.25s ease';
+
+				viewerModal.innerHTML = `
+					<div style="width: 90%; height: 85%; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.97); transition: transform 0.25s ease;" id="support-doc-container">
+						<div style="padding: 15px 20px; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+							<span style="font-weight: 600; color: var(--text-sharp); display: flex; align-items: center; gap: 8px;">
+								<i class="fa-solid fa-file-lines" style="color: #af86fc;"></i> Document Viewer
+							</span>
+							<div style="display: flex; gap: 10px;">
+								<a id="support-doc-download-btn" href="" target="_blank" class="btn btn-secondary" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; text-decoration: none;">
+									<i class="fa-solid fa-download"></i> Download
+								</a>
+								<button id="support-doc-close-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 0.85rem;">
+									<i class="fa-solid fa-xmark"></i> Close
+								</button>
+							</div>
+						</div>
+						<div style="flex: 1; background: #ffffff; display: flex; align-items: center; justify-content: center; position: relative;">
+							<div id="support-doc-loader" style="position: absolute; display: flex; flex-direction: column; align-items: center; gap: 15px; color: #555;">
+								<i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color: #af86fc;"></i>
+								<span>Loading document...</span>
+							</div>
+							<iframe id="support-doc-iframe" src="" style="width: 100%; height: 100%; border: none; opacity: 0; transition: opacity 0.3s;" allowfullscreen></iframe>
+						</div>
+					</div>
+				`;
+
+				const closeViewer = () => {
+					viewerModal.style.opacity = '0';
+					document.getElementById('support-doc-container').style.transform = 'scale(0.97)';
+					setTimeout(() => {
+						viewerModal.classList.add('hide');
+						viewerModal.remove();
+					}, 250);
+				};
+
+				viewerModal.addEventListener('click', (e) => {
+					if (e.target === viewerModal) closeViewer();
+				});
+
+				viewerModal.querySelector('#support-doc-close-btn').addEventListener('click', closeViewer);
+
+				document.body.appendChild(viewerModal);
+			}
+
+			const iframe = viewerModal.querySelector('#support-doc-iframe');
+			const loader = viewerModal.querySelector('#support-doc-loader');
+			const downloadBtn = viewerModal.querySelector('#support-doc-download-btn');
+
+			downloadBtn.href = docUrl;
+
+			const isPdf = docUrl.split('?')[0].split('#')[0].toLowerCase().endsWith('.pdf');
+			const viewerUrl = isPdf 
+				? docUrl 
+				: `https://docs.google.com/gview?url=${encodeURIComponent(docUrl)}&embedded=true`;
+
+			iframe.src = viewerUrl;
+			iframe.style.opacity = '0';
+			loader.style.display = 'flex';
+
+			iframe.onload = () => {
+				loader.style.display = 'none';
+				iframe.style.opacity = '1';
+			};
+
+			viewerModal.getBoundingClientRect();
+			viewerModal.classList.remove('hide');
+			viewerModal.style.opacity = '1';
+			document.getElementById('support-doc-container').style.transform = 'scale(1)';
+		}
+
 		// Render message bubbles in chat
 		function renderChatHistory(messages) {
 			modalChat.innerHTML = '';
-			messages.forEach(msg => {
+			messages.forEach((msg, index) => {
 				const isAdmin = msg.senderType === 'admin' || msg.sender === 'Admin';
+				
+				// Setup dynamic avatar and name
+				let userAvatar = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+				let userName = 'Support Agent';
+
+				if (isAdmin) {
+					userAvatar = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="60" fill="%23af86fc"/><path d="M 35 60 A 25 25 0 0 1 85 60" stroke="%23ffffff" stroke-width="7" fill="none" stroke-linecap="round"/><rect x="25" y="46" width="12" height="28" rx="6" fill="%23ffffff"/><rect x="83" y="46" width="12" height="28" rx="6" fill="%23ffffff"/><path d="M 32 70 Q 34 90 52 86" stroke="%23ffffff" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="52" cy="86" r="4.5" fill="%23ffffff"/></svg>`;
+					userName = 'Support Agent';
+				} else {
+					const currentUser = window.firebaseAuth.currentUser;
+					userAvatar = currentUser?.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+					userName = currentUser?.displayName || msg.sender || 'User';
+				}
+
+				// Row container
 				const msgRow = document.createElement('div');
 				msgRow.style.display = 'flex';
-				msgRow.style.justifyContent = isAdmin ? 'flex-start' : 'flex-end';
+				msgRow.style.alignItems = 'flex-end';
+				msgRow.style.gap = '10px';
 				msgRow.style.width = '100%';
 				msgRow.style.marginBottom = '12px';
 
+				// Create Avatar Image DOM element outside bubble
+				const avatarImg = document.createElement('img');
+				avatarImg.src = userAvatar;
+				avatarImg.style.width = '32px';
+				avatarImg.style.height = '32px';
+				avatarImg.style.borderRadius = '50%';
+				avatarImg.style.objectFit = 'cover';
+				avatarImg.style.border = '1px solid var(--border-color)';
+				avatarImg.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+				avatarImg.style.flexShrink = '0';
+
+				// Create Bubble
 				const bubble = document.createElement('div');
-				bubble.style.maxWidth = '80%';
 				bubble.style.padding = '12px 16px';
 				bubble.style.borderRadius = '15px';
 				bubble.style.lineHeight = '1.4';
@@ -597,40 +934,212 @@
 					bubble.style.border = '1px solid var(--border-color)';
 					bubble.style.color = 'var(--text-primary)';
 					bubble.style.borderBottomLeftRadius = '2px';
+					bubble.style.width = '100%';
+					bubble.style.maxWidth = 'calc(100% - 45px)'; // Admin bubble takes full width space minus avatar
 				} else {
 					bubble.style.background = 'linear-gradient(135deg, rgba(175, 134, 252, 0.15) 0%, rgba(126, 83, 201, 0.15) 100%)';
 					bubble.style.border = '1px solid rgba(175, 134, 252, 0.2)';
 					bubble.style.color = 'var(--text-sharp)';
 					bubble.style.borderBottomRightRadius = '2px';
+					bubble.style.width = '100%';
+					bubble.style.maxWidth = '80%'; // User bubble takes 80%
 				}
 
 				const timeObj = new Date(msg.createdAt);
 				const timeStr = timeObj.toLocaleDateString() + ' ' + timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-				// Render attachments if present
-				let imgHtml = '';
+				// Chat Bubble Header with Username
+				const header = document.createElement('div');
+				header.style.display = 'flex';
+				header.style.alignItems = 'center';
+				header.style.marginBottom = '2px';
+				header.innerHTML = `
+					<span style="font-weight: 600; font-size: 0.8rem; color: var(--text-sharp);">${userName}</span>
+				`;
+				bubble.appendChild(header);
+
+				// Chat Bubble Message Body (initial ticket shows description only)
+				const bodyText = document.createElement('div');
+				bodyText.style.wordBreak = 'break-word';
+				
+				let msgText = msg.message || '';
+				if (index === 0) {
+					const parsed = parseTicketMessage(msgText);
+					msgText = parsed.description;
+				}
+				bodyText.textContent = msgText;
+				bubble.appendChild(bodyText);
+
+				// Process and Render Attachments
 				if (msg.images && msg.images.length > 0) {
-					imgHtml = `<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px;">`;
-					msg.images.forEach(imgUrl => {
-						imgHtml += `
-							<a href="${imgUrl}" target="_blank" style="width: 70px; height: 70px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); display: inline-block;">
-								<img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
-							</a>
-						`;
+					const attachmentsContainer = document.createElement('div');
+					attachmentsContainer.style.display = 'flex';
+					attachmentsContainer.style.flexDirection = 'column';
+					attachmentsContainer.style.gap = '8px';
+					attachmentsContainer.style.marginTop = '8px';
+
+					const imagesList = [];
+					const nonImagesList = [];
+
+					msg.images.forEach(url => {
+						const type = getAttachmentType(url);
+						if (type === 'image') {
+							imagesList.push(url);
+						} else {
+							nonImagesList.push({ url, type });
+						}
 					});
-					imgHtml += `</div>`;
+
+					// Render images in a beautiful visual row
+					if (imagesList.length > 0) {
+						const imageGrid = document.createElement('div');
+						imageGrid.style.display = 'flex';
+						imageGrid.style.gap = '8px';
+						imageGrid.style.flexWrap = 'wrap';
+
+						imagesList.forEach(url => {
+							const imgWrapper = document.createElement('div');
+							imgWrapper.style.width = '80px';
+							imgWrapper.style.height = '80px';
+							imgWrapper.style.borderRadius = '8px';
+							imgWrapper.style.overflow = 'hidden';
+							imgWrapper.style.border = '1px solid var(--border-color)';
+							imgWrapper.style.cursor = 'zoom-in';
+							imgWrapper.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+							imgWrapper.style.transition = 'transform 0.2s ease, opacity 0.2s';
+
+							const img = document.createElement('img');
+							img.src = url;
+							img.style.width = '100%';
+							img.style.height = '100%';
+							img.style.objectFit = 'cover';
+
+							imgWrapper.appendChild(img);
+
+							imgWrapper.addEventListener('mouseover', () => {
+								imgWrapper.style.opacity = '0.85';
+								imgWrapper.style.transform = 'scale(1.03)';
+							});
+							imgWrapper.addEventListener('mouseout', () => {
+								imgWrapper.style.opacity = '1';
+								imgWrapper.style.transform = 'scale(1)';
+							});
+
+							imgWrapper.addEventListener('click', (e) => {
+								e.preventDefault();
+								showImageFullscreen(url);
+							});
+
+							imageGrid.appendChild(imgWrapper);
+						});
+						attachmentsContainer.appendChild(imageGrid);
+					}
+
+					// Render non-images (videos, office documents, others)
+					nonImagesList.forEach(item => {
+						const filename = getAttachmentFileName(item.url);
+
+						if (item.type === 'video') {
+							const videoPlayer = document.createElement('video');
+							videoPlayer.src = item.url;
+							videoPlayer.controls = true;
+							videoPlayer.preload = 'metadata';
+							videoPlayer.style.maxWidth = '100%';
+							videoPlayer.style.maxHeight = '250px';
+							videoPlayer.style.borderRadius = '10px';
+							videoPlayer.style.border = '1px solid var(--border-color)';
+							videoPlayer.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
+							videoPlayer.style.background = '#000000';
+							videoPlayer.style.outline = 'none';
+							videoPlayer.style.marginTop = '4px';
+							attachmentsContainer.appendChild(videoPlayer);
+						} else if (item.type === 'document') {
+							const docCard = document.createElement('div');
+							docCard.style.display = 'flex';
+							docCard.style.alignItems = 'center';
+							docCard.style.gap = '12px';
+							docCard.style.padding = '10px 14px';
+							docCard.style.background = 'rgba(255,255,255,0.03)';
+							docCard.style.border = '1px solid var(--border-color)';
+							docCard.style.borderRadius = '10px';
+							docCard.style.marginTop = '4px';
+
+							const isPdf = filename.toLowerCase().endsWith('.pdf');
+							const docIcon = isPdf ? 'fa-file-pdf' : 'fa-file-word';
+							const docColor = isPdf ? '#ff6666' : '#af86fc';
+
+							docCard.innerHTML = `
+								<i class="fa-solid ${docIcon}" style="font-size: 1.8rem; color: ${docColor};"></i>
+								<div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+									<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+									<span style="font-size: 0.75rem; color: var(--text-muted);">${isPdf ? 'PDF Document' : 'Office Document'}</span>
+								</div>
+								<div style="display: flex; gap: 8px;">
+									<button class="btn-view" style="background: linear-gradient(135deg, rgba(175, 134, 252, 0.2) 0%, rgba(126, 83, 201, 0.2) 100%); border: 1px solid rgba(175, 134, 252, 0.4); color: #af86fc; border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+										<i class="fa-solid fa-eye"></i> View
+									</button>
+									<a href="${item.url}" target="_blank" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+										<i class="fa-solid fa-download"></i> Download
+									</a>
+								</div>
+							`;
+
+							docCard.querySelector('.btn-view').addEventListener('click', () => {
+								showDocumentViewer(item.url);
+							});
+
+							attachmentsContainer.appendChild(docCard);
+						} else {
+							// Archive and other files (ZIP, RAR, EXE, etc.)
+							const fileCard = document.createElement('div');
+							fileCard.style.display = 'flex';
+							fileCard.style.alignItems = 'center';
+							fileCard.style.gap = '12px';
+							fileCard.style.padding = '10px 14px';
+							fileCard.style.background = 'rgba(255,255,255,0.03)';
+							fileCard.style.border = '1px solid var(--border-color)';
+							fileCard.style.borderRadius = '10px';
+							fileCard.style.marginTop = '4px';
+
+							fileCard.innerHTML = `
+								<i class="fa-solid fa-file-zipper" style="font-size: 1.8rem; color: #ffd700;"></i>
+								<div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+									<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+									<span style="font-size: 0.75rem; color: var(--text-muted);">Archive File</span>
+								</div>
+								<a href="${item.url}" target="_blank" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+									<i class="fa-solid fa-download"></i> Download
+								</a>
+							`;
+
+							attachmentsContainer.appendChild(fileCard);
+						}
+					});
+
+					bubble.appendChild(attachmentsContainer);
 				}
 
-				bubble.innerHTML = `
-					<div style="color: var(--text-muted);  text-transform: uppercase;  display: flex; justify-content: space-between; gap: 25px;">
-						<span>${isAdmin ? '💼 Staff Specialist' : '👤 You'}</span>
-						<span>${timeStr}</span>
-					</div>
-					<div style="word-break: break-word;  ">${msg.message || ''}</div>
-					${imgHtml}
-				`;
+				// Chat Bubble Footer (Timestamp shifted elegantly to the bottom)
+				const footer = document.createElement('div');
+				footer.style.color = 'var(--text-muted)';
+				footer.style.fontSize = '0.7rem';
+				footer.style.textAlign = 'right';
+				footer.style.marginTop = '4px';
+				footer.style.opacity = '0.75';
+				footer.textContent = timeStr;
+				bubble.appendChild(footer);
 
-				msgRow.appendChild(bubble);
+				// Align avatars outside bubble (Left for admin, Right for user)
+				if (isAdmin) {
+					msgRow.style.justifyContent = 'flex-start';
+					msgRow.appendChild(avatarImg);
+					msgRow.appendChild(bubble);
+				} else {
+					msgRow.style.justifyContent = 'flex-end';
+					msgRow.appendChild(bubble);
+					msgRow.appendChild(avatarImg);
+				}
+
 				modalChat.appendChild(msgRow);
 			});
 		}
@@ -701,7 +1210,7 @@
 			}
 		});
 
-		// API CALL: Submit User Chat Reply
+		// API CALL: Submit User Chat Reply via HTTP POST
 		modalReplyBtn.addEventListener('click', async () => {
 			const text = modalReplyInput.value.trim();
 			if (!text && selectedReplyFiles.length === 0) return;
@@ -709,13 +1218,28 @@
 			const userInfo = getUserInfo();
 			if (!userInfo || !activeTicketId) return;
 
+			// Optimistic UI Update: Render reply instantly!
+			const ticket = window.supportTicketsList.find(t => t.ticketId === activeTicketId);
+			let tempId = null;
+			if (ticket) {
+				if (!ticket.replies) ticket.replies = {};
+				tempId = `_OPT_${Date.now()}`;
+				const newReply = {
+					sender: userInfo.username || "User",
+					senderType: "user",
+					message: text || '[Sending attachment...]',
+					images: [],
+					createdAt: Date.now()
+				};
+				ticket.replies[tempId] = newReply;
+				ticket.lastActivity = newReply.createdAt;
+				updateModalState(ticket); // render langsung di modal
+			}
+
 			modalReplyBtn.disabled = true;
 			modalReplyBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
 
 			try {
-				console.log('[Reply] selectedReplyFiles count:', selectedReplyFiles.length);
-				selectedReplyFiles.forEach((f, i) => console.log(`[Reply] File[${i}]:`, f.name, f.size, f.type));
-
 				const formData = new FormData();
 				formData.append('ticketId', activeTicketId);
 				formData.append('email', userInfo.email);
@@ -723,11 +1247,8 @@
 				formData.append('message', text || '[Image Attachment]');
 
 				selectedReplyFiles.forEach(file => {
-					// Append dengan nama file eksplisit agar browser include metadata
 					formData.append('images', file, file.name);
 				});
-
-				console.log('[Reply] FormData keys:', [...formData.keys()]);
 
 				const response = await fetch(`${API_BASE}/ticket/reply`, {
 					method: 'POST',
@@ -743,11 +1264,16 @@
 				selectedReplyFiles = [];
 				renderReplyImagesPreview();
 
-				// Instantly reload list
-				loadUserTickets(true);
+				// Immediately trigger loadUserTickets to replace optimistic UI with real data
+				await loadUserTickets();
 
 			} catch (err) {
 				console.error(err);
+				// If optimistic update was made and error occurred, remove it
+				if (ticket && tempId && ticket.replies[tempId]) {
+					delete ticket.replies[tempId];
+					updateModalState(ticket);
+				}
 				window.showAppNotification('danger', `❌ <strong>Failed to reply:</strong> ${err.message}`);
 			} finally {
 				modalReplyBtn.disabled = false;
@@ -765,10 +1291,6 @@
 		modalCloseBtn.addEventListener('click', () => {
 			modal.classList.add('hide');
 			activeTicketId = null;
-			if (pollingInterval) {
-				clearInterval(pollingInterval);
-				pollingInterval = null;
-			}
 		});
 
 		// Hook into SPA navigation to auto load tickets
