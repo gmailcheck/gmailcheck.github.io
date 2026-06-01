@@ -218,17 +218,7 @@
 		});
 	}
 
-	let typingTimer;
 	let validationTimer;
-	const doneTypingInterval = 1500; // 1.5 seconds idle
-
-	function formatSpacesToNewlines() {
-		const currentVal = textarea.value;
-		if (currentVal.includes(' ')) {
-			textarea.value = currentVal.replace(/[ ]+/g, '\n');
-			textarea.dispatchEvent(new Event('input'));
-		}
-	}
 
 	// Immediately hide invalid list on input, paste, or focus – show only on button press
 	function hideInvalidListNow() {
@@ -238,39 +228,19 @@
 		}
 	}
 
-	// Space key converts to newline
-	textarea.addEventListener('keydown', function (e) {
-		if (e.key === ' ') {
-			e.preventDefault();
-			const start = this.selectionStart;
-			const end = this.selectionEnd;
-			this.value = this.value.substring(0, start) + '\n' + this.value.substring(end);
-			this.selectionStart = this.selectionEnd = start + 1;
-			textarea.dispatchEvent(new Event('input'));
-		}
-	});
-
 	textarea.addEventListener('input', () => {
 		statsInput.textContent = `${getEmailsArray().length} email(s)`;
 		hideInvalidListNow();
-		clearTimeout(typingTimer);
-		typingTimer = setTimeout(formatSpacesToNewlines, doneTypingInterval);
 		clearTimeout(validationTimer);
-		// showList=false: validate for notification bar only, never show list while typing
 		validationTimer = setTimeout(() => validateInputEmails(false), 500);
 	});
-
 	textarea.addEventListener('paste', () => {
 		hideInvalidListNow();
 	});
-
 	textarea.addEventListener('focus', () => {
 		hideInvalidListNow();
 	});
-
 	textarea.addEventListener('blur', () => {
-		clearTimeout(typingTimer);
-		formatSpacesToNewlines();
 		statsInput.textContent = `${getEmailsArray().length} email(s)`;
 		// Validate for notification bar only – do NOT show invalid list on blur
 		validateInputEmails(false);
