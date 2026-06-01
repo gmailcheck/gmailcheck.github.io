@@ -359,7 +359,7 @@ function initAdminPanel() {
                 renderReplyImagesPreview();
 
                 window.showAppNotification('success', 'Reply submitted successfully!');
-                
+
                 // Refresh list silently
                 await loadAdminSupport(true);
             } catch (err) {
@@ -938,7 +938,7 @@ function updateAdminModalState(ticket) {
 
     messagesList.forEach((msg, index) => {
         const isAdmin = msg.senderType === 'admin' || msg.sender === 'Admin';
-        
+
         // 1:1 dynamic avatars
         let avatarUrl = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
         if (isAdmin) {
@@ -1000,7 +1000,7 @@ function updateAdminModalState(ticket) {
         // Render message text body
         const textContainer = document.createElement('div');
         textContainer.style.wordBreak = 'break-word';
-        textContainer.textContent = displayMessageText;
+        textContainer.innerHTML = formatUrlsToLinks(displayMessageText);
         bubble.appendChild(textContainer);
 
         // Rich attachments container
@@ -1037,6 +1037,39 @@ function updateAdminModalState(ticket) {
                     video.style.border = '1px solid var(--border-color)';
                     video.style.marginTop = '4px';
                     attachmentsContainer.appendChild(video);
+                } else if (type === 'audio') {
+                    const audioPlayer = document.createElement('audio');
+                    audioPlayer.src = url;
+                    audioPlayer.controls = true;
+                    audioPlayer.preload = 'metadata';
+                    audioPlayer.style.width = '100%';
+                    audioPlayer.style.borderRadius = '8px';
+                    audioPlayer.style.marginTop = '8px';
+                    audioPlayer.style.outline = 'none';
+
+                    const audioWrapper = document.createElement('div');
+                    audioWrapper.style.display = 'flex';
+                    audioWrapper.style.flexDirection = 'column';
+                    audioWrapper.style.gap = '8px';
+                    audioWrapper.style.padding = '12px 14px';
+                    audioWrapper.style.background = 'rgba(255, 255, 255, 0.03)';
+                    audioWrapper.style.border = '1px solid var(--border-color)';
+                    audioWrapper.style.borderRadius = '10px';
+                    audioWrapper.style.marginTop = '4px';
+                    audioWrapper.style.width = '100%';
+                    audioWrapper.style.maxWidth = '320px';
+
+                    audioWrapper.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-music" style="font-size: 1.4rem; color: #66ffd9;"></i>
+                            <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                                <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">Audio File</span>
+                            </div>
+                        </div>
+                    `;
+                    audioWrapper.appendChild(audioPlayer);
+                    attachmentsContainer.appendChild(audioWrapper);
                 } else if (type === 'document') {
                     const docCard = document.createElement('div');
                     docCard.style.display = 'flex';
@@ -1155,6 +1188,7 @@ function getAttachmentType(url) {
     const cleanUrl = url.split('?')[0].split('#')[0].toLowerCase();
     if (cleanUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/)) return 'image';
     if (cleanUrl.match(/\.(mp4|webm|ogg|mov|avi|mkv|flv)$/)) return 'video';
+    if (cleanUrl.match(/\.(mp3|wav|ogg|aac|flac|m4a|weba)$/)) return 'audio';
     if (cleanUrl.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|rtf)$/)) return 'document';
     return 'other';
 }
@@ -1168,6 +1202,25 @@ function getAttachmentFileName(url) {
     } catch (e) {
         return 'Attachment';
     }
+}
+
+// Helper: Format URLs to clickable links safely
+function formatUrlsToLinks(text) {
+    if (!text) return '';
+    const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+    return escaped.replace(urlRegex, (url) => {
+        let href = url;
+        if (!/^https?:\/\//i.test(url)) {
+            href = 'http://' + url;
+        }
+        return `<a href="${href}" target="_blank" style="color: #0098a3ff; text-decoration: underline; word-break: break-all;">${url}</a>`;
+    });
 }
 
 function showImageFullscreen(imgUrl) {
@@ -1291,8 +1344,8 @@ function showDocumentViewer(docUrl) {
     downloadBtn.href = docUrl;
 
     const isPdf = docUrl.split('?')[0].split('#')[0].toLowerCase().endsWith('.pdf');
-    const viewerUrl = isPdf 
-        ? docUrl 
+    const viewerUrl = isPdf
+        ? docUrl
         : `https://docs.google.com/gview?url=${encodeURIComponent(docUrl)}&embedded=true`;
 
     iframe.src = viewerUrl;
@@ -1348,7 +1401,7 @@ async function compressImageIfNeeded(file) {
                             type: "image/jpeg",
                             lastModified: Date.now()
                         });
-                        console.log(`[Compression Admin] "${file.name}" compressed: ${(file.size/1024).toFixed(1)} KB -> ${(compressedFile.size/1024).toFixed(1)} KB`);
+                        console.log(`[Compression Admin] "${file.name}" compressed: ${(file.size / 1024).toFixed(1)} KB -> ${(compressedFile.size / 1024).toFixed(1)} KB`);
                         resolve(compressedFile.size < file.size ? compressedFile : file);
                     } else {
                         resolve(file);

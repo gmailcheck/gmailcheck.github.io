@@ -31,6 +31,7 @@
 		const modalSubject = document.getElementById('ticket-modal-subject');
 		const modalMeta = document.getElementById('ticket-modal-meta');
 		const modalChat = document.getElementById('ticket-modal-chat-history');
+		const btnResolve = document.getElementById('btn-modal-resolve');
 
 		// Modal Reply Selectors
 		const modalReplyContainer = document.getElementById('ticket-modal-reply-container');
@@ -177,7 +178,7 @@
 			const badge = document.getElementById('user-badge-display');
 			return badge && badge.textContent === 'VIP';
 		}
-		
+
 		// Remove file format restrictions on input elements dynamically
 		if (createImagesInput) createImagesInput.removeAttribute('accept');
 		if (replyImagesInput) replyImagesInput.removeAttribute('accept');
@@ -223,7 +224,7 @@
 									type: "image/jpeg",
 									lastModified: Date.now()
 								});
-								console.log(`[Compression] "${file.name}" compressed: ${(file.size/1024).toFixed(1)} KB -> ${(compressedFile.size/1024).toFixed(1)} KB`);
+								console.log(`[Compression] "${file.name}" compressed: ${(file.size / 1024).toFixed(1)} KB -> ${(compressedFile.size / 1024).toFixed(1)} KB`);
 								// Keep whichever is smaller
 								resolve(compressedFile.size < file.size ? compressedFile : file);
 							} else {
@@ -462,7 +463,7 @@
 					renderTicketsList(window.supportTicketsList);
 					const hasPending = window.supportTicketsList.some(t => t.status.toLowerCase() === 'pending');
 					updatePendingFormState(hasPending);
-					
+
 					if (activeTicketId) {
 						const activeTicket = window.supportTicketsList.find(t => t.ticketId === activeTicketId);
 						if (activeTicket) {
@@ -547,6 +548,8 @@
 				const dateObj = new Date(ticket.createdAt);
 				const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+				const parsedMsg = parseTicketMessage(ticket.message);
+
 				card.innerHTML = `
 					<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
 						<div style="display: flex; align-items: center; gap: 8px;">
@@ -555,7 +558,7 @@
 						</div>
 						<span style=" color: ${statusColor}; background: ${statusBg}; border: 1px solid ${statusBorder}; padding: 2px 8px; border-radius: 20px;  letter-spacing: 0.5px;">${statusText}</span>
 					</div>
-					<h4 style="margin: 0; color: var(--text-sharp);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${ticket.message}</h4>
+					<h4 style="margin: 0; color: var(--text-sharp);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${parsedMsg.subject}</h4>
 					<div style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid var(--border-color); padding-top: 8px; ">
 						<span style="color: var(--text-muted);"><i class="fa-solid fa-tags" style="margin-right: 4px;"></i> Category: ${prioText}</span>
 						<span style="color: var(--text-muted); ">
@@ -684,6 +687,7 @@
 			if (isResolved) {
 				// Resolved
 				modalReplyContainer.style.display = 'none';
+				if (btnResolve) btnResolve.style.display = 'none';
 				// Append Closed/Resolved Banner to chat
 				const banner = document.createElement('div');
 				banner.style.textAlign = 'center';
@@ -694,21 +698,25 @@
 				banner.style.borderRadius = '10px';
 				banner.innerHTML = `<i class="fa-solid fa-lock" style="margin-right: 5px;"></i> This ticket has been marked as RESOLVED.`;
 				modalChat.appendChild(banner);
-			} else if (!hasAdminReply) {
-				// Pending (No admin reply yet) -> sembunyikan chat form
-				modalReplyContainer.style.display = 'none';
-				const banner = document.createElement('div');
-				banner.style.textAlign = 'center';
-				banner.style.padding = '10px';
-				banner.style.background = 'rgba(175, 134, 252, 0.05)';
-				banner.style.border = '1px solid rgba(175, 134, 252, 0.2)';
-				banner.style.color = '#af86fc';
-				banner.style.borderRadius = '10px';
-				banner.innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Waiting for support agent response before you can reply.`;
-				modalChat.appendChild(banner);
 			} else {
-				// Admin has replied -> show chat form
-				modalReplyContainer.style.display = 'flex';
+				if (btnResolve) btnResolve.style.display = 'block';
+
+				if (!hasAdminReply) {
+					// Pending (No admin reply yet) -> sembunyikan chat form
+					modalReplyContainer.style.display = 'none';
+					const banner = document.createElement('div');
+					banner.style.textAlign = 'center';
+					banner.style.padding = '10px';
+					banner.style.background = 'rgba(175, 134, 252, 0.05)';
+					banner.style.border = '1px solid rgba(175, 134, 252, 0.2)';
+					banner.style.color = '#af86fc';
+					banner.style.borderRadius = '10px';
+					banner.innerHTML = `<i class="fa-solid fa-clock" style="margin-right: 5px;"></i> Waiting for support agent response before you can reply.`;
+					modalChat.appendChild(banner);
+				} else {
+					// Admin has replied -> show chat form
+					modalReplyContainer.style.display = 'flex';
+				}
 			}
 
 			// Scroll bottom
@@ -722,6 +730,7 @@
 			const cleanUrl = url.split('?')[0].split('#')[0].toLowerCase();
 			if (cleanUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/)) return 'image';
 			if (cleanUrl.match(/\.(mp4|webm|ogg|mov|avi|mkv|flv)$/)) return 'video';
+			if (cleanUrl.match(/\.(mp3|wav|ogg|aac|flac|m4a|weba)$/)) return 'audio';
 			if (cleanUrl.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|rtf)$/)) return 'document';
 			return 'other';
 		}
@@ -736,6 +745,25 @@
 			} catch (e) {
 				return 'Attachment';
 			}
+		}
+
+		// Helper: Format URLs to clickable links safely
+		function formatUrlsToLinks(text) {
+			if (!text) return '';
+			const escaped = text
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;")
+				.replace(/'/g, "&#039;");
+			const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+			return escaped.replace(urlRegex, (url) => {
+				let href = url;
+				if (!/^https?:\/\//i.test(url)) {
+					href = 'http://' + url;
+				}
+				return `<a href="${href}" target="_blank" style="color: #0098a3ff; text-decoration: underline; word-break: break-all;">${url}</a>`;
+			});
 		}
 
 		// Lightbox for Fullscreen Image Preview
@@ -863,8 +891,8 @@
 			downloadBtn.href = docUrl;
 
 			const isPdf = docUrl.split('?')[0].split('#')[0].toLowerCase().endsWith('.pdf');
-			const viewerUrl = isPdf 
-				? docUrl 
+			const viewerUrl = isPdf
+				? docUrl
 				: `https://docs.google.com/gview?url=${encodeURIComponent(docUrl)}&embedded=true`;
 
 			iframe.src = viewerUrl;
@@ -887,7 +915,7 @@
 			modalChat.innerHTML = '';
 			messages.forEach((msg, index) => {
 				const isAdmin = msg.senderType === 'admin' || msg.sender === 'Admin';
-				
+
 				// Setup dynamic avatar and name
 				let userAvatar = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 				let userName = 'Support Agent';
@@ -961,13 +989,13 @@
 				// Chat Bubble Message Body (initial ticket shows description only)
 				const bodyText = document.createElement('div');
 				bodyText.style.wordBreak = 'break-word';
-				
+
 				let msgText = msg.message || '';
 				if (index === 0) {
 					const parsed = parseTicketMessage(msgText);
 					msgText = parsed.description;
 				}
-				bodyText.textContent = msgText;
+				bodyText.innerHTML = formatUrlsToLinks(msgText);
 				bubble.appendChild(bodyText);
 
 				// Process and Render Attachments
@@ -1053,6 +1081,39 @@
 							videoPlayer.style.outline = 'none';
 							videoPlayer.style.marginTop = '4px';
 							attachmentsContainer.appendChild(videoPlayer);
+						} else if (item.type === 'audio') {
+							const audioPlayer = document.createElement('audio');
+							audioPlayer.src = item.url;
+							audioPlayer.controls = true;
+							audioPlayer.preload = 'metadata';
+							audioPlayer.style.width = '100%';
+							audioPlayer.style.borderRadius = '8px';
+							audioPlayer.style.marginTop = '8px';
+							audioPlayer.style.outline = 'none';
+
+							const audioWrapper = document.createElement('div');
+							audioWrapper.style.display = 'flex';
+							audioWrapper.style.flexDirection = 'column';
+							audioWrapper.style.gap = '8px';
+							audioWrapper.style.padding = '12px 14px';
+							audioWrapper.style.background = 'rgba(255,255,255,0.03)';
+							audioWrapper.style.border = '1px solid var(--border-color)';
+							audioWrapper.style.borderRadius = '10px';
+							audioWrapper.style.marginTop = '4px';
+							audioWrapper.style.width = '100%';
+							audioWrapper.style.maxWidth = '320px';
+
+							audioWrapper.innerHTML = `
+								<div style="display: flex; align-items: center; gap: 10px;">
+									<i class="fa-solid fa-music" style="font-size: 1.4rem; color: #66ffd9;"></i>
+									<div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+										<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+										<span style="font-size: 0.75rem; color: var(--text-muted);">Audio File</span>
+									</div>
+								</div>
+							`;
+							audioWrapper.appendChild(audioPlayer);
+							attachmentsContainer.appendChild(audioWrapper);
 						} else if (item.type === 'document') {
 							const docCard = document.createElement('div');
 							docCard.style.display = 'flex';
@@ -1292,6 +1353,52 @@
 			modal.classList.add('hide');
 			activeTicketId = null;
 		});
+
+		// Resolve User Ticket Button Click Handler
+		if (btnResolve) {
+			btnResolve.addEventListener('click', async () => {
+				if (!activeTicketId) return;
+
+				btnResolve.disabled = true;
+				btnResolve.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+				try {
+					const user = window.firebaseAuth.currentUser;
+					if (!user) return;
+					const idToken = await user.getIdToken(false);
+
+					const response = await fetch(`${API_BASE}/ticket/resolve`, {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${idToken}`,
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({ ticketId: activeTicketId })
+					});
+
+					const resData = await response.json();
+					if (!response.ok) {
+						throw new Error(resData.error || 'Failed to resolve support ticket.');
+					}
+
+					window.showAppNotification('success', '✅ <strong>Ticket Closed!</strong> You have resolved this ticket successfully.');
+
+					// Close modal instantly
+					modal.classList.add('hide');
+					activeTicketId = null;
+
+					// Refresh tickets list silently
+					await loadUserTickets(true);
+
+				} catch (err) {
+					console.error(err);
+					window.showAppNotification('danger', `❌ <strong>Error closing ticket:</strong> ${err.message}`);
+				} finally {
+					btnResolve.disabled = false;
+					btnResolve.innerHTML = '<i class="fa-solid fa-check"></i> Close Ticket';
+				}
+			});
+		}
 
 		// Hook into SPA navigation to auto load tickets
 		const originalSetActiveMenu = window.setActiveMenu;
