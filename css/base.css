@@ -1423,12 +1423,29 @@ body[data-rds-mode="mobile"] .pricing-cards-grid {
 }
 
 .modal-btn-close-custom {
-    background: none;
-    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
     cursor: pointer;
     position: absolute;
     right: 20px;
     top: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    z-index: 10;
+}
+
+.modal-btn-close-custom:hover {
+    background: rgba(255, 77, 77, 0.1);
+    border-color: rgba(255, 77, 77, 0.3);
+    color: #ff4d4d;
+    transform: rotate(90deg);
 }
 
 .modal-header-text-group {
@@ -2185,7 +2202,8 @@ body[data-rds-mode="mobile"] .settings-pricing-grid {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: 600px;
+    max-width: 650px;
+    min-height: 650px;
     padding: 30px;
     position: relative;
     width: 100%;
@@ -2197,6 +2215,34 @@ body[data-rds-mode="mobile"] .settings-pricing-grid {
     flex-direction: column;
     gap: 5px;
     padding-bottom: 15px;
+}
+
+.history-detail-modal-header .history-sidebar-actions {
+    padding-right: 40px;
+    box-sizing: border-box;
+}
+
+/* Selector RDS untuk Tablet dan Mobile - Fullscreen modal */
+body[data-rds-mode="tablet"] #ticket-modal .history-detail-modal-card,
+body[data-rds-mode="mobile"] #ticket-modal .history-detail-modal-card,
+body[data-rds-mode="tablet"] #admin-ticket-modal .history-detail-modal-card,
+body[data-rds-mode="mobile"] #admin-ticket-modal .history-detail-modal-card {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    padding: 20px !important;
+}
+
+body[data-rds-mode="tablet"] #ticket-modal .history-detail-modal-content-scroller,
+body[data-rds-mode="mobile"] #ticket-modal .history-detail-modal-content-scroller,
+body[data-rds-mode="tablet"] #admin-ticket-modal .history-detail-modal-content-scroller,
+body[data-rds-mode="mobile"] #admin-ticket-modal .history-detail-modal-content-scroller {
+    max-height: none !important;
+    flex: 1 !important;
 }
 
 .history-detail-modal-meta-badge {
@@ -2831,6 +2877,7 @@ body[data-rds-mode="mobile"] .settings-pricing-grid {
 .sidebar-notif-badge {
     background: #ff4757;
     color: white;
+    -webkit-text-fill-color: white !important;
     border-radius: 50%;
     padding: 2px 6px;
 

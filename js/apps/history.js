@@ -656,13 +656,13 @@ function renderGmailCheckerHistoryVirtualScroll(entry, viewport) {
             details: 'checked'
         };
     }).filter(x => x.email.length > 0 && x.status !== 'failed')
-      .map(item => {
-          visibleIndex++;
-          return {
-              index: visibleIndex,
-              ...item
-          };
-      });
+        .map(item => {
+            visibleIndex++;
+            return {
+                index: visibleIndex,
+                ...item
+            };
+        });
 
     const TOTAL_ITEMS = items.length;
     const ITEM_HEIGHT_REM = 2.875; // 46px / 16
@@ -982,20 +982,9 @@ window.loadHistoryList = async function (forceRefresh = false) {
                 <p style="max-width: 320px; margin: 0 auto 20px;">
                     ${historySearchQuery ? 'No records match your query. Try resetting your search filter.' : 'You have not checked or permuted any results yet. Your offline run history will appear here.'}
                 </p>
-                ${!historySearchQuery ? `
-                    <button class="btn btn-primary" id="btn-history-empty-action">
-                        <i class="fa-solid fa-rocket" style="margin-right: 6px;"></i> Run A New Check
-                    </button>
-                ` : ''}
             </div>
         `;
 
-        const emptyCta = document.getElementById('btn-history-empty-action');
-        if (emptyCta) {
-            emptyCta.addEventListener('click', () => {
-                window.setActiveMenu('app1');
-            });
-        }
         return;
     }
 

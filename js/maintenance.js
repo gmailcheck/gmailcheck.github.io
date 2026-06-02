@@ -11,7 +11,10 @@
         if (!response.ok) return; // If endpoint fails, assume not in maintenance
         const data = await response.json();
         
-        if (!data.isMT) return; // Maintenance not active
+        if (!data.isMT) {
+            localStorage.removeItem('maintenance_end_time');
+            return; // Maintenance not active
+        }
         
         // Prevent double overlay
         if (document.getElementById('maintenance-overlay')) return;
@@ -40,7 +43,8 @@
         let savedEndTime = parseInt(localStorage.getItem('maintenance_end_time'));
         let endDate = new Date(savedEndTime);
 
-        if (isNaN(savedEndTime) || savedEndTime !== estimasiSelesai.getTime()) {
+        const now = new Date();
+        if (isNaN(savedEndTime) || savedEndTime < now.getTime()) {
             endDate = estimasiSelesai;
             localStorage.setItem('maintenance_end_time', endDate.getTime());
         }

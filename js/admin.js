@@ -25,6 +25,7 @@ function initAdminPanel() {
             }
 
             // Load specific tab data
+            if (targetId === 'admin-overview') loadAdminOverview();
             if (targetId === 'admin-users') loadAdminUsers();
             if (targetId === 'admin-payments') loadAdminPayments();
             if (targetId === 'admin-support') loadAdminSupport();
@@ -36,11 +37,38 @@ function initAdminPanel() {
         const activeTab = document.querySelector('.db-tab-btn.active[data-tab^="admin-"]');
         if (activeTab) {
             const targetId = activeTab.getAttribute('data-tab');
+            if (targetId === 'admin-overview') loadAdminOverview();
             if (targetId === 'admin-users') loadAdminUsers();
             if (targetId === 'admin-payments') loadAdminPayments();
             if (targetId === 'admin-support') loadAdminSupport();
         }
     };
+
+    // Auto-update top scrollbar range on window resize
+    window.addEventListener('resize', () => {
+        const usersTab = document.getElementById('admin-users');
+        if (usersTab && !usersTab.classList.contains('hide')) {
+            const tableContainer = document.querySelector('#page-admin .table-responsive');
+            const topScrollbar = document.getElementById('admin-users-top-scrollbar');
+            const topScrollbarDummy = document.getElementById('admin-users-top-scrollbar-dummy');
+
+            if (tableContainer && topScrollbar && topScrollbarDummy) {
+                const hasHorizontalScroll = tableContainer.scrollWidth > tableContainer.clientWidth;
+                if (hasHorizontalScroll) {
+                    topScrollbar.style.display = 'block';
+                    const tableScrollWidth = tableContainer.scrollWidth;
+                    const tableClientWidth = tableContainer.clientWidth;
+                    const topClientWidth = topScrollbar.clientWidth;
+                    
+                    const dummyWidth = tableScrollWidth - tableClientWidth + topClientWidth;
+                    topScrollbarDummy.style.width = dummyWidth + 'px';
+                    topScrollbar.scrollLeft = tableContainer.scrollLeft;
+                } else {
+                    topScrollbar.style.display = 'none';
+                }
+            }
+        }
+    });
 
     // User Directory Sorting Event Listener
     const sortDropdown = document.getElementById('admin-users-sort');
@@ -48,6 +76,97 @@ function initAdminPanel() {
         sortDropdown.addEventListener('change', () => {
             if (typeof renderAdminUsersTable === 'function') {
                 renderAdminUsersTable();
+            }
+        });
+    }
+
+    // User Directory Search Event Listener
+    const searchInput = document.getElementById('admin-users-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            if (typeof renderAdminUsersTable === 'function') {
+                renderAdminUsersTable();
+            }
+        });
+    }
+
+    // Support Tickets Status & Category Filter Event Listeners
+    const supportFilterStatus = document.getElementById('admin-support-filter-status');
+    if (supportFilterStatus) {
+        supportFilterStatus.addEventListener('change', () => {
+            if (typeof renderAdminSupportTable === 'function') {
+                renderAdminSupportTable();
+            }
+        });
+    }
+    const supportFilterCategory = document.getElementById('admin-support-filter-category');
+    if (supportFilterCategory) {
+        supportFilterCategory.addEventListener('change', () => {
+            if (typeof renderAdminSupportTable === 'function') {
+                renderAdminSupportTable();
+            }
+        });
+    }
+
+    // Save Maintenance Settings Event Listener
+    const btnSaveMt = document.getElementById('admin-btn-save-mt');
+    if (btnSaveMt) {
+        btnSaveMt.addEventListener('click', async () => {
+            const isMT = document.getElementById('admin-mt-status').value === 'true';
+            const startTime = document.getElementById('admin-mt-start-time').value;
+            const duration = document.getElementById('admin-mt-duration').value;
+
+            try {
+                btnSaveMt.disabled = true;
+                const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/maintenance-config`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${await getAuthToken()}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ isMT, startTime, duration })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.showAppNotification('success', 'System maintenance config updated successfully!');
+                } else {
+                    window.showAppNotification('danger', data.error || 'Failed to update system config');
+                }
+            } catch (err) {
+                window.showAppNotification('danger', 'Network error: ' + err.message);
+            } finally {
+                btnSaveMt.disabled = false;
+            }
+        });
+    }
+
+    // Force Confirm Payment Event Listener
+    const btnForcePay = document.getElementById('admin-btn-force-pay');
+    if (btnForcePay) {
+        btnForcePay.addEventListener('click', async () => {
+            const invoiceId = document.getElementById('admin-manual-pay-invoice-id').value.trim();
+            if (!invoiceId) return window.showAppNotification('warning', 'Please enter an Invoice ID');
+
+            if (!confirm(`Are you sure you want to force approve payment for Invoice ID: ${invoiceId}?`)) return;
+
+            try {
+                btnForcePay.disabled = true;
+                const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/manual-complete-payment`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${await getAuthToken()}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ invoiceId })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.showAppNotification('success', 'Invoice manually approved and credited successfully!');
+                    document.getElementById('admin-manual-pay-invoice-id').value = '';
+                    if (document.querySelector('.db-tab-btn.active[data-tab="admin-overview"]')) {
+                        loadAdminOverview();
+                    }
+                } else {
+                    window.showAppNotification('danger', data.error || 'Failed to approve invoice');
+                }
+            } catch (err) {
+                window.showAppNotification('danger', 'Network error: ' + err.message);
+            } finally {
+                btnForcePay.disabled = false;
             }
         });
     }
@@ -423,6 +542,52 @@ async function getAuthToken() {
     return await window.firebaseAuth.currentUser.getIdToken(false);
 }
 
+async function loadAdminOverview() {
+    try {
+        const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/dashboard-metrics`, {
+            headers: { 'Authorization': `Bearer ${await getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch dashboard metrics');
+        const metrics = await res.json();
+
+        document.getElementById('admin-metrics-revenue').textContent = metrics.totalRevenue !== undefined ? `$${metrics.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00';
+        document.getElementById('admin-metrics-users').textContent = metrics.totalUsers !== undefined ? metrics.totalUsers.toLocaleString() : '0';
+        document.getElementById('admin-metrics-active').textContent = metrics.activeUsers !== undefined ? metrics.activeUsers.toLocaleString() : '0';
+        document.getElementById('admin-metrics-usage').textContent = metrics.totalApiUsage !== undefined ? metrics.totalApiUsage.toLocaleString() : '0';
+
+    } catch (err) {
+        window.showAppNotification('danger', 'Failed to load dashboard metrics: ' + err.message);
+    }
+
+    try {
+        const res = await fetch(`${window.API.GC_SERVER_BASE}/maintenance`);
+        if (res.ok) {
+            const config = await res.json();
+            document.getElementById('admin-mt-status').value = config.isMT ? 'true' : 'false';
+            if (config.startTime) {
+                try {
+                    const localDate = new Date(config.startTime);
+                    if (!isNaN(localDate.getTime())) {
+                        const offset = localDate.getTimezoneOffset();
+                        const adjustedDate = new Date(localDate.getTime() - (offset * 60 * 1000));
+                        const formatted = adjustedDate.toISOString().substring(0, 16);
+                        document.getElementById('admin-mt-start-time').value = formatted;
+                    } else {
+                        console.warn("Server returned invalid date format:", config.startTime);
+                    }
+                } catch (e) {
+                    console.error("Format date failed:", e);
+                }
+            }
+            if (config.duration) {
+                document.getElementById('admin-mt-duration').value = config.duration;
+            }
+        }
+    } catch (e) {
+        console.error("Fetch maintenance config failed:", e);
+    }
+}
+
 let loadedAdminUsersList = [];
 window.adminUsersRefreshInterval = null;
 
@@ -509,9 +674,18 @@ function renderAdminUsersTable() {
     if (!tbody) return;
 
     const sortType = document.getElementById('admin-users-sort')?.value || 'online';
+    const searchQuery = document.getElementById('admin-users-search')?.value.trim().toLowerCase() || '';
 
-    // Shallow copy loaded users to perform client-side sorting
-    const sortedUsers = [...loadedAdminUsersList];
+    // Shallow copy loaded users to perform client-side sorting & searching
+    let sortedUsers = [...loadedAdminUsersList];
+
+    // search filter
+    if (searchQuery) {
+        sortedUsers = sortedUsers.filter(u => 
+            (u.email && u.email.toLowerCase().includes(searchQuery)) || 
+            (u.username && u.username.toLowerCase().includes(searchQuery))
+        );
+    }
 
     // sorting operations
     if (sortType === 'online') {
@@ -560,6 +734,11 @@ function renderAdminUsersTable() {
     }
 
     tbody.innerHTML = '';
+    if (sortedUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No users matched search criteria</td></tr>`;
+        return;
+    }
+
     sortedUsers.forEach(u => {
         const tr = document.createElement('tr');
 
@@ -585,6 +764,11 @@ function renderAdminUsersTable() {
         }
 
         const planLabel = u.subscription_plan === 'none' ? 'free' : u.subscription_plan;
+        
+        const banBtnText = u.banned ? '<i class="fa-solid fa-unlock"></i> Unban' : '<i class="fa-solid fa-ban"></i> Ban';
+        const banBtnBg = u.banned ? 'rgba(102, 255, 217, 0.1)' : 'rgba(255, 102, 102, 0.1)';
+        const banBtnColor = u.banned ? '#66ffd9' : '#ff6666';
+        const banBtnBorder = u.banned ? 'rgba(102, 255, 217, 0.2)' : 'rgba(255, 102, 102, 0.2)';
 
         tr.innerHTML = `
             <td>${emailColHtml}</td>
@@ -592,11 +776,160 @@ function renderAdminUsersTable() {
             <td>${u.subscription_expiry ? new Date(u.subscription_expiry).toLocaleDateString() : 'Lifetime'}</td>
             <td>${u.api_usage.toLocaleString()} / ${(u.api_credits !== undefined ? u.api_credits : u.api_quota).toLocaleString()}</td>
             <td>${lastSeenHtml}</td>
-            <td><span style="background: ${u.role === 'admin' ? 'rgba(175, 134, 252, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${u.role === 'admin' ? '#af86fc' : 'var(--text-muted)'}; padding: 2px 8px; border-radius: 4px;  text-transform: uppercase;">${u.role}</span></td>
-            <td>-</td>
+            <td>
+                <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                    <span style="background: ${u.role === 'admin' ? 'rgba(175, 134, 252, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${u.role === 'admin' ? '#af86fc' : 'var(--text-muted)'}; padding: 2px 8px; border-radius: 4px;  text-transform: uppercase; font-size: 0.75rem;">${u.role}</span>
+                    ${u.banned ? '<span style="background: rgba(255, 102, 102, 0.15); color: #ff6666; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-size: 0.75rem;">BANNED</span>' : ''}
+                </div>
+            </td>
+            <td>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <button class="btn btn-ban-user" data-email="${u.email}" data-banned="${!!u.banned}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: ${banBtnBg}; color: ${banBtnColor}; border: 1px solid ${banBtnBorder}; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        ${banBtnText}
+                    </button>
+                    <button class="btn btn-role-user" data-email="${u.email}" data-role="${u.role}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: rgba(0, 240, 255, 0.1); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.2); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <i class="fa-solid fa-user-gear"></i> Role
+                    </button>
+                    <button class="btn btn-notify-user" data-email="${u.email}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: rgba(175, 134, 252, 0.15); color: #af86fc; border: 1px solid rgba(175, 134, 252, 0.25); cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <i class="fa-solid fa-bell"></i> Notify
+                    </button>
+                    <button class="btn btn-delete-user" data-email="${u.email}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: rgba(255, 102, 102, 0.15); color: #ff6666; border: 1px solid rgba(255, 102, 102, 0.25); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </td>
         `;
+
+        tr.querySelector('.btn-ban-user').addEventListener('click', async (e) => {
+            const email = e.currentTarget.getAttribute('data-email');
+            const wasBanned = e.currentTarget.getAttribute('data-banned') === 'true';
+            const actionText = wasBanned ? 'unban' : 'ban';
+            if (!confirm(`Are you sure you want to ${actionText} ${email}?`)) return;
+
+            try {
+                const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/ban-user`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${await getAuthToken()}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, banned: !wasBanned })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.showAppNotification('success', `User ${email} has been ${wasBanned ? 'unbanned' : 'banned'}.`);
+                    loadAdminUsers();
+                } else {
+                    window.showAppNotification('danger', data.error || 'Action failed');
+                }
+            } catch (err) {
+                window.showAppNotification('danger', 'Network error');
+            }
+        });
+
+        tr.querySelector('.btn-role-user').addEventListener('click', async (e) => {
+            const email = e.currentTarget.getAttribute('data-email');
+            const currentRole = e.currentTarget.getAttribute('data-role');
+            const newRole = currentRole === 'admin' ? 'user' : 'admin';
+            if (!confirm(`Are you sure you want to change role of ${email} to ${newRole.toUpperCase()}?`)) return;
+
+            try {
+                const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/update-role`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${await getAuthToken()}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, role: newRole })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.showAppNotification('success', `Role of ${email} updated to ${newRole.toUpperCase()}.`);
+                    loadAdminUsers();
+                } else {
+                    window.showAppNotification('danger', data.error || 'Action failed');
+                }
+            } catch (err) {
+                window.showAppNotification('danger', 'Network error');
+            }
+        });
+
+        tr.querySelector('.btn-notify-user').addEventListener('click', (e) => {
+            const email = e.currentTarget.getAttribute('data-email');
+            
+            // Switch to push notification tab
+            const notifTabBtn = document.querySelector('.db-tab-btn[data-tab="admin-notif"]');
+            if (notifTabBtn) {
+                notifTabBtn.click();
+            }
+            
+            // Pre-fill email
+            const emailInput = document.getElementById('admin-notif-email');
+            if (emailInput) {
+                emailInput.value = email;
+            }
+            
+            // Focus on title input
+            const titleInput = document.getElementById('admin-notif-title');
+            if (titleInput) {
+                titleInput.focus();
+            }
+        });
+
+        tr.querySelector('.btn-delete-user').addEventListener('click', async (e) => {
+            const email = e.currentTarget.getAttribute('data-email');
+            if (!confirm(`CRITICAL WARNING:\nAre you sure you want to permanently delete user account: ${email}?\nThis action cannot be undone.`)) return;
+
+            try {
+                const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/delete-user`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${await getAuthToken()}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.showAppNotification('success', `User account ${email} deleted successfully.`);
+                    loadAdminUsers();
+                } else {
+                    window.showAppNotification('danger', data.error || 'Action failed');
+                }
+            } catch (err) {
+                window.showAppNotification('danger', 'Network error');
+            }
+        });
+
         tbody.appendChild(tr);
     });
+
+    // Setup double scrollbar synchronization
+    setTimeout(() => {
+        const tableContainer = document.querySelector('#page-admin .table-responsive');
+        const topScrollbar = document.getElementById('admin-users-top-scrollbar');
+        const topScrollbarDummy = document.getElementById('admin-users-top-scrollbar-dummy');
+
+        if (tableContainer && topScrollbar && topScrollbarDummy) {
+            const hasHorizontalScroll = tableContainer.scrollWidth > tableContainer.clientWidth;
+            if (hasHorizontalScroll) {
+                topScrollbar.style.display = 'block';
+                
+                // Rumus matematika agar rentang scroll maksimum sama persis:
+                // maxScroll(top) = dummyWidth - clientWidth(top)
+                // maxScroll(table) = tableScrollWidth - clientWidth(table)
+                // dummyWidth = tableScrollWidth - clientWidth(table) + clientWidth(top)
+                const tableScrollWidth = tableContainer.scrollWidth;
+                const tableClientWidth = tableContainer.clientWidth;
+                const topClientWidth = topScrollbar.clientWidth;
+                
+                const dummyWidth = tableScrollWidth - tableClientWidth + topClientWidth;
+                topScrollbarDummy.style.width = dummyWidth + 'px';
+                
+                // Sync top -> bottom
+                topScrollbar.onscroll = () => {
+                    tableContainer.scrollLeft = topScrollbar.scrollLeft;
+                };
+                // Sync bottom -> top
+                tableContainer.onscroll = () => {
+                    topScrollbar.scrollLeft = tableContainer.scrollLeft;
+                };
+            } else {
+                topScrollbar.style.display = 'none';
+            }
+        }
+    }, 100);
 }
 
 async function loadAdminPayments() {
@@ -788,13 +1121,35 @@ function renderAdminSupportTable() {
     const tbody = document.getElementById('admin-support-tbody');
     if (!tbody) return;
 
+    const filterStatus = document.getElementById('admin-support-filter-status')?.value || 'all';
+    const filterCategory = document.getElementById('admin-support-filter-category')?.value || 'all';
+
     tbody.innerHTML = '';
-    if (loadedAdminTicketsList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No support tickets found.</td></tr>`;
+
+    // Filter loaded tickets
+    let filteredTickets = [...loadedAdminTicketsList];
+    if (filterStatus !== 'all') {
+        filteredTickets = filteredTickets.filter(t => {
+            const statusLower = t.status.toLowerCase();
+            const isResolved = statusLower === 'resolved' || statusLower === 'closed';
+            const hasAdminReply = t.replies && Object.values(t.replies).some(r => r.sender === 'Admin');
+
+            if (filterStatus === 'resolved') return isResolved;
+            if (filterStatus === 'replied') return !isResolved && hasAdminReply;
+            if (filterStatus === 'pending') return !isResolved && !hasAdminReply;
+            return true;
+        });
+    }
+    if (filterCategory !== 'all') {
+        filteredTickets = filteredTickets.filter(t => (t.type || 'general').toLowerCase() === filterCategory);
+    }
+
+    if (filteredTickets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No support tickets found matching the filters.</td></tr>`;
         return;
     }
 
-    loadedAdminTicketsList.forEach(t => {
+    filteredTickets.forEach(t => {
         const tr = document.createElement('tr');
 
         const subject = t.message ? t.message.substring(0, 45) + (t.message.length > 45 ? '...' : '') : 'No message';
@@ -843,14 +1198,45 @@ function renderAdminSupportTable() {
             </td>
             <td style="color: var(--text-muted);">${lastActivityStr}</td>
             <td>
-                <button class="btn btn-primary btn-open-ticket" data-id="${t.ticketId}" style="width: auto; padding: 4px 10px; border-radius: 4px;">
-                    <i class="fa-solid fa-reply"></i> Reply
-                </button>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-primary btn-open-ticket" data-id="${t.ticketId}" style="width: auto; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+                        <i class="fa-solid fa-reply"></i> Reply
+                    </button>
+                    <button class="btn btn-delete-ticket" data-id="${t.ticketId}" style="width: auto; padding: 4px 10px; border-radius: 4px; background: rgba(255, 102, 102, 0.15); color: #ff6666; border: 1px solid rgba(255, 102, 102, 0.25); cursor: pointer;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
             </td>
         `;
 
         tr.querySelector('.btn-open-ticket').addEventListener('click', () => {
             openAdminTicketDetails(t);
+        });
+
+        tr.querySelector('.btn-delete-ticket').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const ticketId = e.currentTarget.getAttribute('data-id');
+            if (!confirm(`Are you sure you want to permanently delete support ticket ${ticketId}?`)) return;
+
+            try {
+                const res = await fetch(`${window.API.GC_SUPPORT_BASE}/admin/ticket/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${await getAuthToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ticketId })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.showAppNotification('success', `Support ticket ${ticketId} has been deleted.`);
+                    loadAdminSupport();
+                } else {
+                    window.showAppNotification('danger', data.error || 'Failed to delete ticket');
+                }
+            } catch (err) {
+                window.showAppNotification('danger', 'Network error');
+            }
         });
 
         tbody.appendChild(tr);

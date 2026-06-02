@@ -464,6 +464,25 @@
 					const hasPending = window.supportTicketsList.some(t => t.status.toLowerCase() === 'pending');
 					updatePendingFormState(hasPending);
 
+					// Calculate unreplied support tickets count (status pending, last message from admin)
+					const unreplied = (window.supportTicketsList || []).filter(ticket => {
+						const statusLower = (ticket.status || '').toLowerCase();
+						if (statusLower === 'resolved' || statusLower === 'closed') {
+							return false;
+						}
+						if (!ticket.replies || Object.keys(ticket.replies).length === 0) {
+							return false;
+						}
+						const repliesList = Object.values(ticket.replies);
+						repliesList.sort((a, b) => a.createdAt - b.createdAt);
+						const latestReply = repliesList[repliesList.length - 1];
+						return latestReply.sender === 'Admin' || latestReply.senderType === 'admin';
+					});
+					window.supportUnrepliedCount = unreplied.length;
+					if (window.renderMenu) {
+						window.renderMenu();
+					}
+
 					if (activeTicketId) {
 						const activeTicket = window.supportTicketsList.find(t => t.ticketId === activeTicketId);
 						if (activeTicket) {
@@ -1409,5 +1428,27 @@
 				loadUserTickets();
 			}
 		};
+
+		// Hook into Auth UI state changes to immediately load tickets and update badge
+		const originalApplyAuthUIState = window.applyAuthUIState;
+		window.applyAuthUIState = function (user) {
+			if (originalApplyAuthUIState) {
+				originalApplyAuthUIState(user);
+			}
+			if (user) {
+				// User logged in, fetch tickets list to update the badge immediately
+				loadUserTickets(true);
+			} else {
+				// User logged out, reset count and badge
+				window.supportUnrepliedCount = 0;
+				if (window.renderMenu) {
+					window.renderMenu();
+				}
+			}
+		};
+
+
+		// Expose loadUserTickets globally
+		window.loadUserTickets = loadUserTickets;
 	});
 })();

@@ -89,7 +89,7 @@ window.applyAuthUIState = function (user) {
 		}
 
 		if (window.loadDashboardData) {
-			window.loadDashboardData(false);
+			window.loadDashboardData(false, true);
 		}
 	} else {
 		window.isUserAuthenticated = false;

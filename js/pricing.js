@@ -265,7 +265,7 @@ function initPricing() {
 
 					// Update UI to show pending payment state immediately
 					if (window.loadDashboardData) {
-						window.loadDashboardData(true);
+						window.loadDashboardData(true, true);
 
 						// Poll profile updates 5 times, once every 1 minute
 						let pollCount = 0;
@@ -273,7 +273,7 @@ function initPricing() {
 							pollCount++;
 							console.log(`Polling profile update after invoice creation (Attempt ${pollCount}/5)...`);
 							if (window.loadDashboardData) {
-								await window.loadDashboardData(true);
+								await window.loadDashboardData(true, true);
 							}
 							if (pollCount >= 5) {
 								clearInterval(pollInterval);

@@ -307,6 +307,8 @@ body[data-rds-mode="mobile"] .dashboard-stats-row {
     padding: 25px;
     width: 100%;
     transition: all 0.3s ease;
+    max-height: 500px;
+    overflow-y: auto;
 }
 
 .dashboard-history-panel:hover {

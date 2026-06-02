@@ -51,17 +51,6 @@
 	let isRunning = false;
 	let abortController = null;
 	let sanitizerWorker = null;
-	let syncTimeout = null;
-
-	function triggerCreditsSync() {
-		if (syncTimeout) clearTimeout(syncTimeout);
-		syncTimeout = setTimeout(() => {
-			if (typeof window.loadDashboardData === 'function') {
-				// Paksa fetch ulang (jangan pakai cache UI)
-				window.loadDashboardData(true);
-			}
-		}, 2000); // Naikkan delay ke 2000ms agar memberi waktu Firebase DB transaksional (retry ETag) selesai commit
-	}
 
 	// Dynamic script loading for JSZip
 	function loadJSZip(callback) {
@@ -508,6 +497,30 @@
 		const isValid = await validateInputEmails(true);
 		if (!isValid) return;
 
+		// Fetch latest profile credit before checking
+		if (window.loadDashboardData) {
+			await window.loadDashboardData(true, true);
+		}
+
+		// Client-side credit validation
+		const profile = window.dashboardProfile;
+		if (profile && profile.role !== 'admin') {
+			const freeCredits = profile.free_credits || 0;
+			const apiCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
+			const totalCredits = freeCredits + apiCredits;
+			const reqCount = emails.length;
+
+			if (totalCredits < reqCount) {
+				const errorMsg = `You do not have enough credits. Need ${reqCount}.`;
+				if (typeof showInsufficientCreditsModal === 'function') {
+					showInsufficientCreditsModal(errorMsg, totalCredits);
+				} else {
+					window.showAppNotification('danger', `<strong>Insufficient Credits:</strong> ${errorMsg} Remaining: ${totalCredits} credit(s).`);
+				}
+				return;
+			}
+		}
+
 		// Warning check
 		const hasWarning = document.querySelector('.notification-bar.type-warning');
 		if (hasWarning) {
@@ -725,7 +738,6 @@
 					progressEl.style.background = 'linear-gradient(90deg, #66ffd9 0%, #00ffff 100%)';
 					statusEl.innerHTML = '<span style="color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> Success</span>';
 					statsEl.textContent = `Completed batch. Found ${chunk.length} entries.`;
-					triggerCreditsSync();
 
 				} catch (err) {
 					console.error("Batch failure:", err);
@@ -742,7 +754,6 @@
 							details: err.message || 'API Connection Error'
 						});
 					});
-					triggerCreditsSync();
 				}
 
 				completedChunks++;
@@ -790,7 +801,11 @@
 
 					// Persist unified history for dashboard
 					saveUnifiedHistory();
-					triggerCreditsSync();
+
+					// Fetch updated final remaining credits
+					if (window.loadDashboardData) {
+						window.loadDashboardData(true, true);
+					}
 				}
 
 				next();

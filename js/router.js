@@ -296,6 +296,14 @@ function createMenuItem(id, name, icon, withArrow = false) {
 	div.className = `menu-item ${window.currentActiveMenu === id ? 'active' : ''}`;
 	div.id = `menu-${id}`;
 	div.innerHTML = `<i class="${icon}"></i><span>${name}</span>`;
+
+	if (id === 'support' && window.supportUnrepliedCount > 0) {
+		const badge = document.createElement('span');
+		badge.id = 'support-notif-badge';
+		badge.className = 'sidebar-notif-badge';
+		badge.textContent = window.supportUnrepliedCount;
+		div.appendChild(badge);
+	}
 	return div;
 }
 

@@ -2979,9 +2979,9 @@ try {
 						<div class="history-layout-columns">
 							<!-- Left: History Search & Filtering -->
 							<div class="controls">
-								<h3 class="font-keren history-sidebar-title">
+								<div class="font-keren history-sidebar-title">
 									<i class="fa-solid fa-filter "></i> Filters & Controls
-								</h3>
+								</div>
 
 								<div class="pricing-card-content">
 									<!-- Search Input -->
@@ -3032,9 +3032,9 @@ try {
 							<!-- Right: History List Viewer -->
 							<div class="history-results-list-panel inline-style-gen-21">
 								<div class="flex-row-between">
-									<h3 class="font-keren history-sidebar-title">
+									<div class="font-keren history-sidebar-title">
 										<i class="fa-solid fa-list-ul "></i> History Entries
-									</h3>
+									</div>
 									<button class="btn btn-history-clear-all" id="btn-refresh-history">
 										<i class="fa-solid fa-rotate"></i> Refresh
 									</button>
@@ -3145,7 +3145,10 @@ try {
 						</div>
 
 						<div class="db-tabs">
-							<button class="db-tab-btn active" data-tab="admin-users">
+							<button class="db-tab-btn active" data-tab="admin-overview">
+								<i class="fa-solid fa-chart-line"></i> Overview
+							</button>
+							<button class="db-tab-btn" data-tab="admin-users">
 								<i class="fa-solid fa-users"></i> Users
 							</button>
 							<button class="db-tab-btn" data-tab="admin-payments">
@@ -3162,12 +3165,159 @@ try {
 							</button>
 						</div>
 
+						<!-- Overview Tab -->
+						<div id="admin-overview" class="db-tab-content active">
+							<!-- Metrics Grid -->
+							<div class="admin-card-grid"
+								style="margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+								<div class="card"
+									style="background: linear-gradient(135deg, rgba(102, 255, 217, 0.05) 0%, rgba(10, 8, 16, 0.5) 100%); border: 1px solid rgba(102, 255, 217, 0.15); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px;">
+									<div
+										style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+										<div>
+											<span
+												style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Total
+												Revenue</span>
+											<h2 id="admin-metrics-revenue"
+												style="color: #66ffd9; margin: 8px 0 0 0; font-size: 1.8rem; font-weight: 700;"
+												class="font-keren">$0.00</h2>
+										</div>
+										<i class="fa-solid fa-wallet"
+											style="font-size: 2rem; color: #66ffd9; opacity: 0.7;"></i>
+									</div>
+								</div>
+								<div class="card"
+									style="background: linear-gradient(135deg, rgba(175, 134, 252, 0.05) 0%, rgba(10, 8, 16, 0.5) 100%); border: 1px solid rgba(175, 134, 252, 0.15); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px;">
+									<div
+										style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+										<div>
+											<span
+												style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Registered
+												Users</span>
+											<h2 id="admin-metrics-users"
+												style="color: #af86fc; margin: 8px 0 0 0; font-size: 1.8rem; font-weight: 700;"
+												class="font-keren">0</h2>
+										</div>
+										<i class="fa-solid fa-users"
+											style="font-size: 2rem; color: #af86fc; opacity: 0.7;"></i>
+									</div>
+								</div>
+								<div class="card"
+									style="background: linear-gradient(135deg, rgba(0, 240, 255, 0.05) 0%, rgba(10, 8, 16, 0.5) 100%); border: 1px solid rgba(0, 240, 255, 0.15); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px;">
+									<div
+										style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+										<div>
+											<span
+												style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Active
+												Users</span>
+											<h2 id="admin-metrics-active"
+												style="color: #00f0ff; margin: 8px 0 0 0; font-size: 1.8rem; font-weight: 700;"
+												class="font-keren">0</h2>
+										</div>
+										<i class="fa-solid fa-signal"
+											style="font-size: 2rem; color: #00f0ff; opacity: 0.7;"></i>
+									</div>
+								</div>
+								<div class="card"
+									style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, rgba(10, 8, 16, 0.5) 100%); border: 1px solid rgba(255, 215, 0, 0.15); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px;">
+									<div
+										style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+										<div>
+											<span
+												style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Checks
+												Usage</span>
+											<h2 id="admin-metrics-usage"
+												style="color: #ffd700; margin: 8px 0 0 0; font-size: 1.8rem; font-weight: 700;"
+												class="font-keren">0</h2>
+										</div>
+										<i class="fa-solid fa-database"
+											style="font-size: 2rem; color: #ffd700; opacity: 0.7;"></i>
+									</div>
+								</div>
+							</div>
+
+							<div class="admin-card-grid"
+								style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+								<!-- Maintenance Config Card -->
+								<div class="admin-form-card"
+									style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 25px; border-radius: 12px;">
+									<h4
+										style="margin: 0 0 10px 0; color: var(--text-sharp); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+										<i class="fa-solid fa-screwdriver-wrench" style="color: #af86fc;"></i>
+										Maintenance Settings</h4>
+									<p
+										style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 20px 0; line-height: 1.4;">
+										Put the system in maintenance mode dynamically. Users will see a full-screen
+										overlay restricting activity.</p>
+
+									<div style="margin-bottom: 15px;">
+										<label
+											style="display: block; color: var(--text-primary); font-size: 0.85rem; font-weight: 500; margin-bottom: 6px;">Maintenance
+											Status</label>
+										<select id="admin-mt-status" class="db-input" style="width: 100%;">
+											<option value="false">Inactive / Online</option>
+											<option value="true">Active (MT Mode)</option>
+										</select>
+									</div>
+
+									<div style="margin-bottom: 15px;">
+										<label
+											style="display: block; color: var(--text-primary); font-size: 0.85rem; font-weight: 500; margin-bottom: 6px;">Start
+											Time (UTC/Local)</label>
+										<input type="datetime-local" id="admin-mt-start-time" class="db-input"
+											style="width: 100%;">
+									</div>
+
+									<div style="margin-bottom: 20px;">
+										<label
+											style="display: block; color: var(--text-primary); font-size: 0.85rem; font-weight: 500; margin-bottom: 6px;">Duration
+											(Minutes)</label>
+										<input type="number" id="admin-mt-duration" class="db-input"
+											placeholder="e.g. 30" value="30" style="width: 100%;">
+									</div>
+
+									<button id="admin-btn-save-mt" class="btn btn-primary" style="width: 100%;"><i
+											class="fa-solid fa-save" style="margin-right: 6px;"></i> Save System
+										Config</button>
+								</div>
+
+								<!-- Manual Payment Confirmation Card -->
+								<div class="admin-form-card"
+									style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 25px; border-radius: 12px;">
+									<h4
+										style="margin: 0 0 10px 0; color: var(--text-sharp); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+										<i class="fa-solid fa-check-double" style="color: #66ffd9;"></i> Force Confirm
+										Payment</h4>
+									<p
+										style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 20px 0; line-height: 1.4;">
+										Manually approve a pending invoice. This will credit the user account and
+										activate their plans without NowPayments notification.</p>
+
+									<div style="margin-bottom: 25px;">
+										<label
+											style="display: block; color: var(--text-primary); font-size: 0.85rem; font-weight: 500; margin-bottom: 6px;">Invoice
+											ID</label>
+										<input type="text" id="admin-manual-pay-invoice-id" class="db-input"
+											placeholder="e.g. INV-abcdefghij" style="width: 100%;">
+									</div>
+
+									<button id="admin-btn-force-pay" class="btn btn-primary"
+										style="width: 100%; background: linear-gradient(135deg, #af86fc 0%, #7e53c9 100%);"><i
+											class="fa-solid fa-check" style="margin-right: 6px;"></i> Force Approve
+										Payment</button>
+								</div>
+							</div>
+						</div>
+
 						<!-- Users Tab -->
-						<div id="admin-users" class="db-tab-content active">
+						<div id="admin-users" class="db-tab-content hide">
 							<div class="card">
 								<div class="inline-style-gen-80">
 									<h3 class="font-keren inline-style-gen-49">User Directory</h3>
 									<div class="inline-style-gen-113">
+										<input type="text" id="admin-users-search" placeholder="Search user email..."
+											class="db-input"
+											style="width: 220px; font-size: 0.85rem; padding: 6px 12px; margin-right: 15px; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02); color: var(--text-sharp);">
 										<div class="inline-style-gen-3">
 											<span class="inline-style-gen-15">Sort:</span>
 											<select id="admin-users-sort" class="inline-style-gen-98">
@@ -3180,6 +3330,10 @@ try {
 										<span id="admin-total-users" class="inline-style-gen-70">Total
 											Users: 0</span>
 									</div>
+								</div>
+								<div id="admin-users-top-scrollbar"
+									style="overflow-x: auto; overflow-y: hidden; height: 14px; width: 100%; margin-bottom: 6px; display: none; background: rgba(255,255,255,0.01); border-radius: 4px;">
+									<div id="admin-users-top-scrollbar-dummy" style="height: 1px;"></div>
 								</div>
 								<div class="table-responsive">
 									<table class="db-table" id="admin-users-table">
@@ -3319,12 +3473,31 @@ try {
 						<!-- Support Tickets Tab -->
 						<div id="admin-support" class="db-tab-content hide">
 							<div class="card">
-								<div class="inline-style-gen-80">
-									<h3 class="font-keren inline-style-gen-49">Support Tickets Management</h3>
-									<button class="btn btn-primary" id="admin-btn-refresh-support"
-										class="inline-style-gen-75">
-										<i class="fa-solid fa-rotate"></i> Refresh
-									</button>
+								<div class="inline-style-gen-80"
+									style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+									<h3 class="font-keren inline-style-gen-49" style="margin: 0;">Support Tickets
+										Management</h3>
+									<div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+										<select id="admin-support-filter-status" class="db-input"
+											style="width: 130px; font-size: 0.85rem; padding: 6px 12px;">
+											<option value="all">All Statuses</option>
+											<option value="pending">Pending</option>
+											<option value="replied">Replied</option>
+											<option value="resolved">Closed</option>
+										</select>
+										<select id="admin-support-filter-category" class="db-input"
+											style="width: 150px; font-size: 0.85rem; padding: 6px 12px;">
+											<option value="all">All Categories</option>
+											<option value="general">General</option>
+											<option value="billing">Billing</option>
+											<option value="bug">Bug Report</option>
+											<option value="feature">Feature Request</option>
+										</select>
+										<button class="btn btn-primary" id="admin-btn-refresh-support"
+											style="padding: 6px 12px; width: auto; font-size: 0.85rem; border-radius: 6px;">
+											<i class="fa-solid fa-rotate"></i> Refresh
+										</button>
+									</div>
 								</div>
 								<div class="table-responsive">
 									<table class="db-table" id="admin-support-table">
@@ -3447,9 +3620,9 @@ try {
 							<!-- Tab 2: Your Support Tickets List -->
 							<div id="support-history-tab" class="support-tab-content hide">
 								<div class="flex-row-between" style="margin-bottom: 20px;">
-									<h3 class="font-keren history-sidebar-title">
+									<div class="font-keren history-sidebar-title">
 										<i class="fa-solid fa-list-check "></i> Support Tickets List
-									</h3>
+									</div>
 									<button class="btn btn-history-clear-all" id="btn-refresh-tickets">
 										<i class="fa-solid fa-rotate"></i> Refresh
 									</button>

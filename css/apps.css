@@ -386,7 +386,8 @@ body[data-rds-mode="mobile"] .filter-button-group {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-height: 250px;
+    max-height: 480px;
+    flex: 1;
     overflow-y: auto;
     padding-right: 5px;
 }

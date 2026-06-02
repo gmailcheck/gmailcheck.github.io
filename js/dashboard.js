@@ -177,7 +177,8 @@ function initDashboard() {
 		originalSetActiveMenu(menuId, pushState);
 		const devMenuIds = ['dev-keys', 'dev-credits', 'dev-stats', 'dev-add', 'dev-purchases', 'pricing'];
 		if ((menuId === 'dashboard' || menuId === 'setting1' || devMenuIds.includes(menuId)) && window.isUserAuthenticated) {
-			window.loadDashboardData(false);
+			const profileOnly = (menuId === 'setting1' || menuId === 'pricing');
+			window.loadDashboardData(false, profileOnly);
 		}
 	};
 
@@ -188,14 +189,24 @@ function initDashboard() {
 }
 
 let lastDashboardLoadTime = 0;
+let lastKeysLoadTime = 0;
 let isDashboardLoading = false;
 
 // MAIN FUNCTION TO LOAD DASHBOARD DATA
-window.loadDashboardData = async function (force = false) {
+window.loadDashboardData = async function (force = false, profileOnly = false) {
 	if (isDashboardLoading) return;
-	if (!force && Date.now() - lastDashboardLoadTime < 30000) {
-		// Cached within 30 seconds
-		return;
+
+	const needKeys = !profileOnly;
+	const keysAge = Date.now() - lastKeysLoadTime;
+	const profileAge = Date.now() - lastDashboardLoadTime;
+
+	if (!force) {
+		if (needKeys && keysAge < 30000 && profileAge < 30000) {
+			return;
+		}
+		if (!needKeys && profileAge < 30000) {
+			return;
+		}
 	}
 
 	isDashboardLoading = true;
@@ -961,7 +972,10 @@ window.loadDashboardData = async function (force = false) {
 		} // closes if (profileRes.ok)
 
 		// 4. Load owned keys list (refreshed after profile loads)
-		await loadOwnedKeysList(idToken);
+		if (!profileOnly) {
+			await loadOwnedKeysList(idToken);
+			lastKeysLoadTime = Date.now();
+		}
 
 	} catch (e) {
 		console.error("Dashboard failed to retrieve full data:", e);

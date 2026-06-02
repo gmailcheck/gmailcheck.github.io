@@ -1196,6 +1196,7 @@ body[data-rds-mode="tablet"] .container.home-active #btn-toggle-sidebar {
 .sidebar-notif-badge {
     background: #ff4757 !important;
     color: white !important;
+    -webkit-text-fill-color: white !important;
     border-radius: 10px !important;
     padding: 2px 7px !important;
 
