@@ -51,6 +51,17 @@
 	let isRunning = false;
 	let abortController = null;
 	let sanitizerWorker = null;
+	let syncTimeout = null;
+
+	function triggerCreditsSync() {
+		if (syncTimeout) clearTimeout(syncTimeout);
+		syncTimeout = setTimeout(() => {
+			if (typeof window.loadDashboardData === 'function') {
+				// Paksa fetch ulang (jangan pakai cache UI, hanya profile saja)
+				window.loadDashboardData(true, true);
+			}
+		}, 2000); // Naikkan delay ke 2000ms agar memberi waktu Firebase DB transaksional (retry ETag) selesai commit
+	}
 
 	// Dynamic script loading for JSZip
 	function loadJSZip(callback) {
@@ -497,30 +508,6 @@
 		const isValid = await validateInputEmails(true);
 		if (!isValid) return;
 
-		// Fetch latest profile credit before checking
-		if (window.loadDashboardData) {
-			await window.loadDashboardData(true, true);
-		}
-
-		// Client-side credit validation
-		const profile = window.dashboardProfile;
-		if (profile && profile.role !== 'admin') {
-			const freeCredits = profile.free_credits || 0;
-			const apiCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
-			const totalCredits = freeCredits + apiCredits;
-			const reqCount = emails.length;
-
-			if (totalCredits < reqCount) {
-				const errorMsg = `You do not have enough credits. Need ${reqCount}.`;
-				if (typeof showInsufficientCreditsModal === 'function') {
-					showInsufficientCreditsModal(errorMsg, totalCredits);
-				} else {
-					window.showAppNotification('danger', `<strong>Insufficient Credits:</strong> ${errorMsg} Remaining: ${totalCredits} credit(s).`);
-				}
-				return;
-			}
-		}
-
 		// Warning check
 		const hasWarning = document.querySelector('.notification-bar.type-warning');
 		if (hasWarning) {
@@ -552,6 +539,8 @@
 		btnCopy.classList.add('hide');
 		btnDownload.classList.add('hide');
 		btnDownloadAll.classList.add('hide');
+
+		triggerCreditsSync();
 
 		results = [];
 		isRunning = true;
@@ -683,7 +672,7 @@
 								errorMsg = `Server error: ${errData.error}`;
 								console.error("Backend Error Details:", errData);
 							}
-						} catch (e) {}
+						} catch (e) { }
 						throw new Error(errorMsg);
 					}
 
@@ -754,6 +743,7 @@
 							details: err.message || 'API Connection Error'
 						});
 					});
+
 				}
 
 				completedChunks++;
@@ -801,11 +791,6 @@
 
 					// Persist unified history for dashboard
 					saveUnifiedHistory();
-
-					// Fetch updated final remaining credits
-					if (window.loadDashboardData) {
-						window.loadDashboardData(true, true);
-					}
 				}
 
 				next();
@@ -868,14 +853,12 @@
 		btnExecute.classList.remove('hide');
 		btnStop.classList.add('hide');
 		window.showAppNotification('danger', '<strong>Cancelled:</strong> Verification process was stopped by user.');
-		triggerCreditsSync();
 	});
 
 	// Back/Reset button
 	btnBack.addEventListener('click', function () {
 		isRunning = false;
 		if (abortController) abortController.abort();
-		triggerCreditsSync();
 
 		resultsContainer.classList.add('hide');
 		inputContainer.classList.remove('hide');
