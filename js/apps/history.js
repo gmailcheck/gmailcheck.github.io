@@ -7,6 +7,68 @@ const STORE_NAME = 'history';
 let historyDbInstance = null;
 let cachedHistoryEntries = null;
 
+// Custom confirm dialog modal helper to replace default browser confirms
+function showCustomConfirm(title, message, onConfirm) {
+    let modal = document.getElementById('custom-confirm-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'custom-confirm-modal';
+        modal.className = 'modal-overlay hide modal-overlay-whitelist';
+        modal.style.zIndex = '99999';
+        modal.innerHTML = `
+            <div class="modal-card-whitelist" style="max-width: 400px; text-align: center; display: flex; flex-direction: column; gap: 20px; padding: 24px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <!-- Warning Icon -->
+                <div style="display: flex; justify-content: center; align-items: center;">
+                    <div style="width: 60px; height: 60px; background: rgba(255, 102, 102, 0.1); border: 1px solid rgba(255, 102, 102, 0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255, 102, 102, 0.2);">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #ff6666; font-size: 24px;"></i>
+                    </div>
+                </div>
+
+                <!-- Text Content -->
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <h3 class="font-keren" id="custom-confirm-title" style="color: var(--text-sharp); margin: 0; font-size: 20px; letter-spacing: 0.5px;"></h3>
+                    <p id="custom-confirm-message" style="color: var(--text-secondary); margin: 0; line-height: 1.5; font-size: 14px; text-align: center;"></p>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 8px; width: 100%;">
+                    <button id="btn-custom-confirm-cancel" class="btn btn-secondary" style="flex: 1; border-radius: 12px; padding: 10px 16px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
+                        Cancel
+                    </button>
+                    <button id="btn-custom-confirm-ok" class="btn btn-danger" style="flex: 1; border-radius: 12px; padding: 10px 16px; background: linear-gradient(135deg, #ff4d4d 0%, #cc0000 100%); color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(255, 77, 77, 0.3); transition: all 0.2s;">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const closeModal = () => modal.classList.add('hide');
+        document.getElementById('btn-custom-confirm-cancel').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    // Set dynamic content
+    document.getElementById('custom-confirm-title').textContent = title;
+    document.getElementById('custom-confirm-message').innerHTML = message;
+
+    // Hook the confirm button
+    const confirmBtn = document.getElementById('btn-custom-confirm-ok');
+    // Recreate the confirm button to strip previous event listeners cleanly
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+    newConfirmBtn.addEventListener('click', () => {
+        modal.classList.add('hide');
+        if (typeof onConfirm === 'function') onConfirm();
+    });
+
+    // Show modal
+    modal.classList.remove('hide');
+}
+
 // Initialize IndexedDB
 function initHistoryDB() {
     return new Promise((resolve, reject) => {
@@ -273,7 +335,7 @@ function showHistoryDetailsModal(entry) {
                         email: email,
                         status: statusText.toLowerCase()
                     };
-                }).filter(x => x.email.length > 0);
+                }).filter(x => x.email.length > 0 && x.status !== 'failed');
 
                 // Detect server type
                 let serverType = 'advanced';
@@ -583,17 +645,24 @@ function renderMonospaceHistoryVirtualScroll(entry, viewport) {
 // Gmail Checker Card/Row Virtual Scroller
 function renderGmailCheckerHistoryVirtualScroll(entry, viewport) {
     const lines = entry.content ? entry.content.split('\n') : [];
-    const items = lines.map((line, idx) => {
+    let visibleIndex = 0;
+    const items = lines.map((line) => {
         const parts = line.split(' - ');
         const email = parts[0]?.trim() || '';
         const statusText = parts[1]?.trim() || 'BAD';
         return {
-            index: idx + 1,
             email: email,
             status: statusText.toLowerCase(),
             details: 'checked'
         };
-    }).filter(x => x.email.length > 0);
+    }).filter(x => x.email.length > 0 && x.status !== 'failed')
+      .map(item => {
+          visibleIndex++;
+          return {
+              index: visibleIndex,
+              ...item
+          };
+      });
 
     const TOTAL_ITEMS = items.length;
     const ITEM_HEIGHT_REM = 2.875; // 46px / 16
@@ -1049,16 +1118,20 @@ window.loadHistoryList = async function (forceRefresh = false) {
                 URL.revokeObjectURL(link.href);
             });
 
-            delBtn.addEventListener('click', async (e) => {
+            delBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (confirm(`Delete history entry from ${entry.title}?`)) {
-                    await deleteHistoryEntry(entry.id);
-                    cachedHistoryEntries = null; // Clear cache
-                    if (window.showAppNotification) {
-                        window.showAppNotification('success', 'History entry successfully removed.');
+                showCustomConfirm(
+                    "Delete Entry",
+                    `Are you sure you want to delete the history entry from <strong>${entry.title}</strong>?`,
+                    async () => {
+                        await deleteHistoryEntry(entry.id);
+                        cachedHistoryEntries = null; // Clear cache
+                        if (window.showAppNotification) {
+                            window.showAppNotification('success', 'History entry successfully removed.');
+                        }
+                        window.loadHistoryList();
                     }
-                    window.loadHistoryList();
-                }
+                );
             });
 
             detailsToggle.addEventListener('click', (e) => {
@@ -1125,9 +1198,11 @@ function initHistoryPage() {
     // Clear All button
     const clearAllBtn = document.getElementById('btn-clear-all-history');
     if (clearAllBtn) {
-        clearAllBtn.addEventListener('click', async () => {
-            if (confirm("Are you absolutely sure you want to clear your entire check/generation history? This cannot be undone.")) {
-                if (confirm("Confirm one more time to empty your offline history database permanently.")) {
+        clearAllBtn.addEventListener('click', () => {
+            showCustomConfirm(
+                "Clear History",
+                "Are you absolutely sure you want to clear your entire check/generation history? This will permanently delete your offline history database and cannot be undone.",
+                async () => {
                     await clearAllHistory();
                     cachedHistoryEntries = null; // Clear memory cache
                     if (window.showAppNotification) {
@@ -1135,7 +1210,7 @@ function initHistoryPage() {
                     }
                     window.loadHistoryList();
                 }
-            }
+            );
         });
     }
 

@@ -99,6 +99,10 @@ window.applyAuthUIState = function (user) {
 		window.APIKEY = null;
 		localStorage.removeItem('gmailChecker_apiData');
 
+		if (window.closeTicketsWS) {
+			window.closeTicketsWS();
+		}
+
 		// Handle routing for unauthenticated user
 		if (['dashboard', 'app1', 'app2', 'app3', 'setting1', 'setting2', 'support'].includes(currentMenuId)) {
 			window.loginRedirectTarget = currentMenuId;

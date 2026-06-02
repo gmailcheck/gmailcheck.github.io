@@ -15,7 +15,6 @@ async function fetchProducts() {
 		const response = await fetch(window.API.PRODUCTS);
 		const data = await response.json();
 		backendProducts = data.products || {};
-		console.log("Products loaded from backend:", backendProducts);
 	} catch (err) {
 		console.error("Failed to fetch products:", err);
 		// Fallback to empty object, UI will show "No products"

@@ -60,6 +60,9 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
     const badge = document.getElementById('notif-badge');
     const list = document.getElementById('notif-list');
 
+    // Filter out invalid/empty notifications (title/message is undefined or null)
+    notifications = (notifications || []).filter(n => n && n.title && n.message);
+
     // Retrieve locally read notification IDs from LocalStorage
     const localReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
 

@@ -7,6 +7,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let countdownInterval = null;
 
+// Custom confirm dialog modal helper to replace default browser confirms
+function showCustomConfirm(title, message, onConfirm) {
+    let modal = document.getElementById('custom-confirm-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'custom-confirm-modal';
+        modal.className = 'modal-overlay hide modal-overlay-whitelist';
+        modal.style.zIndex = '99999';
+        modal.innerHTML = `
+            <div class="modal-card-whitelist" style="max-width: 400px; text-align: center; display: flex; flex-direction: column; gap: 20px; padding: 24px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <!-- Warning Icon -->
+                <div style="display: flex; justify-content: center; align-items: center;">
+                    <div style="width: 60px; height: 60px; background: rgba(255, 102, 102, 0.1); border: 1px solid rgba(255, 102, 102, 0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255, 102, 102, 0.2);">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #ff6666; font-size: 24px;"></i>
+                    </div>
+                </div>
+
+                <!-- Text Content -->
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <h3 class="font-keren" id="custom-confirm-title" style="color: var(--text-sharp); margin: 0; font-size: 20px; letter-spacing: 0.5px;"></h3>
+                    <p id="custom-confirm-message" style="color: var(--text-secondary); margin: 0; line-height: 1.5; font-size: 14px; text-align: center;"></p>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 12px; margin-top: 8px; width: 100%;">
+                    <button id="btn-custom-confirm-cancel" class="btn btn-secondary" style="flex: 1; border-radius: 12px; padding: 10px 16px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
+                        Cancel
+                    </button>
+                    <button id="btn-custom-confirm-ok" class="btn btn-danger" style="flex: 1; border-radius: 12px; padding: 10px 16px; background: linear-gradient(135deg, #ff4d4d 0%, #cc0000 100%); color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(255, 77, 77, 0.3); transition: all 0.2s;">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const closeModal = () => modal.classList.add('hide');
+        document.getElementById('btn-custom-confirm-cancel').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    // Set dynamic content
+    document.getElementById('custom-confirm-title').textContent = title;
+    document.getElementById('custom-confirm-message').innerHTML = message;
+
+    // Hook the confirm button
+    const confirmBtn = document.getElementById('btn-custom-confirm-ok');
+    // Recreate the confirm button to strip previous event listeners cleanly
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+    newConfirmBtn.addEventListener('click', () => {
+        modal.classList.add('hide');
+        if (typeof onConfirm === 'function') onConfirm();
+    });
+
+    // Show modal
+    modal.classList.remove('hide');
+}
+
 function initDashboard() {
 	// 1. TAB SWITCHING LOGIC
 	const btnTabKeys = document.getElementById('btn-tab-keys');
@@ -156,10 +218,6 @@ window.loadDashboardData = async function (force = false) {
 		const userEmailText = document.getElementById('db-user-email');
 		if (userEmailText) userEmailText.textContent = user.email;
 
-		// 1. Load owned keys list first to determine profile tiers
-		const keys = await loadOwnedKeysList(idToken);
-
-
 		// 2. Fetch User Profile status from auth service
 		const profileRes = await fetch(window.API.PROFILE, {
 			method: 'GET',
@@ -180,6 +238,11 @@ window.loadDashboardData = async function (force = false) {
 			// Connect to Presence WebSocket to enable real-time status and save database query cost
 			if (window.connectPresenceWS) {
 				window.connectPresenceWS(idToken);
+			}
+
+			// Connect to Unified Support WebSocket
+			if (window.connectTicketsWS) {
+				window.connectTicketsWS(idToken);
 			}
 
 			// Update Badges dynamically based on roles and keys
@@ -317,28 +380,33 @@ window.loadDashboardData = async function (force = false) {
 					const newBtnCancel = btnPendingCancel.cloneNode(true);
 					btnPendingCancel.parentNode.replaceChild(newBtnCancel, btnPendingCancel);
 
-					newBtnCancel.addEventListener('click', async () => {
-						if (!confirm('Are you sure you want to cancel and remove this invoice?')) return;
-						newBtnCancel.disabled = true;
-						newBtnCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
-						try {
-							const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-								body: JSON.stringify({ invoiceId: pendingSubscription.id })
-							});
-							const cancelData = await cancelRes.json();
-							if (cancelRes.ok && cancelData.success) {
-								window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-								await window.loadDashboardData(true);
-							} else {
-								throw new Error(cancelData.error || 'Server error');
+					newBtnCancel.addEventListener('click', () => {
+						showCustomConfirm(
+							"Cancel Invoice",
+							"Are you sure you want to cancel and remove this invoice?",
+							async () => {
+								newBtnCancel.disabled = true;
+								newBtnCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
+								try {
+									const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
+										method: 'POST',
+										headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+										body: JSON.stringify({ invoiceId: pendingSubscription.id })
+									});
+									const cancelData = await cancelRes.json();
+									if (cancelRes.ok && cancelData.success) {
+										window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
+										await window.loadDashboardData(true);
+									} else {
+										throw new Error(cancelData.error || 'Server error');
+									}
+								} catch (err) {
+									window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
+									newBtnCancel.disabled = false;
+									newBtnCancel.innerHTML = '<i class="fa-solid fa-trash"></i> Cancel Invoice';
+								}
 							}
-						} catch (err) {
-							window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
-							newBtnCancel.disabled = false;
-							newBtnCancel.innerHTML = '<i class="fa-solid fa-trash"></i> Cancel Invoice';
-						}
+						);
 					});
 				}
 			} else {
@@ -375,28 +443,33 @@ window.loadDashboardData = async function (force = false) {
 					const newBtnDevCancel = btnDevPendingCancel.cloneNode(true);
 					btnDevPendingCancel.parentNode.replaceChild(newBtnDevCancel, btnDevPendingCancel);
 
-					newBtnDevCancel.addEventListener('click', async () => {
-						if (!confirm('Are you sure you want to cancel and remove this invoice?')) return;
-						newBtnDevCancel.disabled = true;
-						newBtnDevCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
-						try {
-							const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-								body: JSON.stringify({ invoiceId: pendingApiKey.id })
-							});
-							const cancelData = await cancelRes.json();
-							if (cancelRes.ok && cancelData.success) {
-								window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-								await window.loadDashboardData(true);
-							} else {
-								throw new Error(cancelData.error || 'Server error');
+					newBtnDevCancel.addEventListener('click', () => {
+						showCustomConfirm(
+							"Cancel Invoice",
+							"Are you sure you want to cancel and remove this invoice?",
+							async () => {
+								newBtnDevCancel.disabled = true;
+								newBtnDevCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
+								try {
+									const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
+										method: 'POST',
+										headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+										body: JSON.stringify({ invoiceId: pendingApiKey.id })
+									});
+									const cancelData = await cancelRes.json();
+									if (cancelRes.ok && cancelData.success) {
+										window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
+										await window.loadDashboardData(true);
+									} else {
+										throw new Error(cancelData.error || 'Server error');
+									}
+								} catch (err) {
+									window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
+									newBtnDevCancel.disabled = false;
+									newBtnDevCancel.innerHTML = '<i class="fa-solid fa-trash"></i> Cancel';
+								}
 							}
-						} catch (err) {
-							window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
-							newBtnDevCancel.disabled = false;
-							newBtnDevCancel.innerHTML = '<i class="fa-solid fa-trash"></i> Cancel';
-						}
+						);
 					});
 				}
 			} else {
@@ -532,39 +605,43 @@ window.loadDashboardData = async function (force = false) {
 
 					// Bind cancellation click events
 					paymentsList.querySelectorAll('.btn-cancel-invoice').forEach(btn => {
-						btn.addEventListener('click', async (e) => {
+						btn.addEventListener('click', (e) => {
 							e.stopPropagation();
 							const invId = btn.getAttribute('data-invoice');
-							if (!confirm('Are you sure you want to cancel and remove this invoice?')) return;
+							showCustomConfirm(
+								"Cancel Invoice",
+								"Are you sure you want to cancel and remove this invoice?",
+								async () => {
+									btn.disabled = true;
+									btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-							btn.disabled = true;
-							btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+									try {
+										const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
+											method: 'POST',
+											headers: {
+												'Content-Type': 'application/json',
+												'Authorization': `Bearer ${idToken}`
+											},
+											body: JSON.stringify({ invoiceId: invId })
+										});
 
-							try {
-								const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
-									method: 'POST',
-									headers: {
-										'Content-Type': 'application/json',
-										'Authorization': `Bearer ${idToken}`
-									},
-									body: JSON.stringify({ invoiceId: invId })
-								});
-
-								const cancelData = await cancelRes.json();
-								if (cancelRes.ok && cancelData.success) {
-									window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-									await window.loadDashboardData(true);
-								} else {
-									window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
-									btn.disabled = false;
-									btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+										const cancelData = await cancelRes.json();
+										if (cancelRes.ok && cancelData.success) {
+											window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
+											await window.loadDashboardData(true);
+										} else {
+											window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
+											btn.disabled = false;
+											btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+										}
+									} catch (err) {
+										console.error("Cancellation error", err);
+										window.showAppNotification('danger', 'Failed to cancel invoice due to network error.');
+										btn.disabled = false;
+										btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+									}
 								}
-							} catch (err) {
-								console.error("Cancellation error", err);
-								window.showAppNotification('danger', 'Failed to cancel invoice due to network error.');
-								btn.disabled = false;
-								btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-							}
+							);
 						});
 					});
 				} else {
@@ -694,38 +771,42 @@ window.loadDashboardData = async function (force = false) {
 
 					// Bind cancellation click events
 					devPaymentsList.querySelectorAll('.btn-cancel-invoice').forEach(btn => {
-						btn.addEventListener('click', async (e) => {
+						btn.addEventListener('click', (e) => {
 							e.stopPropagation();
 							const invId = btn.getAttribute('data-invoice');
-							if (!confirm('Are you sure you want to cancel and remove this invoice?')) return;
+							showCustomConfirm(
+								"Cancel Invoice",
+								"Are you sure you want to cancel and remove this invoice?",
+								async () => {
+									btn.disabled = true;
+									btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-							btn.disabled = true;
-							btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+									try {
+										const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
+											method: 'POST',
+											headers: {
+												'Content-Type': 'application/json',
+												'Authorization': `Bearer ${idToken}`
+											},
+											body: JSON.stringify({ invoiceId: invId })
+										});
 
-							try {
-								const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
-									method: 'POST',
-									headers: {
-										'Content-Type': 'application/json',
-										'Authorization': `Bearer ${idToken}`
-									},
-									body: JSON.stringify({ invoiceId: invId })
-								});
-
-								const cancelData = await cancelRes.json();
-								if (cancelRes.ok && cancelData.success) {
-									window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-									await window.loadDashboardData(true);
-								} else {
-									window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
-									btn.disabled = false;
-									btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+										const cancelData = await cancelRes.json();
+										if (cancelRes.ok && cancelData.success) {
+											window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
+											await window.loadDashboardData(true);
+										} else {
+											window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
+											btn.disabled = false;
+											btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+										}
+									} catch (err) {
+										window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
+										btn.disabled = false;
+										btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+									}
 								}
-							} catch (err) {
-								window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
-								btn.disabled = false;
-								btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-							}
+							);
 						});
 					});
 				} else {
@@ -763,6 +844,10 @@ window.loadDashboardData = async function (force = false) {
 				availableCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
 			}
 
+			const premiumCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
+			const freeCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
+			const totalAvailable = premiumCredits + freeCredits;
+
 			// App Dashboard Credits
 			const appUsageLabel = document.getElementById('db-quota-usage-label');
 			const appQuotaBar = document.getElementById('db-quota-bar');
@@ -790,10 +875,24 @@ window.loadDashboardData = async function (force = false) {
 					appQuotaBar.style.boxShadow = '';
 				}
 			}
-			if (appRemaining) appRemaining.textContent = availableCredits.toLocaleString();
+			
+			// Penjumlahan Daily Internal Credits + API Credits (termasuk free daily bonus jika berlangganan aktif)
+			const totalRemainingSum = plan !== 'none'
+				? (availableCredits + premiumCredits + freeCredits)
+				: (availableCredits + premiumCredits);
+			if (appRemaining) appRemaining.textContent = totalRemainingSum.toLocaleString();
 
 			// Developer Dashboard Credits (Global API Credits)
-			const apiAvailable = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
+
+			const dbApiCreditsValue = document.getElementById('db-api-credits-value');
+			if (dbApiCreditsValue) dbApiCreditsValue.textContent = totalAvailable.toLocaleString();
+
+			const dbApiCreditsBreakdown = document.getElementById('db-api-credits-breakdown');
+			if (dbApiCreditsBreakdown) {
+				dbApiCreditsBreakdown.textContent = `(${freeCredits.toLocaleString()} - Daily Bonus + ${premiumCredits.toLocaleString()} - Purchased)`;
+			}
+
+			const apiAvailable = premiumCredits;
 
 			// Low credit alert check with webhook integration
 			if (apiAvailable < 1000) {
@@ -1627,7 +1726,6 @@ window.connectPresenceWS = function (idToken) {
 		const wsBase = window.API.GC_SERVER_BASE.replace(/^http/, 'ws');
 		const wsUrl = `${wsBase}/ws?auth=${encodeURIComponent(idToken)}`;
 
-		console.log("🔌 Connecting to Presence WebSocket...");
 		const ws = new WebSocket(wsUrl);
 		window.presenceWS = ws;
 
@@ -1697,8 +1795,6 @@ window.connectPresenceWS = function (idToken) {
 		};
 
 		ws.onopen = () => {
-			console.log("🟢 Connected to Presence WebSocket successfully!");
-
 			// Set initial status to online explicitly
 			sendWSStatus("online");
 
@@ -1725,16 +1821,17 @@ window.connectPresenceWS = function (idToken) {
 		ws.onmessage = (event) => {
 			try {
 				const data = JSON.parse(event.data);
-				if (data.type === "welcome") {
-					console.log(`👤 WS Presence registered for: ${data.email}`);
-				}
+				// Welcome message can be captured silently
 			} catch (err) {
 				// Ignore JSON parse errors for non-JSON traffic
 			}
 		};
 
 		ws.onclose = (event) => {
-			console.log(`🔴 Connection to Presence WS closed (Code: ${event.code}). Reconnecting in 5s...`);
+			// Print warning only on abnormal close (e.g. server crash or internet drop)
+			if (event.code !== 1000 && event.code !== 1001 && event.code !== 1005) {
+				console.warn(`⚠️ Presence WS closed (Code: ${event.code}). Reconnecting in 5s...`);
+			}
 
 			cleanupActivityListeners();
 
@@ -1759,31 +1856,11 @@ window.connectPresenceWS = function (idToken) {
 		};
 
 		ws.onerror = (err) => {
-			console.error("⚠️ Presence WS Error:", err);
+			// Silence normal socket errors during unloading
+			if (ws.readyState !== WebSocket.CLOSED) {
+				console.error("⚠️ Presence WS Error:", err);
+			}
 		};
-
-		// Explicit unload cleanup to force status change instantly on tab close
-		window.addEventListener("beforeunload", () => {
-			cleanupActivityListeners();
-			if (ws.readyState === WebSocket.OPEN) {
-				try {
-					ws.send(JSON.stringify({ type: "status", status: "offline" }));
-					ws.close();
-				} catch (e) { }
-			}
-
-			// Fire-and-forget keepalive REST fetch to mark offline instantly
-			if (window.cachedUserToken) {
-				try {
-					const apiBase = window.API.GC_SERVER_BASE;
-					fetch(`${apiBase}/user/presence-offline?auth=${encodeURIComponent(window.cachedUserToken)}`, {
-						method: "POST",
-						mode: "no-cors",
-						keepalive: true
-					});
-				} catch (e) { }
-			}
-		});
 
 	} catch (err) {
 		console.error("❌ Failed to initialize WebSocket Presence:", err);

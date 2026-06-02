@@ -22,10 +22,10 @@
 		RDS.init({
 			debug: 0,
 			remMode: 'responsive',
-			breakpoints: { mobile: 640, tablet: 1023 },
+			breakpoints: { mobile: 550, tablet: 1023 },
 			desktop: { baseWidth: 1920, baseHeight: 1080, minScale: 0.3, maxScale: 1.2 },
 			tablet: { baseWidth: 1023, baseHeight: 1280, minScale: 0.2, maxScale: 1.1 },
-			mobile: { baseWidth: 640, baseHeight: 900, minScale: 0.1, maxScale: 1.0 }
+			mobile: { baseWidth: 550, baseHeight: 900, minScale: 0.1, maxScale: 1.0 }
 		});
 	</script>
 
@@ -133,13 +133,13 @@
 					onclick="window.setActiveMenu('pricing', true)">
 					<i class="fa-solid fa-spinner fa-spin sidebar-pending-payment-spinner"></i>
 					<span class="sidebar-pending-payment-text">PENDING
-						SUBSCRIPTION</span>
+						PAYMENTS</span>
 				</div>
 				<div id="sidebar-pending-api-notif" class="hide sidebar-pending-api-banner"
 					onclick="window.setActiveMenu('dev-purchases', true)">
 					<i class="fa-solid fa-spinner fa-spin sidebar-pending-api-spinner"></i>
 					<span class="sidebar-pending-api-text">PENDING
-						API KEY</span>
+						PAYMENTS</span>
 				</div>
 
 				<div class="menu-item pos-relative" id="notif-container">
@@ -885,7 +885,7 @@
 								<div class="flex-row-between">
 									<h3 class="dashboard-stats-title font-keren"><i
 											class="fa-solid fa-chart-line m-r-8"></i>
-										Daily Limit</h3>
+										Daily Internal Credits</h3>
 									<span id="db-quota-reset-text" class="dashboard-stats-subtitle">Resets in 24
 										hours</span>
 								</div>
@@ -922,6 +922,40 @@
 										<strong id="db-reset-countdown"
 											class="dashboard-stats-meta-value-danger">00:00:00</strong>
 									</div>
+								</div>
+							</div>
+
+							<!-- API Credits Stats Card -->
+							<div class="dashboard-stats-card-main" id="db-api-credits-card">
+								<div class="flex-row-between">
+									<h3 class="dashboard-stats-title font-keren"><i class="fa-solid fa-coins m-r-8"
+											style="color: #00f0ff;"></i>
+										My API Credits</h3>
+									<span class="dashboard-stats-subtitle">Lifetime Credits</span>
+								</div>
+
+								<!-- API Credits Content -->
+								<div
+									style="background: var(--bg-primary); padding: 25px 15px; border-radius: 16px; border: 1px solid var(--border-color); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+									<span
+										style="display: block; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; font-size: 11px; letter-spacing: 1.5px;">API
+										Credits</span>
+									<div id="db-api-credits-value"
+										style="font-size: 32px; font-family: Arial, Helvetica, sans-serif; color: #66ffd9; text-shadow: 0 0 15px rgba(102, 255, 217, 0.4); font-weight: bold;">
+										0
+									</div>
+									<span id="db-api-credits-breakdown"
+										style="display: block; color: var(--text-muted); margin-top: 8px; font-size: 11px;">
+										(0 - Daily Bonus + 0 - Purchased)
+									</span>
+								</div>
+
+								<div
+									style="display: flex; justify-content: center; margin-top: auto; padding-top: 10px;">
+									<button class="btn btn-primary" onclick="window.setActiveMenu('dev-add', true)"
+										style="padding: 10px 20px; border-radius: 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; box-shadow: 0 4px 15px rgba(175, 134, 252, 0.3);">
+										<i class="fa-solid fa-cart-shopping"></i> Buy Credits
+									</button>
 								</div>
 							</div>
 
@@ -2207,39 +2241,71 @@
 										<h2 class="font-keren documentation-title">
 											Gmail Checker Guide</h2>
 										<p class="legal-subtitle">
-											Comprehensive bulk verification guide with live WebSocket streaming and credit refund guarantees</p>
+											Comprehensive bulk verification guide with live WebSocket streaming and
+											credit refund guarantees</p>
 									</div>
 								</div>
 
 								<div class="documentation-body">
-									<p><strong>Purpose:</strong> Verify large lists of Gmail addresses programmatically or in the browser workspace to check if they are active, disabled, or unregistered.</p>
+									<p><strong>Purpose:</strong> Verify large lists of Gmail addresses programmatically
+										or in the browser workspace to check if they are active, disabled, or
+										unregistered.</p>
 
-									<h4 class="font-keren documentation-section-heading">Core Verification Engines (Modes):</h4>
+									<h4 class="font-keren documentation-section-heading">Core Verification Engines
+										(Modes):</h4>
 									<ul class="documentation-code-list" style="margin-left: 20px; margin-bottom: 20px;">
-										<li><strong>Fast Check:</strong> High-speed syntax analysis and lightning-fast response checks. Best for rapid sorting and filtering of massive bulk lists.</li>
-										<li><strong>Deep Check:</strong> Performs an exhaustive, real-time mailbox availability check, and anti-greylisting checks. Slower but achieves absolute 100% verification accuracy.</li>
+										<li><strong>Fast Check:</strong> High-speed syntax analysis and lightning-fast
+											response checks. Best for rapid sorting and filtering of massive bulk lists.
+										</li>
+										<li><strong>Deep Check:</strong> Performs an exhaustive, real-time mailbox
+											availability check, and anti-greylisting checks. Slower but achieves
+											absolute 100% verification accuracy.</li>
 									</ul>
 
-									<h4 class="font-keren documentation-section-heading">Pay-on-Success Credit Refund Policy (100% Risk-Free):</h4>
-									<p>We believe in absolute fairness and credit security. Every check consumes <strong>1 Credit</strong> (or daily quota unit). However, we have built-in safety nets:</p>
-									<div class="documentation-warning-box" style="margin: 15px 0; background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2);">
-										<i class="fa-solid fa-coins" style="color: #00f0ff; font-size: 1.5rem; margin-right: 15px;"></i>
+									<h4 class="font-keren documentation-section-heading">Pay-on-Success Credit Refund
+										Policy (100% Risk-Free):</h4>
+									<p>We believe in absolute fairness and credit security. Every check consumes
+										<strong>1 Credit</strong> (or daily quota unit). However, we have built-in
+										safety nets:
+									</p>
+									<div class="documentation-warning-box"
+										style="margin: 15px 0; background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2);">
+										<i class="fa-solid fa-coins"
+											style="color: #00f0ff; font-size: 1.5rem; margin-right: 15px;"></i>
 										<div>
 											<strong style="color: #00f0ff;">Fail-Safe Credit Protections:</strong>
-											<ul style="margin: 5px 0 0 15px; padding: 0; font-size: 0.9rem; line-height: 1.5;">
-												<li><strong>Partial Refund:</strong> If any email checking attempt fails (returning a <code>failed</code> status due to worker timeouts, server glitches, or external network blocks), the credits consumed by those failed lines are <strong>instantly refunded</strong> back to your account profile! You only pay for definitive outcomes (Live, Disabled, Unregistered).</li>
-												<li><strong>Full Cancellation Stop Refund:</strong> If you click the **STOP** button during a bulk checking batch, a cancellation command is immediately sent over the WebSocket channel. The backend worker terminates the execution loop instantly, and all unprocessed remaining credits are <strong>immediately refunded</strong> back to your balance!</li>
+											<ul
+												style="margin: 5px 0 0 15px; padding: 0; font-size: 0.9rem; line-height: 1.5;">
+												<li><strong>Partial Refund:</strong> If any email checking attempt fails
+													(returning a <code>failed</code> status due to worker timeouts,
+													server glitches, or external network blocks), the credits consumed
+													by those failed lines are <strong>instantly refunded</strong> back
+													to your account profile! You only pay for definitive outcomes (Live,
+													Disabled, Unregistered).</li>
+												<li><strong>Full Cancellation Stop Refund:</strong> If you click the
+													**STOP** button during a bulk checking batch, a cancellation command
+													is immediately sent over the WebSocket channel. The backend worker
+													terminates the execution loop instantly, and all unprocessed
+													remaining credits are <strong>immediately refunded</strong> back to
+													your balance!</li>
 											</ul>
 										</div>
 									</div>
 
 									<h4 class="font-keren documentation-section-heading">How to Use:</h4>
 									<ol class="documentation-list">
-										<li>Navigate to the <strong>Apps > Gmail Checker</strong> menu in the sidebar.</li>
-										<li>Paste your raw email list into the input box (supports thousands of lines instantly without browser freeze).</li>
-										<li>Select your desired verification mode (<strong>Fast Check</strong> vs <strong>Deep Check</strong>) and click <strong>Start Checking</strong>.</li>
-										<li>The verification engine establishes a high-performance WebSocket connection, streaming live outcomes onto your dashboard line-by-line in real-time.</li>
-										<li>Filter results seamlessly using the Live, Disabled, Unregistered, Bad, or Failed tabs, and click <strong>Copy</strong> or <strong>Download</strong> to export your clean lists.</li>
+										<li>Navigate to the <strong>Apps > Gmail Checker</strong> menu in the sidebar.
+										</li>
+										<li>Paste your raw email list into the input box (supports thousands of lines
+											instantly without browser freeze).</li>
+										<li>Select your desired verification mode (<strong>Fast Check</strong> vs
+											<strong>Deep Check</strong>) and click <strong>Start Checking</strong>.
+										</li>
+										<li>The verification engine establishes a high-performance WebSocket connection,
+											streaming live outcomes onto your dashboard line-by-line in real-time.</li>
+										<li>Filter results seamlessly using the Live, Disabled, Unregistered, Bad, or
+											Failed tabs, and click <strong>Copy</strong> or <strong>Download</strong> to
+											export your clean lists.</li>
 									</ol>
 								</div>
 							</div>
@@ -2345,13 +2411,34 @@
 											<i class="fa-solid fa-coins"></i> API Credits & Limits
 										</h4>
 										<p class="inline-style-gen-30">
-											Every programmatic check made via our API endpoints consumes exactly <strong>1 Credit</strong>. To support developer integration, our billing engine employs strict success guarantees:
+											Every programmatic check made via our API endpoints consumes exactly
+											<strong>1 Credit</strong>. To support developer integration, our billing
+											engine employs strict success guarantees:
 										</p>
 										<ul class="inline-style-gen-55">
-											<li><strong>Welcome Bonus:</strong> New developer accounts receive a one-time bonus of <strong>1,000 API Credits</strong> instantly upon sign-up to run deep integrations.</li>
-											<li><strong>Daily Free Tier:</strong> Get <strong>1,000 Free Daily Credits</strong> every single day (refreshed daily at 00:00 UTC) to power automated check flows.</li>
-											<li><strong>Success-Only Billing Guarantee:</strong> API requests enjoy the exact same fail-safe protection. If any checked email results in a <code>failed</code> status due to network lag, server timeouts, or temporary connectivity errors, that credit is **instantly refunded** back to your API Key balance automatically!</li>
-											<li><strong>Interchangeable Terms:</strong> Under the hood, <strong>Credits</strong> and <strong>Daily Limit</strong> refer to the exact same unit of verification (1 check = 1 Credit).</li>
+											<li><strong>Welcome Bonus:</strong> New developer accounts receive a
+												one-time bonus of <strong>1,000 API Credits</strong> instantly upon
+												sign-up to run deep integrations.</li>
+											<li><strong>Daily Free Tier:</strong> Get <strong>1,000 Free Daily
+													Credits</strong> every single day (refreshed daily at 00:00 UTC) to
+												power automated check flows.</li>
+											<li><strong>Success-Only Billing Guarantee:</strong> API requests enjoy the
+												exact same fail-safe protection. If any checked email results in a
+												<code>failed</code> status due to network lag, server timeouts, or
+												temporary connectivity errors, that credit is **instantly refunded**
+												back to your API Key balance automatically!
+											</li>
+											<li><strong>Maximum Payload Ceiling:</strong> A single API request/batch can
+												contain a maximum of <strong>100,000 emails</strong>. Any request
+												exceeding this limit will be instantly rejected with a
+												<code>400 Bad Request</code> to guarantee server memory stability and
+												ultra-low latency. If you have larger lists, please divide them into
+												multiple chunks or use streaming.
+											</li>
+											<li><strong>Interchangeable Terms:</strong> Under the hood,
+												<strong>Credits</strong> and <strong>Daily Limit</strong> refer to the
+												exact same unit of verification (1 check = 1 Credit).
+											</li>
 										</ul>
 									</div>
 
@@ -2574,12 +2661,22 @@ try {
 												Premium Membership (Web-App)
 											</span>
 											<p class="documentation-info-card-text inline-style-gen-31">
-												Unlocks ultra-high volume email checking limits inside the browser workspace running on high-speed dedicated checking nodes.
+												Unlocks ultra-high volume email checking limits inside the browser
+												workspace running on high-speed dedicated checking nodes.
 											</p>
 											<ul class="documentation-info-card-list">
-												<li><strong>Free Plan:</strong> 1,000 credits / day (Lifetime access).</li>
-												<li><strong>PRO Plan ($2.99 / 90 Days):</strong> 25,000 credits / day (2.25M credits in total!).</li>
-												<li><strong>ULTRA Plan ($8.99 / 90 Days):</strong> 100,000 credits / day (9M credits in total!) + dedicated fast servers.</li>
+												<li><strong>Free Plan:</strong> 1,000 credits / day (Lifetime access).
+												</li>
+												<li><strong>PRO Plan ($2.99 / 90 Days):</strong> 25,000 credits / day
+													(2.25M credits in total!).</li>
+												<li><strong>ULTRA Plan ($8.99 / 90 Days):</strong> 100,000 credits / day
+													(9M credits in total!) + dedicated fast servers.</li>
+												<li style="margin-top: 8px; color: #af86fc;"><i
+														class="fa-solid fa-circle-info m-r-4"></i> <strong>Seamless
+														Rollover:</strong> If your daily internal balance runs out, the
+													browser workspace will automatically consume credits from your
+													purchased <strong>Developer API Credits</strong> balance so you
+													never experience service interruption!</li>
 											</ul>
 										</div>
 										<!-- Box 2: API -->
@@ -2588,19 +2685,29 @@ try {
 													class="fa-solid fa-key m-r-6"></i>
 												Developer API Keys</span>
 											<p class="documentation-info-card-text inline-style-gen-50">
-												Perfect for external programmatic integrations. API usage is decoupled entirely from web-app limits.
+												Perfect for external programmatic integrations. API usage is decoupled
+												entirely from web-app limits.
 											</p>
 											<ul class="documentation-info-card-list inline-style-gen-107">
-												<li><strong>Welcome Bonus:</strong> New accounts get a one-time gift of <strong>1,000 API Credits</strong>.</li>
-												<li><strong>Daily Free Tier:</strong> Get <strong>1,000 Free Credits / Daily Limit</strong> refreshed every day.</li>
+												<li><strong>Welcome Bonus:</strong> New accounts get a one-time gift of
+													<strong>1,000 API Credits</strong>.
+												</li>
+												<li><strong>Daily Free Tier:</strong> Get <strong>1,000 Free Credits /
+														Daily Limit</strong> refreshed every day.</li>
 												<li><strong>1M Credits Package:</strong> $1.99 (one-time purchase).</li>
 												<li><strong>2M Credits Package:</strong> $2.99 (one-time purchase).</li>
 												<li><strong>3M Credits Package:</strong> $3.89 (one-time purchase).</li>
 												<li><strong>4M Credits Package:</strong> $4.99 (one-time purchase).</li>
 												<li><strong>5M Credits Package:</strong> $5.99 (one-time purchase).</li>
+												<li style="margin-top: 8px; color: #00e5ff;"><i
+														class="fa-solid fa-circle-info m-r-4"></i> <strong>Dual-Usage
+														Support:</strong> Purchased API Credits can be used for external
+													programmatic API integrations AND as an automatic backup for browser
+													web-app verification checks!</li>
 											</ul>
 											<p class="inline-style-gen-2">
-												* Note: 1 Credit = 1 email check. The terms <strong>Credits</strong> and <strong>Limit</strong> refer to the same unit in our database.
+												* Note: 1 Credit = 1 email check. The terms <strong>Credits</strong> and
+												<strong>Limit</strong> refer to the same unit in our database.
 											</p>
 										</div>
 									</div>
@@ -2640,12 +2747,21 @@ try {
 										</div>
 									</div>
 
-									<div class="documentation-warning-box" style="margin-top: 15px; border-color: rgba(46, 213, 115, 0.4); background: rgba(46, 213, 115, 0.05);">
-										<i class="fa-solid fa-shield-halved documentation-warning-icon" style="color: #2ed573;"></i>
+									<div class="documentation-warning-box"
+										style="margin-top: 15px; border-color: rgba(46, 213, 115, 0.4); background: rgba(46, 213, 115, 0.05);">
+										<i class="fa-solid fa-shield-halved documentation-warning-icon"
+											style="color: #2ed573;"></i>
 										<div>
-											<strong class="documentation-warning-title" style="color: #2ed573;">100% Credit Safety & Pay-on-Success Policy:</strong>
+											<strong class="documentation-warning-title" style="color: #2ed573;">100%
+												Credit Safety & Pay-on-Success Policy:</strong>
 											<p class="documentation-warning-text">
-												Our billing engine implements strict consumer protection rules. All bulk checks (via both browser workspace and programmatic API) operate on a success-only model. If any checking processes are stopped mid-way by the user, or if individual check lines fail due to networking issues or remote server downtime, all affected credits are **automatically and instantly refunded** back to your active credit balance. You will never pay for incomplete or failed checks.</p>
+												Our billing engine implements strict consumer protection rules. All bulk
+												checks (via both browser workspace and programmatic API) operate on a
+												success-only model. If any checking processes are stopped mid-way by the
+												user, or if individual check lines fail due to networking issues or
+												remote server downtime, all affected credits are **automatically and
+												instantly refunded** back to your active credit balance. You will never
+												pay for incomplete or failed checks.</p>
 										</div>
 									</div>
 								</div>
@@ -2881,26 +2997,32 @@ try {
 										<label class="history-sidebar-section-title">App Category</label>
 										<div class="history-tabs-container">
 											<button class="btn btn-filter-pill active" data-category="all">
-												<i class="fa-solid fa-border-all" style="color: var(--text-secondary);"></i> All Apps
+												<i class="fa-solid fa-border-all"
+													style="color: var(--text-secondary);"></i> All Apps
 											</button>
 											<button class="btn btn-filter-pill" data-category="app1">
-												<i class="fa-solid fa-envelope" style="color: #af86fc;"></i> Gmail Checker
+												<i class="fa-solid fa-envelope" style="color: #af86fc;"></i> Gmail
+												Checker
 											</button>
 											<button class="btn btn-filter-pill" data-category="app2">
-												<i class="fa-solid fa-wand-magic-sparkles" style="color: #00f0ff;"></i> Gmail Dot Tricks
+												<i class="fa-solid fa-wand-magic-sparkles" style="color: #00f0ff;"></i>
+												Gmail Dot Tricks
 											</button>
 											<button class="btn btn-filter-pill" data-category="app3">
-												<i class="fa-solid fa-shuffle" style="color: #66ffd9;"></i> Name Combiner
+												<i class="fa-solid fa-shuffle" style="color: #66ffd9;"></i> Name
+												Combiner
 											</button>
 											<button class="btn btn-filter-pill" data-category="app4">
-												<i class="fa-solid fa-filter" style="color: #ffd700;"></i> Email Extractor
+												<i class="fa-solid fa-filter" style="color: #ffd700;"></i> Email
+												Extractor
 											</button>
 										</div>
 									</div>
 
 									<!-- Action Controls -->
 									<div class="inline-style-gen-99">
-										<button class="btn btn-danger-custom inline-style-gen-14" id="btn-clear-all-history">
+										<button class="btn btn-danger-custom inline-style-gen-14"
+											id="btn-clear-all-history">
 											<i class="fa-solid fa-trash-can inline-style-gen-82"></i> Clear All History
 										</button>
 									</div>
@@ -3285,7 +3407,8 @@ try {
 												<option value="low">Low</option>
 												<option value="medium" selected>Medium</option>
 												<option value="high">High</option>
-												<option value="vip" id="support-priority-vip-opt">👑 VIP Priority (VIP Only)</option>
+												<option value="vip" id="support-priority-vip-opt">👑 VIP Priority (VIP
+													Only)</option>
 											</select>
 										</div>
 									</div>
@@ -3349,10 +3472,12 @@ try {
 						</button>
 
 						<div class="history-detail-modal-header">
-							<div class="history-sidebar-actions inline-style-gen-68" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+							<div class="history-sidebar-actions inline-style-gen-68"
+								style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
 								<div>
 									<span id="ticket-modal-id" class="history-detail-modal-app-badge">#TCK-12345</span>
-									<span id="ticket-modal-status-badge" class="history-detail-modal-meta-badge">OPEN</span>
+									<span id="ticket-modal-status-badge"
+										class="history-detail-modal-meta-badge">OPEN</span>
 								</div>
 								<button id="btn-modal-resolve" class="btn inline-style-gen-96">
 									<i class="fa-solid fa-check"></i> Close Ticket

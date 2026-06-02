@@ -954,6 +954,7 @@ function updateAdminModalState(ticket) {
         msgRow.style.gap = '10px';
         msgRow.style.width = '100%';
         msgRow.style.marginBottom = '12px';
+        msgRow.style.whiteSpace = 'pre-wrap';
 
         const avatarImg = document.createElement('img');
         avatarImg.src = avatarUrl;

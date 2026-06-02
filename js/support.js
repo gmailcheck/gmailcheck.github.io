@@ -936,6 +936,7 @@
 				msgRow.style.gap = '10px';
 				msgRow.style.width = '100%';
 				msgRow.style.marginBottom = '12px';
+				msgRow.style.whiteSpace = 'pre-wrap';
 
 				// Create Avatar Image DOM element outside bubble
 				const avatarImg = document.createElement('img');

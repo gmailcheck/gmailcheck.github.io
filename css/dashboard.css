@@ -148,6 +148,7 @@ body[data-rds-mode="mobile"] .dashboard-stats-row {
     box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 20px;
     padding: 25px;
     transition: all 0.3s ease;

@@ -60,7 +60,7 @@
 				// Paksa fetch ulang (jangan pakai cache UI)
 				window.loadDashboardData(true);
 			}
-		}, 500); // Naikkan delay jadi 500ms agar memberi waktu Firebase DB sinkronisasi
+		}, 2000); // Naikkan delay ke 2000ms agar memberi waktu Firebase DB transaksional (retry ETag) selesai commit
 	}
 
 	// Dynamic script loading for JSZip
@@ -663,7 +663,15 @@
 
 							throw new Error('Insufficient Credits');
 						}
-						throw new Error(`Server returned ${response.status}`);
+						let errorMsg = `Server returned ${response.status}`;
+						try {
+							const errData = await response.json();
+							if (errData && errData.error) {
+								errorMsg = `Server error: ${errData.error}`;
+								console.error("Backend Error Details:", errData);
+							}
+						} catch (e) {}
+						throw new Error(errorMsg);
 					}
 
 					const data = await response.json();
@@ -681,6 +689,7 @@
 							const allowed = ['live', 'verify', 'disabled', 'unregistered', 'bad'];
 							if (!allowed.includes(status)) status = 'bad';
 						}
+
 
 						if (status === 'failed') {
 							batchFailedCount++;
@@ -792,6 +801,14 @@
 	// Save run to local storage history
 	function saveUnifiedHistory() {
 		try {
+			// Saring hasil: jangan masukkan status === 'failed' ke history
+			const filteredResults = results.filter(x => x.status !== 'failed');
+
+			// Jika failed semuanya (misal abort controller, respon 500, dll), jangan masukkan ke history sama sekali
+			if (filteredResults.length === 0) {
+				return;
+			}
+
 			const histKey = 'projekin_app_history';
 			const raw = localStorage.getItem(histKey);
 			const history = raw ? JSON.parse(raw) : [];
@@ -802,7 +819,7 @@
 			const selectedServer = selectServer ? selectServer.value : 'fastServer1';
 
 			// Combine output content
-			const contentText = results.map(x => `${x.email} - ${x.status.toUpperCase()}`).join('\n');
+			const contentText = filteredResults.map(x => `${x.email} - ${x.status.toUpperCase()}`).join('\n');
 
 			history.unshift({
 				id: 'hist_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
@@ -810,7 +827,7 @@
 				appName: 'Gmail Checker',
 				title: dateStr,
 				time: timeStr,
-				count: results.length,
+				count: filteredResults.length,
 				content: contentText,
 				server: selectedServer
 			});
@@ -820,7 +837,7 @@
 
 			// Save to premium offline IndexedDB History
 			if (window.saveHistoryEntry) {
-				window.saveHistoryEntry('app1', 'Gmail Checker', results.length, contentText, 'emails', { server: selectedServer });
+				window.saveHistoryEntry('app1', 'Gmail Checker', filteredResults.length, contentText, 'emails', { server: selectedServer });
 			}
 		} catch (e) {
 			console.error("Unified history persist error:", e);
@@ -1154,6 +1171,37 @@
 	});
 
 	function showInsufficientCreditsModal(message, remainingCredits) {
+		// Calculate the actual sum of daily + api_credits dynamically
+		let actualRemaining = remainingCredits;
+		if (window.dashboardProfile) {
+			const profile = window.dashboardProfile;
+			let plan = profile.subscription_plan || 'none';
+			const expiry = profile.subscription_expiry || 0;
+			if (plan !== 'none' && expiry < Date.now()) plan = 'none';
+
+			let dailyCredits = 0;
+			if (plan === 'pro_subs') {
+				dailyCredits = profile.pro_subs_credits !== undefined ? profile.pro_subs_credits : 0;
+			} else if (plan === 'ultra_subs') {
+				dailyCredits = profile.ultra_subs_credits !== undefined ? profile.ultra_subs_credits : 0;
+			} else if (plan === 'special_subs') {
+				dailyCredits = profile.special_credits !== undefined ? profile.special_credits : 0;
+			} else {
+				dailyCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
+			}
+
+			const apiCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
+			actualRemaining = dailyCredits + apiCredits;
+		} else {
+			const appRemaining = document.getElementById('db-remaining-requests');
+			if (appRemaining && appRemaining.textContent) {
+				const val = parseInt(appRemaining.textContent.replace(/,/g, ''));
+				if (!isNaN(val)) {
+					actualRemaining = val;
+				}
+			}
+		}
+
 		let modal = document.getElementById('insufficient-credits-modal');
 		if (!modal) {
 			modal = document.createElement('div');
@@ -1180,7 +1228,7 @@
 					
 					<!-- Quota Info Box -->
 					<div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 16px; margin: 5px 0; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
-						<span style="color: var(--text-muted); ">Remaining Balance</span>
+						<span style="color: var(--text-muted); ">Remaining Credits</span>
 						<span id="credits-modal-balance" style="color: #ff6666; background: rgba(255, 102, 102, 0.1); padding: 4px 10px; border-radius: 8px;">0 credits</span>
 					</div>
 
@@ -1225,7 +1273,7 @@
 
 		// Update modal dynamic values
 		document.getElementById('credits-modal-message').innerHTML = message;
-		document.getElementById('credits-modal-balance').textContent = `${remainingCredits} credit(s)`;
+		document.getElementById('credits-modal-balance').textContent = `${actualRemaining.toLocaleString()} credit(s)`;
 
 		// Show modal
 		modal.classList.remove('hide');
