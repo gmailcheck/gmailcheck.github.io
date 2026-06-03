@@ -844,19 +844,22 @@ window.loadDashboardData = async function (force = false, profileOnly = false) {
 			const expiry = profile.subscription_expiry || 0;
 			if (plan !== 'none' && expiry < Date.now()) plan = 'none';
 
-			let availableCredits = 0;
-			if (plan === 'pro_subs') {
-				availableCredits = profile.pro_subs_credits !== undefined ? profile.pro_subs_credits : 0;
-			} else if (plan === 'ultra_subs') {
-				availableCredits = profile.ultra_subs_credits !== undefined ? profile.ultra_subs_credits : 0;
-			} else if (plan === 'special_subs') {
-				availableCredits = profile.special_credits !== undefined ? profile.special_credits : 0;
-			} else {
-				availableCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
-			}
-
-			const premiumCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
 			const freeCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
+			const proSubsCredits = profile.pro_subs_credits !== undefined ? profile.pro_subs_credits : 0;
+			const ultraSubsCredits = profile.ultra_subs_credits !== undefined ? profile.ultra_subs_credits : 0;
+			const premiumCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
+
+			// Hitung subs credits berdasarkan plan aktif
+			let subsCredits = 0;
+			if (plan === 'pro_subs') subsCredits = proSubsCredits;
+			else if (plan === 'ultra_subs') subsCredits = ultraSubsCredits;
+			else if (plan === 'special_subs') subsCredits = profile.special_credits !== undefined ? profile.special_credits : 0;
+
+			// Total kredit harian yang tersedia = subs credits + free credits (1K harian)
+			// Jika free tier: hanya free_credits
+			const isSubscribed = plan !== 'none' && plan !== 'free';
+			const availableCredits = isSubscribed ? (subsCredits + freeCredits) : freeCredits;
+
 			const totalAvailable = premiumCredits + freeCredits;
 
 			// App Dashboard Credits
@@ -864,18 +867,15 @@ window.loadDashboardData = async function (force = false, profileOnly = false) {
 			const appQuotaBar = document.getElementById('db-quota-bar');
 			const appRemaining = document.getElementById('db-remaining-requests');
 
-			// Determine max daily credit limit based on active plan
-			let maxDailyCredits;
-			if (plan === 'pro_subs') maxDailyCredits = 25000;
-			else if (plan === 'ultra_subs') maxDailyCredits = 100000;
-			else if (plan === 'special_subs') maxDailyCredits = null; // no cap, treat as full
-			else maxDailyCredits = 1000; // free tier
+			// maxDailyCredits dari server (tidak ada hardcode di frontend)
+			// Backend mengembalikan daily_limit berdasarkan plan aktif
+			const maxDailyCredits = profile.daily_limit || availableCredits || 1; // null = unlimited → pakai availableCredits
+			const quotaPct = Math.min(100, Math.round((availableCredits / maxDailyCredits) * 100));
 
-			const quotaPct = maxDailyCredits
-				? Math.min(100, Math.round((availableCredits / maxDailyCredits) * 100))
-				: 100;
-
-			if (appUsageLabel) appUsageLabel.textContent = `Credits: ${availableCredits.toLocaleString()}`;
+			if (appUsageLabel) {
+				// Tampilkan total gabungan (subs + free) langsung — lebih bersih
+				appUsageLabel.textContent = `Credits: ${availableCredits.toLocaleString()}`;
+			}
 			if (appQuotaBar) {
 				appQuotaBar.style.width = `${quotaPct}%`;
 				if (quotaPct <= 50) {
@@ -886,11 +886,9 @@ window.loadDashboardData = async function (force = false, profileOnly = false) {
 					appQuotaBar.style.boxShadow = '';
 				}
 			}
-			
-			// Penjumlahan Daily Internal Credits + API Credits (termasuk free daily bonus jika berlangganan aktif)
-			const totalRemainingSum = plan !== 'none'
-				? (availableCredits + premiumCredits + freeCredits)
-				: (availableCredits + premiumCredits);
+
+			// Remaining Checks = total harian tersedia + api_credits
+			const totalRemainingSum = availableCredits + premiumCredits;
 			if (appRemaining) appRemaining.textContent = totalRemainingSum.toLocaleString();
 
 			// Developer Dashboard Credits (Global API Credits)
@@ -1199,9 +1197,9 @@ async function renderDevStatsCards(keys = []) {
 		const maskedKey = k.key.slice(0, 8) + '...' + k.key.slice(-8);
 		const s = statsMap[k.key] || {};
 		const totalUsage = k.usage || s.usage || 0;
-		const totalLimit = k.limit || s.limit || 50000;
+		const totalLimit = k.limit || s.limit || 0;
 		const dailyKeyUsage = s.dailyKeyUsage || 0;
-		const dailyLimit = k.daily_limit || s.daily_limit || 100000;
+		const dailyLimit = k.daily_limit || s.daily_limit || 0;
 		const expiresStr = k.expiresAt === 'lifetime' || s.expiresAt === 'lifetime' ? 'Lifetime' : new Date(k.expiresAt || s.expiresAt).toLocaleDateString();
 
 		html += `
@@ -1290,7 +1288,7 @@ window.renderCreditsTab = function () {
 				<div style="display: flex; flex-direction: column; gap: 12px; width: 100%; box-sizing: border-box;">
 		`;
 		compKeys.forEach(k => {
-			const dailyLimit = k.daily_limit || 100000;
+			const dailyLimit = k.daily_limit || 0;
 			const maskedKey = k.key.slice(0, 8) + '...' + k.key.slice(-8);
 			compHtml += `
 				<div style="background: rgba(0,0,0,0.15); padding: 18px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">

@@ -704,9 +704,8 @@
 									<ul class="pricing-features-list">
 										<li class="pricing-feature-item">
 											<i class="fa-solid fa-circle-check pricing-feature-icon-starter"></i> 1,000
-											Gmail
-											Gmail Checks /
-											Day
+											Credits /
+											Day for Gmail Checks
 										</li>
 										<li class="pricing-feature-item">
 											<i
@@ -742,9 +741,13 @@
 									<ul class="pricing-features-list">
 										<li class="pricing-feature-item">
 											<i class="fa-solid fa-circle-check pricing-feature-icon-pro"></i>
-											<strong>25,000
+											<strong>25,000 Credits / Day for
 												Gmail
-												Checks / Day</strong>
+												Checks </strong>
+										</li>
+										<li class="pricing-feature-item">
+											<i class="fa-solid fa-circle-check pricing-feature-icon-pro"></i>
+											<strong>Free 1,000 Credits / Day</strong>
 										</li>
 										<li class="pricing-feature-item">
 											<i class="fa-solid fa-circle-check pricing-feature-icon-pro"></i> <strong>90
@@ -781,9 +784,11 @@
 									<ul class="pricing-features-list">
 										<li class="pricing-feature-item">
 											<i class="fa-solid fa-circle-check pricing-feature-icon-ultra"></i>
-											<strong>100,000
-												Gmail
-												Checks / Day</strong>
+											<strong>100,000 Credits / Day for Gmail Checks</strong>
+										</li>
+										<li class="pricing-feature-item">
+											<i class="fa-solid fa-circle-check pricing-feature-icon-ultra"></i>
+											<strong>Free 1,000 Credits / Day</strong>
 										</li>
 										<li class="pricing-feature-item">
 											<i class="fa-solid fa-circle-check pricing-feature-icon-ultra"></i>
@@ -2665,12 +2670,13 @@ try {
 												workspace running on high-speed dedicated checking nodes.
 											</p>
 											<ul class="documentation-info-card-list">
-												<li><strong>Free Plan:</strong> 1,000 credits / day (Lifetime access).
+												<li><strong>Free Plan:</strong> 1,000 credits / day (Lifetime access, shared with API Keys).
 												</li>
-												<li><strong>PRO Plan ($2.99 / 90 Days):</strong> 25,000 credits / day
-													(2.25M credits in total!).</li>
+												<li><strong>PRO Plan ($2.99 / 90 Days):</strong> 25,000 credits / day +
+													1,000 Daily Free Credits (Accumulated 26,000 credits/day!).</li>
 												<li><strong>ULTRA Plan ($8.99 / 90 Days):</strong> 100,000 credits / day
-													(9M credits in total!) + dedicated fast servers.</li>
+													+ 1,000 Daily Free Credits (Accumulated 101,000 credits/day!) +
+													dedicated fast servers.</li>
 												<li style="margin-top: 8px; color: #af86fc;"><i
 														class="fa-solid fa-circle-info m-r-4"></i> <strong>Seamless
 														Rollover:</strong> If your daily internal balance runs out, the
@@ -2693,7 +2699,7 @@ try {
 													<strong>1,000 API Credits</strong>.
 												</li>
 												<li><strong>Daily Free Tier:</strong> Get <strong>1,000 Free Credits /
-														Daily Limit</strong> refreshed every day.</li>
+														Daily Limit</strong> refreshed every day. This daily free quota is <strong>fully shared</strong> between your browser dashboard checks and all Developer API Keys.</li>
 												<li><strong>1M Credits Package:</strong> $1.99 (one-time purchase).</li>
 												<li><strong>2M Credits Package:</strong> $2.99 (one-time purchase).</li>
 												<li><strong>3M Credits Package:</strong> $3.89 (one-time purchase).</li>
@@ -3244,7 +3250,8 @@ try {
 									<h4
 										style="margin: 0 0 10px 0; color: var(--text-sharp); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
 										<i class="fa-solid fa-screwdriver-wrench" style="color: #af86fc;"></i>
-										Maintenance Settings</h4>
+										Maintenance Settings
+									</h4>
 									<p
 										style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 20px 0; line-height: 1.4;">
 										Put the system in maintenance mode dynamically. Users will see a full-screen
@@ -3287,7 +3294,8 @@ try {
 									<h4
 										style="margin: 0 0 10px 0; color: var(--text-sharp); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
 										<i class="fa-solid fa-check-double" style="color: #66ffd9;"></i> Force Confirm
-										Payment</h4>
+										Payment
+									</h4>
 									<p
 										style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 20px 0; line-height: 1.4;">
 										Manually approve a pending invoice. This will credit the user account and
@@ -3580,8 +3588,7 @@ try {
 												<option value="low">Low</option>
 												<option value="medium" selected>Medium</option>
 												<option value="high">High</option>
-												<option value="vip" id="support-priority-vip-opt">👑 VIP Priority (VIP
-													Only)</option>
+												<option value="vip" id="support-priority-vip-opt">👑 PRO/ULTRA Priority (PRO/ULTRA Only)</option>
 											</select>
 										</div>
 									</div>

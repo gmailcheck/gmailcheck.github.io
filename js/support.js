@@ -164,19 +164,21 @@
 		// Helper: Check Priority Access based on Membership
 		selectPriority.addEventListener('change', () => {
 			const val = selectPriority.value;
-			const isVip = checkIsVipUser();
+			const isPremium = checkIsPremiumUser();
 
 			if (val === 'vip') {
-				if (!isVip) {
-					window.showAppNotification('warning', '👑 <strong>VIP Priority Exclusive!</strong> VIP Priority is only available for VIP members. Your ticket has been reset to Medium priority.');
+				if (!isPremium) {
+					window.showAppNotification('warning', '👑 <strong>Premium Priority Exclusive!</strong> PRO/ULTRA Priority is only available for PRO/ULTRA members. Your ticket has been reset to Medium priority.');
 					selectPriority.value = 'medium';
 				}
 			}
 		});
 
-		function checkIsVipUser() {
+		function checkIsPremiumUser() {
 			const badge = document.getElementById('user-badge-display');
-			return badge && badge.textContent === 'VIP';
+			if (!badge) return false;
+			const text = badge.textContent.trim();
+			return text === 'PRO' || text === 'ULTRA' || text === 'ADMIN';
 		}
 
 		// Remove file format restrictions on input elements dynamically

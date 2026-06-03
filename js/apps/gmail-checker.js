@@ -1178,15 +1178,17 @@
 			if (plan !== 'none' && expiry < Date.now()) plan = 'none';
 
 			let dailyCredits = 0;
+			const isSubActive = plan !== 'none' && plan !== 'free';
 			if (plan === 'pro_subs') {
 				dailyCredits = profile.pro_subs_credits !== undefined ? profile.pro_subs_credits : 0;
 			} else if (plan === 'ultra_subs') {
 				dailyCredits = profile.ultra_subs_credits !== undefined ? profile.ultra_subs_credits : 0;
 			} else if (plan === 'special_subs') {
 				dailyCredits = profile.special_credits !== undefined ? profile.special_credits : 0;
-			} else {
-				dailyCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
 			}
+			// Selalu tambahkan free_credits (harian) ke total — konsisten dengan dashboard
+			const freeCreditsBalance = profile.free_credits !== undefined ? profile.free_credits : 0;
+			dailyCredits = isSubActive ? (dailyCredits + freeCreditsBalance) : freeCreditsBalance;
 
 			const apiCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
 			actualRemaining = dailyCredits + apiCredits;
