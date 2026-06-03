@@ -2496,8 +2496,6 @@
 												<i class="fa-solid fa-copy"></i> Copy
 											</button>
 											<pre class="documentation-code-block">
-
-# Check Google (Gmail) Account Status
 curl -X POST "https://gmail-checker.blacksoftchild.workers.dev/check1" \
 	-H "Authorization: Bearer YOUR_API_KEY" \
 	-H "Content-Type: application/json" \
@@ -2507,13 +2505,13 @@ curl -X POST "https://gmail-checker.blacksoftchild.workers.dev/check1" \
 			"example2@gmail.com",
 			"example3@gmail.com"
 		]
-}'
-
+}'</pre>
 										</div>
 
 										<!-- Pane Python -->
 										<div id="pane-doc-python" class="doc-pane hide pos-relative">
-											<button class="btn btn-copy-doc btn-doc-copy-code" onclick="window.copyDocCode('pane-doc-python')">
+											<button class="btn btn-copy-doc btn-doc-copy-code"
+												onclick="window.copyDocCode('pane-doc-python')">
 												<i class="fa-solid fa-copy"></i> Copy
 											</button>
 											<pre class="documentation-code-block">
@@ -2670,7 +2668,7 @@ try {
 												workspace running on high-speed dedicated checking nodes.
 											</p>
 											<ul class="documentation-info-card-list">
-												<li><strong>Free Plan:</strong> 1,000 credits / day (Lifetime access, shared with API Keys).
+												<li><strong>Free Plan:</strong> 1,000 credits / day (Lifetime access).
 												</li>
 												<li><strong>PRO Plan ($2.99 / 90 Days):</strong> 25,000 credits / day +
 													1,000 Daily Free Credits (Accumulated 26,000 credits/day!).</li>
@@ -2699,7 +2697,7 @@ try {
 													<strong>1,000 API Credits</strong>.
 												</li>
 												<li><strong>Daily Free Tier:</strong> Get <strong>1,000 Free Credits /
-														Daily Limit</strong> refreshed every day. This daily free quota is <strong>fully shared</strong> between your browser dashboard checks and all Developer API Keys.</li>
+														Daily Limit</strong> refreshed every day.</li>
 												<li><strong>1M Credits Package:</strong> $1.99 (one-time purchase).</li>
 												<li><strong>2M Credits Package:</strong> $2.99 (one-time purchase).</li>
 												<li><strong>3M Credits Package:</strong> $3.89 (one-time purchase).</li>
@@ -3588,7 +3586,8 @@ try {
 												<option value="low">Low</option>
 												<option value="medium" selected>Medium</option>
 												<option value="high">High</option>
-												<option value="vip" id="support-priority-vip-opt">👑 PRO/ULTRA Priority (PRO/ULTRA Only)</option>
+												<option value="vip" id="support-priority-vip-opt">👑 PRO/ULTRA Priority
+													(PRO/ULTRA Only)</option>
 											</select>
 										</div>
 									</div>
@@ -3603,13 +3602,13 @@ try {
 
 									<!-- Image Attachments -->
 									<div class="history-sidebar-section">
-										<label class="history-sidebar-section-title">Attach Images (Max 5)</label>
+										<label class="history-sidebar-section-title">Attach Files (Max 5)</label>
 										<div class="history-sidebar-actions">
 											<input type="file" id="support-images-input" accept="image/*" multiple
 												class="display-none">
 											<button class="btn btn-history-sidebar-action"
 												id="btn-trigger-support-images" type="button">
-												<i class="fa-solid fa-paperclip "></i> Add Images
+												<i class="fa-solid fa-paperclip "></i> Add Files
 											</button>
 											<span id="support-images-count-label"
 												class="dashboard-panel-status-label">No files chosen</span>
