@@ -890,7 +890,7 @@
 								<div class="flex-row-between">
 									<h3 class="dashboard-stats-title font-keren"><i
 											class="fa-solid fa-chart-line m-r-8"></i>
-										Daily Internal Credits</h3>
+										Daily Credits</h3>
 									<span id="db-quota-reset-text" class="dashboard-stats-subtitle">Resets in 24
 										hours</span>
 								</div>
@@ -935,7 +935,7 @@
 								<div class="flex-row-between">
 									<h3 class="dashboard-stats-title font-keren"><i class="fa-solid fa-coins m-r-8"
 											style="color: #00f0ff;"></i>
-										My API Credits</h3>
+										API Credits</h3>
 									<span class="dashboard-stats-subtitle">Lifetime Credits</span>
 								</div>
 
@@ -1375,7 +1375,7 @@
 									<div class="flex-row-between">
 										<h3 class="font-keren dashboard-panel-title"><i
 												class="fa-solid fa-key settings-purchases-icon-cyan"></i>
-											API Keys & Credits Purchases</h3>
+											API Credits Purchases</h3>
 										<span class="dashboard-panel-status-label">Status:
 											Real-time</span>
 									</div>
@@ -1394,7 +1394,7 @@
 									</div>
 
 									<div id="dev-api-info-list" class="dashboard-list-empty">
-										No API key purchase history found.
+										No API Credits purchase history found.
 									</div>
 
 									<div class="dashboard-panel-actions">
@@ -2677,7 +2677,7 @@ try {
 													dedicated fast servers.</li>
 												<li style="margin-top: 8px; color: #af86fc;"><i
 														class="fa-solid fa-circle-info m-r-4"></i> <strong>Seamless
-														Rollover:</strong> If your daily internal balance runs out, the
+														Rollover:</strong> If your daily internal credits runs out, the
 													browser workspace will automatically consume credits from your
 													purchased <strong>Developer API Credits</strong> balance so you
 													never experience service interruption!</li>
@@ -3734,9 +3734,38 @@ try {
 								<input type="file" id="admin-ticket-modal-reply-images-input" multiple
 									class="display-none">
 								<button class="btn btn-history-detail-modal-close" id="admin-btn-trigger-reply-images"
-									type="button">
+									type="button" title="Attach Image">
 									<i class="fa-solid fa-paperclip whitelist-modal-icon"></i>
 								</button>
+								<div class="pos-relative">
+									<button class="btn btn-history-detail-modal-close" id="admin-btn-trigger-templates"
+										type="button" title="Reply Templates">
+										<i class="fa-solid fa-file-lines whitelist-modal-icon"></i>
+									</button>
+									<div id="admin-templates-popover" class="hide"
+										style="position: absolute; bottom: 120%; left: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 350px; padding: 15px; z-index: 9999;">
+										<div
+											style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+											<h4 class="font-keren" style="margin: 0; font-size: 1rem;">Saved Templates
+											</h4>
+											<button id="admin-btn-close-templates" class="btn"
+												style="background: none; border: none; color: var(--text-muted); cursor: pointer;"><i
+													class="fa-solid fa-xmark"></i></button>
+										</div>
+										<div id="admin-templates-list"
+											style="max-height: 200px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;">
+											<!-- Templates will be populated here -->
+										</div>
+										<div style="display: flex; gap: 8px;">
+											<input type="text" id="admin-new-template-input" class="db-input"
+												placeholder="New template text..."
+												style="flex: 1; font-size: 0.85rem; padding: 6px;">
+											<button id="admin-btn-add-template" class="btn btn-primary"
+												style="padding: 6px 12px; font-size: 0.85rem;" title="Save Template"><i
+													class="fa-solid fa-plus"></i></button>
+										</div>
+									</div>
+								</div>
 								<input type="text" id="admin-ticket-modal-reply-input"
 									placeholder="Type your reply to the user here..."
 									class="history-detail-modal-input-field">
