@@ -52,6 +52,7 @@
 	let abortController = null;
 	let sanitizerWorker = null;
 	let syncTimeout = null;
+	let activeQueue = null;
 
 	function triggerCreditsSync() {
 		if (syncTimeout) clearTimeout(syncTimeout);
@@ -311,6 +312,9 @@
 				this.process();
 			});
 		}
+		clear() {
+			this.queue = [];
+		}
 	}
 
 	// Fetch helper with timeout per User Plan
@@ -419,29 +423,35 @@
 			};
 
 			ws.onerror = (err) => {
-				window.gmailCheckerWSConnectPromise = null;
+				if (window.gmailCheckerWS === ws) {
+					window.gmailCheckerWSConnectPromise = null;
+					window.gmailCheckerWS = null;
+				}
 				if (!isInitialized) {
 					reject(new Error('WebSocket connection error'));
 				}
-				// Reject all pending active requests
-				for (const [batchId, callback] of window.gmailCheckerWSCallbacks.entries()) {
-					callback.reject(new Error('WebSocket error occurred'));
+				if (window.gmailCheckerWS === ws || window.gmailCheckerWS === null) {
+					for (const [batchId, callback] of window.gmailCheckerWSCallbacks.entries()) {
+						callback.reject(new Error('WebSocket error occurred'));
+					}
+					window.gmailCheckerWSCallbacks.clear();
 				}
-				window.gmailCheckerWSCallbacks.clear();
-				window.gmailCheckerWS = null;
 			};
 
 			ws.onclose = (event) => {
-				window.gmailCheckerWSConnectPromise = null;
+				if (window.gmailCheckerWS === ws) {
+					window.gmailCheckerWSConnectPromise = null;
+					window.gmailCheckerWS = null;
+				}
 				if (!isInitialized) {
 					reject(new Error(`WebSocket closed (Code: ${event.code})`));
 				}
-				// Reject all pending active requests
-				for (const [batchId, callback] of window.gmailCheckerWSCallbacks.entries()) {
-					callback.reject(new Error('WebSocket connection lost'));
+				if (window.gmailCheckerWS === ws || window.gmailCheckerWS === null) {
+					for (const [batchId, callback] of window.gmailCheckerWSCallbacks.entries()) {
+						callback.reject(new Error('WebSocket connection lost'));
+					}
+					window.gmailCheckerWSCallbacks.clear();
 				}
-				window.gmailCheckerWSCallbacks.clear();
-				window.gmailCheckerWS = null;
 			};
 		});
 
@@ -470,7 +480,17 @@
 							reject(new Error('Aborted'));
 						}
 					};
-					signal.addEventListener('abort', onAbort);
+					if (signal.aborted) {
+						onAbort();
+					} else {
+						signal.addEventListener('abort', onAbort);
+					}
+				}
+
+				if (signal && signal.aborted) return; // Prevent sending if already aborted
+				if (ws.readyState !== WebSocket.OPEN) {
+					reject(new Error('WebSocket is not open'));
+					return;
 				}
 
 				let serviceName = 'check1';
@@ -559,7 +579,7 @@
 		renderResultsList();
 
 		let completedChunks = 0;
-		const queue = new ConcurrencyQueue(concurrency);
+		activeQueue = new ConcurrencyQueue(concurrency);
 
 		// Resolve Firebase Auth ID Token for Cloudflare Worker Authorization
 		let idToken = '';
@@ -604,7 +624,7 @@
 			const progressEl = document.getElementById(`${cardId}-progress`);
 			const statsEl = document.getElementById(`${cardId}-stats`);
 
-			queue.push(async (next) => {
+			activeQueue.push(async (next) => {
 				if (!isRunning) {
 					next();
 					return;
@@ -850,6 +870,9 @@
 			abortController.abort();
 		}
 		isRunning = false;
+		if (activeQueue) {
+			activeQueue.clear();
+		}
 		btnExecute.classList.remove('hide');
 		btnStop.classList.add('hide');
 		window.showAppNotification('danger', '<strong>Cancelled:</strong> Verification process was stopped by user.');
@@ -858,6 +881,7 @@
 	// Back/Reset button
 	btnBack.addEventListener('click', function () {
 		isRunning = false;
+		if (activeQueue) activeQueue.clear();
 		if (abortController) abortController.abort();
 
 		resultsContainer.classList.add('hide');
