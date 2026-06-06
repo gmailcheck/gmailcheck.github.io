@@ -1,8 +1,6 @@
 /* ==========================================================================
    TOPBAR AND NOTIFICATION COMPONENTS
    ========================================================================== */
-
-
 .top-bar {
     height: 100px;
     width: 100%;
@@ -13,12 +11,7 @@
     box-sizing: border-box;
 }
 
-.anon-logo {
-    flex: 1;
-}
-
 /* Hide top bar logo when sidebar is visible (not on Home and not Anonymous, or on Doc page) */
-.container:not(.anonim):not(.home-active) .anon-logo,
 .container.doc-active .anon-logo {
     display: none !important;
 }
@@ -34,16 +27,11 @@
 }
 
 .anon-logo {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 12px;
     cursor: pointer;
-}
-
-.anon-logo img {
-    border-radius: 8px;
-    height: 30px;
-    width: 30px;
 }
 
 .top-bar-logo-text {
@@ -71,18 +59,7 @@
     color: var(--text-sharp);
 }
 
-
-
 /* Hide notifications in top bar on mobile to fit search/logo */
-body[data-rds-mode="mobile"] #top-bar-notification-container {
-    display: none !important;
-}
-
-
-
-body[data-rds-mode="tablet"] #top-bar-notification-container {
-    display: none !important;
-}
 
 .top-bar-notification-container {
     left: 50%;
@@ -104,15 +81,4 @@ body[data-rds-mode="tablet"] #top-bar-notification-container {
 .top-bar-logo-img {
     height: 32px;
     width: 32px;
-}
-
-.top-bar-logo-text {
-
-
-
-    letter-spacing: 0.5px;
-}
-
-body[data-rds-mode="mobile"] .anon-logo span {
-    display: none !important;
 }

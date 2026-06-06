@@ -1,0 +1,32 @@
+/* ==========================================================================
+   ANONYMOUS CLIENT STATE SPECIFIC STYLES
+   ========================================================================== */
+
+.container.anonim:not(.doc-active) #side-bar {
+    display: none !important;
+}
+
+.container.anonim #sidebar-developer-btn,
+.container.anonim #sidebar-settings-btn,
+.container.anonim #user-profile-card-trigger,
+.container.anonim #sidebar-pending-payment-notif,
+.container.anonim #sidebar-pending-api-notif {
+    display: none !important;
+}
+
+.container.anonim:not(.doc-active) #page-name {
+    display: none !important;
+}
+
+/* Toggle Home Page CTA buttons based on auth state */
+.container.anonim #btn-home-get-started {
+    display: inline-flex !important;
+}
+
+.container.anonim #btn-home-open-dashboard {
+    display: none !important;
+}
+
+.container.anonim #notif-container {
+    display: none !important;
+}

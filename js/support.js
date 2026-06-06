@@ -46,6 +46,19 @@
 		let selectedReplyFiles = [];
 		let pollingInterval = null;
 
+		function escapeHTML(str) {
+			if (!str) return '';
+			return str.replace(/[&<>'"]/g,
+				tag => ({
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					"'": '&#39;',
+					'"': '&quot;'
+				}[tag] || tag)
+			);
+		}
+
 		window.supportTicketsWS = null;
 		window.supportTicketsList = [];
 		let reconnectTimeout = null;
@@ -166,7 +179,7 @@
 			const val = selectPriority.value;
 			const isPremium = checkIsPremiumUser();
 
-			if (val === 'vip') {
+			if (val === 'premium') {
 				if (!isPremium) {
 					window.showAppNotification('warning', '👑 <strong>Premium Priority Exclusive!</strong> PRO/ULTRA Priority is only available for PRO/ULTRA members. Your ticket has been reset to Medium priority.');
 					selectPriority.value = 'medium';
@@ -287,7 +300,6 @@
 				div.style.width = '60px';
 				div.style.height = '60px';
 				div.style.borderRadius = '8px';
-				div.style.overflow = 'hidden';
 				div.style.border = '1px solid var(--border-color)';
 				div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
 				div.style.display = 'flex';
@@ -378,7 +390,6 @@
 				div.style.width = '55px';
 				div.style.height = '55px';
 				div.style.borderRadius = '8px';
-				div.style.overflow = 'hidden';
 				div.style.border = '1px solid var(--border-color)';
 				div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
 				div.style.display = 'flex';
@@ -448,9 +459,8 @@
 			}
 
 			try {
-				const user = window.firebaseAuth.currentUser;
-				if (!user) return;
-				const idToken = await user.getIdToken(false);
+				const idToken = await window.getAuthToken();
+				if (!idToken) return;
 
 				const response = await fetch(`${API_BASE}/ticket/list`, {
 					method: 'GET',
@@ -579,7 +589,7 @@
 						</div>
 						<span style=" color: ${statusColor}; background: ${statusBg}; border: 1px solid ${statusBorder}; padding: 2px 8px; border-radius: 20px;  letter-spacing: 0.5px;">${statusText}</span>
 					</div>
-					<h4 style="margin: 0; color: var(--text-sharp);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${parsedMsg.subject}</h4>
+					<h4 style="margin: 0; color: var(--text-sharp);  white-space: nowrap;  text-overflow: ellipsis; width: 100%;">${parsedMsg.subject}</h4>
 					<div style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid var(--border-color); padding-top: 8px; ">
 						<span style="color: var(--text-muted);"><i class="fa-solid fa-tags" style="margin-right: 4px;"></i> Category: ${prioText}</span>
 						<span style="color: var(--text-muted); ">
@@ -863,7 +873,7 @@
 				viewerModal.style.transition = 'opacity 0.25s ease';
 
 				viewerModal.innerHTML = `
-					<div style="width: 90%; height: 85%; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.97); transition: transform 0.25s ease;" id="support-doc-container">
+					<div style="width: 90%; height: 85%; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color);  display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.97); transition: transform 0.25s ease;" id="support-doc-container">
 						<div style="padding: 15px 20px; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
 							<span style="font-weight: 600; color: var(--text-sharp); display: flex; align-items: center; gap: 8px;">
 								<i class="fa-solid fa-file-lines" style="color: #af86fc;"></i> Document Viewer
@@ -1004,7 +1014,7 @@
 				header.style.alignItems = 'center';
 				header.style.marginBottom = '2px';
 				header.innerHTML = `
-					<span style="font-weight: 600; font-size: 0.8rem; color: var(--text-sharp);">${userName}</span>
+					<span style="font-weight: 600; font-size: 0.8rem; color: var(--text-sharp);">${escapeHTML(userName)}</span>
 				`;
 				bubble.appendChild(header);
 
@@ -1129,7 +1139,7 @@
 								<div style="display: flex; align-items: center; gap: 10px;">
 									<i class="fa-solid fa-music" style="font-size: 1.4rem; color: #66ffd9;"></i>
 									<div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
-										<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+										<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(filename)}</span>
 										<span style="font-size: 0.75rem; color: var(--text-muted);">Audio File</span>
 									</div>
 								</div>
@@ -1154,7 +1164,7 @@
 							docCard.innerHTML = `
 								<i class="fa-solid ${docIcon}" style="font-size: 1.8rem; color: ${docColor};"></i>
 								<div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
-									<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+									<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(filename)}</span>
 									<span style="font-size: 0.75rem; color: var(--text-muted);">${isPdf ? 'PDF Document' : 'Office Document'}</span>
 								</div>
 								<div style="display: flex; gap: 8px;">
@@ -1187,7 +1197,7 @@
 							fileCard.innerHTML = `
 								<i class="fa-solid fa-file-zipper" style="font-size: 1.8rem; color: #ffd700;"></i>
 								<div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
-									<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+									<span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(filename)}</span>
 									<span style="font-size: 0.75rem; color: var(--text-muted);">Archive File</span>
 								</div>
 								<a href="${item.url}" target="_blank" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 5px;">
@@ -1385,9 +1395,8 @@
 				btnResolve.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
 
 				try {
-					const user = window.firebaseAuth.currentUser;
-					if (!user) return;
-					const idToken = await user.getIdToken(false);
+					const idToken = await window.getAuthToken();
+					if (!idToken) return;
 
 					const response = await fetch(`${API_BASE}/ticket/resolve`, {
 						method: 'POST',
@@ -1448,7 +1457,13 @@
 				}
 			}
 		};
+		// Ensure updateAuthUI also uses the patched version for late-firing auth states
+		window.updateAuthUI = window.applyAuthUIState;
 
+		// If user is already authenticated when this script loads, fetch tickets immediately
+		if (window.isUserAuthenticated) {
+			loadUserTickets(true);
+		}
 
 		// Expose loadUserTickets globally
 		window.loadUserTickets = loadUserTickets;

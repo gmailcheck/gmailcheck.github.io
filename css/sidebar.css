@@ -7,12 +7,9 @@
     display: flex;
     flex-direction: column;
     width: 300px;
-    height: 100vh;
-    /* Viewport height fallback */
-    height: 100dvh;
-    /* Dynamic viewport height */
+    height: 100%;
+    min-height: 0;
     position: relative;
-    box-sizing: border-box;
 }
 
 .side-bar-top {
@@ -23,7 +20,6 @@
     cursor: pointer;
     gap: 12px;
     flex-shrink: 0;
-    /* Header doesn't shrink */
 }
 
 .side-bar-top img {
@@ -33,36 +29,57 @@
     border-radius: 8px;
 }
 
-.side-bar-bottom {
+.side-bar-content-container {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     min-height: 0;
     overflow-y: auto;
-    /* Enable vertical scroll ONLY for menu list */
+}
+
+.side-bar-bottom {
+    flex: 1;
+    min-height: max-content;
     padding-right: 4px;
-    /* Space for the custom scrollbar */
 }
 
 /* Custom super-slim scrollbar for sidebar menu navigation */
-.side-bar-bottom::-webkit-scrollbar {
+.side-bar-content-container::-webkit-scrollbar {
     width: 4px;
 }
 
-.side-bar-bottom::-webkit-scrollbar-track {
+.side-bar-content-container::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.side-bar-bottom::-webkit-scrollbar-thumb {
+.side-bar-content-container::-webkit-scrollbar-thumb {
     background: rgba(175, 134, 252, 0.15);
     border-radius: 10px;
 }
 
-.side-bar-bottom::-webkit-scrollbar-thumb:hover {
+.side-bar-content-container::-webkit-scrollbar-thumb:hover {
     background: rgba(175, 134, 252, 0.3);
 }
 
 .side-bar-bottom-content {
     padding: 10px;
 }
+
+/* Container submenu */
+.submenu-container {
+    margin-left: 35px;
+    border-left: 1px solid var(--border-color);
+    padding-left: 5px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.submenu-container.show {
+    max-height: 200px;
+    /* cukup untuk 2-3 submenu */
+}
+
 
 /* Style untuk menu items */
 .menu-item {
@@ -136,11 +153,13 @@
     background-color: rgba(59, 130, 246, 0.08) !important;
     color: #3b82f6 !important;
 }
+
 #menu-home.active>i {
     background-color: rgba(59, 130, 246, 0.16) !important;
     color: #2563eb !important;
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.2) !important;
 }
+
 :root.dark #menu-home.active>i {
     background-color: rgba(96, 165, 250, 0.2) !important;
     color: #60a5fa !important;
@@ -152,11 +171,13 @@
     background-color: rgba(99, 102, 241, 0.08) !important;
     color: #6366f1 !important;
 }
+
 #menu-dashboard.active>i {
     background-color: rgba(99, 102, 241, 0.16) !important;
     color: #4f46e5 !important;
     box-shadow: 0 0 10px rgba(99, 102, 241, 0.2) !important;
 }
+
 :root.dark #menu-dashboard.active>i {
     background-color: rgba(129, 140, 248, 0.2) !important;
     color: #818cf8 !important;
@@ -168,11 +189,13 @@
     background-color: rgba(168, 85, 247, 0.08) !important;
     color: #a855f7 !important;
 }
+
 #menu-apps.active>i {
     background-color: rgba(168, 85, 247, 0.16) !important;
     color: #9333ea !important;
     box-shadow: 0 0 10px rgba(168, 85, 247, 0.2) !important;
 }
+
 :root.dark #menu-apps.active>i {
     background-color: rgba(192, 132, 252, 0.2) !important;
     color: #c084fc !important;
@@ -185,11 +208,13 @@
     background-color: rgba(16, 185, 129, 0.08) !important;
     color: #10b981 !important;
 }
+
 #submenu-app1.active>i {
     background-color: rgba(16, 185, 129, 0.16) !important;
     color: #059669 !important;
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
 }
+
 :root.dark #submenu-app1.active>i {
     background-color: rgba(52, 211, 153, 0.2) !important;
     color: #34d399 !important;
@@ -201,11 +226,13 @@
     background-color: rgba(245, 158, 11, 0.08) !important;
     color: #f59e0b !important;
 }
+
 #submenu-app2.active>i {
     background-color: rgba(245, 158, 11, 0.16) !important;
     color: #d97706 !important;
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.2) !important;
 }
+
 :root.dark #submenu-app2.active>i {
     background-color: rgba(251, 191, 36, 0.2) !important;
     color: #fbbf24 !important;
@@ -217,11 +244,13 @@
     background-color: rgba(6, 182, 212, 0.08) !important;
     color: #06b6d4 !important;
 }
+
 #submenu-app3.active>i {
     background-color: rgba(6, 182, 212, 0.16) !important;
     color: #0891b2 !important;
     box-shadow: 0 0 10px rgba(6, 182, 212, 0.2) !important;
 }
+
 :root.dark #submenu-app3.active>i {
     background-color: rgba(34, 211, 238, 0.2) !important;
     color: #22d3ee !important;
@@ -233,11 +262,13 @@
     background-color: rgba(20, 184, 166, 0.08) !important;
     color: #14b8a6 !important;
 }
+
 #submenu-app4.active>i {
     background-color: rgba(20, 184, 166, 0.16) !important;
     color: #0d9488 !important;
     box-shadow: 0 0 10px rgba(20, 184, 166, 0.2) !important;
 }
+
 :root.dark #submenu-app4.active>i {
     background-color: rgba(45, 212, 191, 0.2) !important;
     color: #2dd4bf !important;
@@ -249,11 +280,13 @@
     background-color: rgba(99, 102, 241, 0.08) !important;
     color: #6366f1 !important;
 }
+
 #submenu-app5.active>i {
     background-color: rgba(99, 102, 241, 0.16) !important;
     color: #4f46e5 !important;
     box-shadow: 0 0 10px rgba(99, 102, 241, 0.2) !important;
 }
+
 :root.dark #submenu-app5.active>i {
     background-color: rgba(129, 140, 248, 0.2) !important;
     color: #818cf8 !important;
@@ -265,11 +298,13 @@
     background-color: rgba(239, 68, 68, 0.08) !important;
     color: #ef4444 !important;
 }
+
 #menu-admin.active>i {
     background-color: rgba(239, 68, 68, 0.16) !important;
     color: #dc2626 !important;
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.2) !important;
 }
+
 :root.dark #menu-admin.active>i {
     background-color: rgba(248, 113, 113, 0.2) !important;
     color: #f87171 !important;
@@ -277,31 +312,24 @@
 }
 
 /* 5. History */
-#menu-history>i {
-    background-color: rgba(100, 116, 139, 0.08) !important;
-    color: #64748b !important;
-}
-#menu-history.active>i {
-    background-color: rgba(100, 116, 139, 0.16) !important;
-    color: #475569 !important;
-    box-shadow: 0 0 10px rgba(100, 116, 139, 0.2) !important;
-}
-:root.dark #menu-history.active>i {
-    background-color: rgba(148, 163, 184, 0.2) !important;
-    color: #94a3b8 !important;
-    box-shadow: 0 0 10px rgba(148, 163, 184, 0.25) !important;
-}
+
+
+
+
+
 
 /* 6. Docs */
 #menu-documentation>i {
     background-color: rgba(5, 150, 105, 0.08) !important;
     color: #059669 !important;
 }
+
 #menu-documentation.active>i {
     background-color: rgba(5, 150, 105, 0.16) !important;
     color: #047857 !important;
     box-shadow: 0 0 10px rgba(5, 150, 105, 0.2) !important;
 }
+
 :root.dark #menu-documentation.active>i {
     background-color: rgba(52, 211, 153, 0.2) !important;
     color: #34d399 !important;
@@ -313,11 +341,13 @@
     background-color: rgba(217, 119, 6, 0.08) !important;
     color: #d97706 !important;
 }
+
 #menu-support.active>i {
     background-color: rgba(217, 119, 6, 0.16) !important;
     color: #b45309 !important;
     box-shadow: 0 0 10px rgba(217, 119, 6, 0.2) !important;
 }
+
 :root.dark #menu-support.active>i {
     background-color: rgba(251, 146, 60, 0.2) !important;
     color: #fb923c !important;
@@ -329,11 +359,13 @@
     background-color: rgba(234, 179, 8, 0.08) !important;
     color: #eab308 !important;
 }
+
 #notif-container.active>i {
     background-color: rgba(234, 179, 8, 0.16) !important;
     color: #ca8a04 !important;
     box-shadow: 0 0 10px rgba(234, 179, 8, 0.2) !important;
 }
+
 :root.dark #notif-container.active>i {
     background-color: rgba(250, 204, 21, 0.2) !important;
     color: #facc15 !important;
@@ -345,11 +377,13 @@
     background-color: rgba(168, 85, 247, 0.08) !important;
     color: #a855f7 !important;
 }
+
 #sidebar-developer-btn.active>i {
     background-color: rgba(168, 85, 247, 0.16) !important;
     color: #9333ea !important;
     box-shadow: 0 0 10px rgba(168, 85, 247, 0.2) !important;
 }
+
 :root.dark #sidebar-developer-btn.active>i {
     background-color: rgba(192, 132, 252, 0.2) !important;
     color: #c084fc !important;
@@ -361,11 +395,13 @@
     background-color: rgba(75, 85, 99, 0.08) !important;
     color: #4b5563 !important;
 }
+
 #sidebar-settings-btn.active>i {
     background-color: rgba(75, 85, 99, 0.16) !important;
     color: #374151 !important;
     box-shadow: 0 0 10px rgba(75, 85, 99, 0.2) !important;
 }
+
 :root.dark #sidebar-settings-btn.active>i {
     background-color: rgba(156, 163, 175, 0.2) !important;
     color: #9ca3af !important;
@@ -377,11 +413,13 @@
     background-color: rgba(245, 158, 11, 0.08) !important;
     color: #f59e0b !important;
 }
+
 #menu-dev-keys.active>i {
     background-color: rgba(245, 158, 11, 0.16) !important;
     color: #d97706 !important;
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.2) !important;
 }
+
 :root.dark #menu-dev-keys.active>i {
     background-color: rgba(251, 191, 36, 0.2) !important;
     color: #fbbf24 !important;
@@ -392,11 +430,13 @@
     background-color: rgba(16, 185, 129, 0.08) !important;
     color: #10b981 !important;
 }
+
 #menu-dev-create.active>i {
     background-color: rgba(16, 185, 129, 0.16) !important;
     color: #059669 !important;
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
 }
+
 :root.dark #menu-dev-create.active>i {
     background-color: rgba(52, 211, 153, 0.2) !important;
     color: #34d399 !important;
@@ -407,11 +447,13 @@
     background-color: rgba(234, 179, 8, 0.08) !important;
     color: #eab308 !important;
 }
+
 #menu-dev-credits.active>i {
     background-color: rgba(234, 179, 8, 0.16) !important;
     color: #ca8a04 !important;
     box-shadow: 0 0 10px rgba(234, 179, 8, 0.2) !important;
 }
+
 :root.dark #menu-dev-credits.active>i {
     background-color: rgba(250, 204, 21, 0.2) !important;
     color: #facc15 !important;
@@ -422,11 +464,13 @@
     background-color: rgba(59, 130, 246, 0.08) !important;
     color: #3b82f6 !important;
 }
+
 #menu-dev-stats.active>i {
     background-color: rgba(59, 130, 246, 0.16) !important;
     color: #2563eb !important;
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.2) !important;
 }
+
 :root.dark #menu-dev-stats.active>i {
     background-color: rgba(96, 165, 250, 0.2) !important;
     color: #60a5fa !important;
@@ -437,11 +481,13 @@
     background-color: rgba(168, 85, 247, 0.08) !important;
     color: #a855f7 !important;
 }
+
 #menu-dev-add.active>i {
     background-color: rgba(168, 85, 247, 0.16) !important;
     color: #9333ea !important;
     box-shadow: 0 0 10px rgba(168, 85, 247, 0.2) !important;
 }
+
 :root.dark #menu-dev-add.active>i {
     background-color: rgba(192, 132, 252, 0.2) !important;
     color: #c084fc !important;
@@ -452,11 +498,13 @@
     background-color: rgba(16, 185, 129, 0.08) !important;
     color: #10b981 !important;
 }
+
 #menu-dev-purchases.active>i {
     background-color: rgba(16, 185, 129, 0.16) !important;
     color: #059669 !important;
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
 }
+
 :root.dark #menu-dev-purchases.active>i {
     background-color: rgba(52, 211, 153, 0.2) !important;
     color: #34d399 !important;
@@ -468,11 +516,13 @@
     background-color: rgba(5, 150, 105, 0.08) !important;
     color: #059669 !important;
 }
+
 [id^="menu-doc-"].active>i {
     background-color: rgba(5, 150, 105, 0.16) !important;
     color: #047857 !important;
     box-shadow: 0 0 10px rgba(5, 150, 105, 0.2) !important;
 }
+
 :root.dark [id^="menu-doc-"].active>i {
     background-color: rgba(52, 211, 153, 0.2) !important;
     color: #34d399 !important;
@@ -531,12 +581,9 @@
     padding: 10px;
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
-    /* Footer doesn't shrink */
 }
 
 /* Anonymous & Home Page Mode styling */
-.container.anonim:not(.doc-active) #side-bar,
 .container.home-active #side-bar {
     display: none !important;
 }
@@ -650,19 +697,18 @@
 }
 
 .profile-popover-name {
-
-    color: var(--text-sharp);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text-sharp);
     text-align: left;
 }
 
 .profile-popover-email {
-    color: var(--text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text-muted);
     text-align: left;
 }
 
@@ -741,14 +787,7 @@
     background-color: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
     z-index: 999;
-    opacity: 0;
-    visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.sidebar-backdrop.show {
-    opacity: 1;
-    visibility: visible;
 }
 
 /* --- HAMBURGER MENU BUTTON --- */
@@ -773,64 +812,6 @@
 .btn-toggle-sidebar:active {
     transform: scale(0.92);
 }
-
-/* ==========================================
-		   1. MOBILE MODE (body[data-rds-mode="mobile"])
-		   ========================================== */
-body[data-rds-mode="mobile"] .btn-toggle-sidebar {
-    display: inline-flex;
-}
-
-/* Sidebar transformed to beautiful floating slide-in drawer */
-body[data-rds-mode="mobile"] .side-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    height: 100dvh;
-    width: 75%;
-    z-index: 1000;
-    background-color: var(--bg-sidebar);
-    border-right: 1px solid var(--border-color);
-    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.25);
-    transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-rds-mode="mobile"] .side-bar.open {
-    transform: translateX(0);
-}
-
-/* ==========================================
-		   2. TABLET MODE (body[data-rds-mode="tablet"])
-		   ========================================== */
-body[data-rds-mode="tablet"] .btn-toggle-sidebar {
-    display: inline-flex;
-}
-
-/* Sidebar transformed to floating slide-in drawer on tablets */
-body[data-rds-mode="tablet"] .side-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    height: 100dvh;
-    width: 50%;
-    z-index: 1000;
-    background-color: var(--bg-sidebar);
-    border-right: 1px solid var(--border-color);
-    box-shadow: 8px 0 35px rgba(0, 0, 0, 0.22);
-    transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-rds-mode="tablet"] .side-bar.open {
-    transform: translateX(0);
-}
-
-/* ==========================================================================
-   CLEANED INLINE STYLES FROM index.html
-   ========================================================================== */
 
 .anon-logo img,
 .side-bar-top img {
@@ -906,7 +887,6 @@ body[data-rds-mode="tablet"] .side-bar.open {
     display: flex;
     height: 32px;
     justify-content: center;
-    overflow: hidden;
     position: relative;
     width: 32px;
 }
@@ -969,143 +949,10 @@ body[data-rds-mode="tablet"] .side-bar.open {
     padding: 12px;
 }
 
-.history-sidebar-filters {
-    backdrop-filter: blur(10px);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    box-shadow: var(--shadow-md);
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 20px;
-    min-width: 320px;
-    padding: 30px;
-}
-
-.history-sidebar-title {
-    align-items: center;
-    color: var(--text-sharp);
-    display: flex;
-    gap: 10px;
-    margin: 0;
-}
-
-.history-sidebar-section {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.history-sidebar-section-title {
-    color: var(--text-secondary);
-
-}
-
-.history-sidebar-search-input {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-sharp);
-
-    outline: none;
-    padding: 12px;
-    width: 100%;
-}
-
-.history-sidebar-date-group {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 140px;
-}
-
-.history-sidebar-select {
-    background-color: var(--bg-primary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-    outline: none;
-    padding: 10px;
-    text-align: left;
-}
-
-.history-sidebar-limit-group {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 140px;
-    position: relative;
-}
-
-.history-sidebar-notes-area {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-sharp);
-
-    height: 120px;
-    outline: none;
-    padding: 12px;
-    resize: none;
-    width: 100%;
-}
-
-.history-sidebar-actions {
-    align-items: center;
-    display: flex;
-    gap: 10px;
-}
-
-.btn-history-sidebar-action {
-    align-items: center;
-    background: transparent;
-    border-color: var(--border-color);
-    color: var(--text-primary);
-    cursor: pointer;
-    display: flex;
-    gap: 8px;
-    padding: 8px 12px;
-    width: auto;
-}
-
-.history-sidebar-badge-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 5px;
-}
-
-/* Hide auth-only sidebar elements for anonymous visitors */
-.container.anonim #sidebar-developer-btn,
-.container.anonim #sidebar-settings-btn,
-.container.anonim #user-profile-card-trigger,
-.container.anonim #sidebar-pending-payment-notif,
-.container.anonim #sidebar-pending-api-notif {
-    display: none !important;
-}
-
 /* Hide anonymous hamburger toggle by default */
 #btn-toggle-sidebar-anon {
     display: none !important;
 }
-
-/* Display anonymous hamburger toggle on mobile and tablet documentation views */
-body[data-rds-mode="mobile"] .container.doc-active #btn-toggle-sidebar-anon,
-body[data-rds-mode="tablet"] .container.doc-active #btn-toggle-sidebar-anon {
-    display: inline-flex !important;
-}
-
-/* Hide hamburger on Home page only (router adds .home-active to .container) */
-body[data-rds-mode="mobile"] .container.home-active #btn-toggle-sidebar,
-body[data-rds-mode="tablet"] .container.home-active #btn-toggle-sidebar {
-    display: none !important;
-}
-
-/* ==========================================================================
-   SIDEBAR NOTIFICATIONS POPUP DROPDOWN (PREMIUM OVERRIDE)
-   ========================================================================== */
 
 #notif-container {
     position: relative;

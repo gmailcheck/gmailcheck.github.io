@@ -13,8 +13,14 @@
 	<link rel="stylesheet" href="css/fonts.css">
 	<link rel="stylesheet" href="css/forms.css">
 	<link rel="stylesheet" href="css/home.css">
+	<link rel="stylesheet" href="css/anonim.css">
+	<link rel="stylesheet" href="css/not-anonim.css">
+	<link rel="stylesheet" href="css/inline.css">
+	<link rel="stylesheet" href="css/pricing.css">
+	<link rel="stylesheet" href="css/history.css">
 	<link rel="stylesheet" href="css/sidebar.css">
 	<link rel="stylesheet" href="css/topbar.css">
+	<link rel="stylesheet" href="css/responsive.css">
 	<link rel="stylesheet" href="css/variables.css">
 	<link rel="stylesheet" href="fontawesome/css/all.min.css">
 	<script type="module">
@@ -63,7 +69,7 @@
 	<script>
 		// Terapkan tema sebelum halaman selesai merender untuk mencegah kedipan (flash)
 		(function () {
-			const savedTheme = localStorage.getItem('app-theme') || 'system';
+			const savedTheme = localStorage.getItem('app-theme') || 'dark';
 			if (savedTheme === 'dark') {
 				document.documentElement.classList.add('dark');
 			} else if (savedTheme === 'light') {
@@ -74,11 +80,13 @@
 			}
 		})();
 	</script>
+	<!-- Cloudflare Turnstile -->
+	<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 
 <body>
 	<div class="container anonim">
-		<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+		<div class="sidebar-backdrop hide" id="sidebar-backdrop"></div>
 		<div class="side-bar" id="side-bar">
 			<div class="side-bar-top" id="side-bar-top">
 				<img src="logo.png" alt="logo"
@@ -86,144 +94,158 @@
 					class="sidebar-logo-img">
 				<span class="sidebar-logo-text font-keren">GMAIL CHECKER</span>
 			</div>
-			<div class="side-bar-bottom" id="side-bar-bottom">
-				<div class="side-bar-bottom-content" id="side-bar-bottom-content">
-					<!-- Menu items akan diisi oleh JavaScript -->
+			<div class="side-bar-content-container">
+				<div class="side-bar-bottom" id="side-bar-bottom">
+					<div class="side-bar-bottom-content" id="side-bar-bottom-content">
+						<!-- Menu items akan diisi oleh JavaScript -->
+					</div>
 				</div>
-			</div>
-			<div class="side-bar-footer pos-relative">
-				<!-- Profile Popover -->
-				<div class="profile-popover" id="profile-popover">
-					<div class="profile-popover-header">
-						<div class="profile-popover-logo">
-							<img src="logo.png" alt="logo"
-								onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%230095c8\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'">
-							<span>GMAIL CHECKER</span>
+				<div class="side-bar-footer">
+					<!-- Profile Popover -->
+					<div class="profile-popover" id="profile-popover">
+						<div class="profile-popover-header">
+							<div class="profile-popover-logo">
+								<img src="logo.png" alt="logo"
+									onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%230095c8\' rx=\'20\'/><text x=\'50\' y=\'65\' font-size=\'45\' font-family=\'Orbitron\' font-weight=\'bold\' fill=\'white\' text-anchor=\'middle\'>G</text></svg>'">
+								<span>GMAIL CHECKER</span>
+							</div>
+							<button class="profile-popover-close" id="profile-popover-close-btn">
+								<i class="fa-solid fa-times"></i>
+							</button>
 						</div>
-						<button class="profile-popover-close" id="profile-popover-close-btn">
-							<i class="fa-solid fa-times"></i>
+						<div class="profile-popover-user-info">
+							<div class="profile-popover-avatar-wrapper">
+								<img id="profile-popover-avatar-img" class="profile-popover-avatar hide" src=""
+									alt="avatar">
+								<i id="profile-popover-avatar-icon" class="fas fa-user profile-popover-avatar-icon"></i>
+							</div>
+							<div class="profile-popover-details">
+								<span class="profile-popover-name" id="profile-popover-name-display">Loading...</span>
+								<span class="profile-popover-email" id="profile-popover-email-display">Loading...</span>
+							</div>
+							<span class="user-badge font-keren" id="profile-popover-badge-display">FREE</span>
+						</div>
+						<div class="profile-popover-actions">
+							<button class="profile-popover-btn" id="profile-popover-btn-manage">Manage
+								membership</button>
+							<button class="profile-popover-btn" id="profile-popover-btn-switch">Switch account</button>
+							<button class="profile-popover-btn" id="profile-popover-btn-logout">Sign out</button>
+						</div>
+						<div class="profile-popover-footer">
+							<a href="/privacy" class="profile-popover-footer-link">Privacy Policy</a>
+							<span>·</span>
+							<a href="/terms" class="profile-popover-footer-link">Terms of Service</a>
+						</div>
+					</div>
+
+					<!-- Pending Payment Notification Banner -->
+					<div id="sidebar-pending-payment-notif" class="hide sidebar-pending-payment-banner"
+						onclick="window.setActiveMenu('pricing', true)">
+						<i class="fa-solid fa-spinner fa-spin sidebar-pending-payment-spinner"></i>
+						<span class="sidebar-pending-payment-text">PENDING
+							PAYMENTS</span>
+					</div>
+					<div id="sidebar-pending-api-notif" class="hide sidebar-pending-api-banner"
+						onclick="window.setActiveMenu('dev-purchases', true)">
+						<i class="fa-solid fa-spinner fa-spin sidebar-pending-api-spinner"></i>
+						<span class="sidebar-pending-api-text">PENDING
+							PAYMENTS</span>
+					</div>
+
+					<!-- Daily Reward Sidebar Button -->
+					<div class="menu-item pos-relative hide" id="daily-reward-sidebar-btn"
+						style="background: rgba(188, 59, 247, 0.08); border: 1px solid rgba(188, 59, 247, 0.25); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s;">
+						<i class="fa-solid fa-gift"
+							style="color: #bc3bf7; filter: drop-shadow(0 0 3px rgba(188, 59, 247, 0.4));"></i>
+						<span style="color: var(--text-sharp); font-weight: bold; font-size: 14px;">Claim Daily
+							Reward</span>
+					</div>
+
+					<div class="menu-item pos-relative" id="notif-container">
+						<i class="fa-solid fa-bell"></i>
+						<span>Notifications</span>
+						<span id="notif-badge" class="hide sidebar-notif-badge">0</span>
+						<div id="notif-dropdown" class="hide sidebar-notif-dropdown">
+							<div class="sidebar-notif-dropdown-header">
+								<h5 class="sidebar-notif-dropdown-title">
+									Notifications</h5>
+								<button id="notif-mark-read" class="sidebar-notif-mark-read-btn">Mark
+									all read</button>
+							</div>
+							<div id="notif-list" class="flex-col-gap-8">
+								<div class="sidebar-notif-empty-state-text">No new
+									notifications</div>
+							</div>
+						</div>
+					</div>
+					<div class="menu-item" id="sidebar-developer-btn">
+						<i class="fas fa-key"></i>
+						<span>Get API Key</span>
+					</div>
+					<div class="menu-item" id="sidebar-settings-btn">
+						<i class="fas fa-cog"></i>
+						<span>Settings</span>
+					</div>
+					<div class="user-profile-card cursor-pointer" id="user-profile-card-trigger">
+						<div class="avatar-circle sidebar-user-avatar-wrapper" id="user-avatar-btn">
+							<i class="fas fa-user" id="user-avatar-icon"></i>
+							<img id="user-avatar-img" class="hide sidebar-user-avatar-img">
+						</div>
+						<div class="user-details">
+							<span class="user-email" id="user-email-display" title="">Loading...</span>
+						</div>
+						<span class="user-badge font-keren" id="user-badge-display">FREE</span>
+						<button id="btn-logout" title="Logout" class="sidebar-btn-logout">
+							<i class="fa-solid fa-right-from-bracket"></i>
 						</button>
 					</div>
-					<div class="profile-popover-user-info">
-						<div class="profile-popover-avatar-wrapper">
-							<img id="profile-popover-avatar-img" class="profile-popover-avatar hide" src=""
-								alt="avatar">
-							<i id="profile-popover-avatar-icon" class="fas fa-user profile-popover-avatar-icon"></i>
-						</div>
-						<div class="profile-popover-details">
-							<span class="profile-popover-name" id="profile-popover-name-display">Loading...</span>
-							<span class="profile-popover-email" id="profile-popover-email-display">Loading...</span>
-						</div>
-						<span class="user-badge font-keren" id="profile-popover-badge-display">FREE</span>
-					</div>
-					<div class="profile-popover-actions">
-						<button class="profile-popover-btn" id="profile-popover-btn-manage">Manage membership</button>
-						<button class="profile-popover-btn" id="profile-popover-btn-switch">Switch account</button>
-						<button class="profile-popover-btn" id="profile-popover-btn-logout">Sign out</button>
-					</div>
-					<div class="profile-popover-footer">
-						<a href="/privacy" class="profile-popover-footer-link">Privacy Policy</a>
-						<span>·</span>
-						<a href="/terms" class="profile-popover-footer-link">Terms of Service</a>
-					</div>
 				</div>
+				<!-- Settings Panel (Context Popup Menu) -->
+				<div class="settings-panel" id="settings-panel">
+					<div class="settings-panel-content">
+						<!-- Theme Button with Hover Popover -->
+						<div class="settings-panel-item" id="theme-panel-item">
+							<i class="item-icon fas fa-palette"></i>
+							<span>Theme</span>
+							<i class="chevron fas fa-chevron-right"></i>
 
-				<!-- Pending Payment Notification Banner -->
-				<div id="sidebar-pending-payment-notif" class="hide sidebar-pending-payment-banner"
-					onclick="window.setActiveMenu('pricing', true)">
-					<i class="fa-solid fa-spinner fa-spin sidebar-pending-payment-spinner"></i>
-					<span class="sidebar-pending-payment-text">PENDING
-						PAYMENTS</span>
-				</div>
-				<div id="sidebar-pending-api-notif" class="hide sidebar-pending-api-banner"
-					onclick="window.setActiveMenu('dev-purchases', true)">
-					<i class="fa-solid fa-spinner fa-spin sidebar-pending-api-spinner"></i>
-					<span class="sidebar-pending-api-text">PENDING
-						PAYMENTS</span>
-				</div>
-
-				<div class="menu-item pos-relative" id="notif-container">
-					<i class="fa-solid fa-bell"></i>
-					<span>Notifications</span>
-					<span id="notif-badge" class="hide sidebar-notif-badge">0</span>
-					<div id="notif-dropdown" class="hide sidebar-notif-dropdown">
-						<div class="sidebar-notif-dropdown-header">
-							<h5 class="sidebar-notif-dropdown-title">
-								Notifications</h5>
-							<button id="notif-mark-read" class="sidebar-notif-mark-read-btn">Mark
-								all read</button>
-						</div>
-						<div id="notif-list" class="flex-col-gap-8">
-							<div class="sidebar-notif-empty-state-text">No new
-								notifications</div>
-						</div>
-					</div>
-				</div>
-				<div class="menu-item" id="sidebar-developer-btn">
-					<i class="fas fa-key"></i>
-					<span>Get API Key</span>
-				</div>
-				<div class="menu-item" id="sidebar-settings-btn">
-					<i class="fas fa-cog"></i>
-					<span>Settings</span>
-				</div>
-				<div class="user-profile-card cursor-pointer" id="user-profile-card-trigger">
-					<div class="avatar-circle sidebar-user-avatar-wrapper" id="user-avatar-btn">
-						<i class="fas fa-user" id="user-avatar-icon"></i>
-						<img id="user-avatar-img" class="hide sidebar-user-avatar-img">
-					</div>
-					<div class="user-details">
-						<span class="user-email" id="user-email-display" title="">Loading...</span>
-					</div>
-					<span class="user-badge font-keren" id="user-badge-display">FREE</span>
-					<button id="btn-logout" title="Logout" class="sidebar-btn-logout">
-						<i class="fa-solid fa-right-from-bracket"></i>
-					</button>
-				</div>
-			</div>
-			<!-- Settings Panel (Context Popup Menu) -->
-			<div class="settings-panel" id="settings-panel">
-				<div class="settings-panel-content">
-					<!-- Theme Button with Hover Popover -->
-					<div class="settings-panel-item" id="theme-panel-item">
-						<i class="item-icon fas fa-palette"></i>
-						<span>Theme</span>
-						<i class="chevron fas fa-chevron-right"></i>
-
-						<!-- Floating Popover -->
-						<div class="theme-popover" id="theme-popover">
-							<div class="theme-popover-item" data-theme="light">
-								<i class="radio-icon fas fa-circle"></i>
-								<i class="theme-icon fas fa-sun"></i>
-								<span>Light</span>
-							</div>
-							<div class="theme-popover-item" data-theme="dark">
-								<i class="radio-icon far fa-circle"></i>
-								<i class="theme-icon fas fa-moon"></i>
-								<span>Dark</span>
-							</div>
-							<div class="theme-popover-item" data-theme="system">
-								<i class="radio-icon far fa-circle"></i>
-								<i class="theme-icon fas fa-laptop"></i>
-								<span>System</span>
+							<!-- Floating Popover -->
+							<div class="theme-popover" id="theme-popover">
+								<div class="theme-popover-item" data-theme="light">
+									<i class="radio-icon fas fa-circle"></i>
+									<i class="theme-icon fas fa-sun"></i>
+									<span>Light</span>
+								</div>
+								<div class="theme-popover-item" data-theme="dark">
+									<i class="radio-icon far fa-circle"></i>
+									<i class="theme-icon fas fa-moon"></i>
+									<span>Dark</span>
+								</div>
+								<div class="theme-popover-item" data-theme="system">
+									<i class="radio-icon far fa-circle"></i>
+									<i class="theme-icon fas fa-laptop"></i>
+									<span>System</span>
+								</div>
 							</div>
 						</div>
-					</div>
 
-					<div class="settings-panel-item display-none" id="setting1-panel-item">
-						<i class="item-icon fas fa-key"></i>
-						<span>Manage API Keys</span>
-					</div>
+						<div class="settings-panel-item hide" id="setting1-panel-item">
+							<i class="item-icon fas fa-key"></i>
+							<span>Manage API Keys</span>
+						</div>
 
-					<div class="settings-panel-item" id="setting2-panel-item">
-						<i class="item-icon fas fa-sliders-h"></i>
-						<span>Preferences</span>
-					</div>
+						<div class="settings-panel-item" id="setting2-panel-item">
+							<i class="item-icon fas fa-sliders-h"></i>
+							<span>Preferences</span>
+						</div>
 
-					<div class="settings-panel-divider"></div>
+						<div class="settings-panel-divider"></div>
+					</div>
 				</div>
 			</div>
 		</div>
+
+		<!--Main Page Content-->
 		<div class="main">
 			<div class="top-bar pos-relative" id="top-bar">
 				<!-- Notification Container -->
@@ -271,6 +293,7 @@
 			<div class="page-name" id="page-name">
 				<span id="current-page-label">Dashboard</span>
 			</div>
+			<!--Page Content-->
 			<div class="content" id="content">
 
 				<!-- Page Home -->
@@ -285,10 +308,12 @@
 							<h1 class="home-hero-heading">
 								UPGRADE YOUR <span class="home-hero-gradient-text">WORKFLOW</span>
 							</h1>
+
 							<p class="home-hero-paragraph">
 								Your ultimate premium suite for bulk Gmail checking, automated dot trick variations
 								generation, and fast name combiner permutations.
 							</p>
+
 							<div id="home-cta-container" class="home-hero-cta-group">
 								<button class="btn btn-primary btn-home-cta-get-started" id="btn-home-get-started">
 									Get Started Free <i class="fa-solid fa-arrow-right m-l-8"></i>
@@ -298,6 +323,83 @@
 									Open Dashboard <i class="fa-solid fa-arrow-right-to-bracket m-l-8"></i>
 								</button>
 							</div>
+
+							<!-- Gmail Checker Demo Widget -->
+							<div class="demo-card home-demo-card">
+								<div class="demo-card-header">
+									<h3 class="demo-card-title"><i class="fa-solid fa-flask"
+											style="color: #00f0ff;"></i>
+										Try Gmail Checker</h3>
+								</div>
+								<div class="demo-card-body">
+									<p class="demo-card-desc">Enter up to 20 Gmail addresses below (one per line) to
+										test
+										our checker in real time.</p>
+									<div class="input-container" id="demo-input-container">
+										<div id="demo-line-numbers" class="line-numbers">1</div>
+										<textarea id="demo-emails-input"
+											placeholder="example1@gmail.com&#10;example2@gmail.com" rows="5"
+											spellcheck="false"></textarea>
+									</div>
+
+									<div class="demo-controls-row">
+										<div class="demo-select-container">
+											<label for="demo-checker-type" class="demo-label">Select Mode:</label>
+											<select id="demo-checker-type" class="demo-select">
+												<option value="fast">Fast Check</option>
+												<option value="deep">Deep Check</option>
+											</select>
+										</div>
+
+										<!-- Turnstile Widget Container -->
+										<div id="demo-turnstile-container" class="demo-turnstile-container"></div>
+									</div>
+
+									<button id="btn-run-demo-check" class="btn btn-primary btn-demo-check">
+										<i class="fa-solid fa-play"></i> Start Check
+									</button>
+
+									<!-- Progress Bar Container -->
+									<div id="demo-progress-container" class="demo-progress-container hide">
+										<div class="demo-progress-header">
+											<span id="demo-progress-text">Checking emails...</span>
+											<span id="demo-progress-percent">0%</span>
+										</div>
+										<div class="demo-progress-bar-bg">
+											<div id="demo-progress-bar-fill" class="demo-progress-bar-fill"></div>
+										</div>
+									</div>
+
+									<!-- Results Container -->
+									<div id="demo-results-container" class="demo-results-container hide">
+										<div class="demo-results-stats">
+											<div class="demo-stat-box live">
+												<span class="demo-stat-num" id="demo-stat-live">0</span>
+												<span class="demo-stat-lbl">Live</span>
+											</div>
+											<div class="demo-stat-box disabled">
+												<span class="demo-stat-num" id="demo-stat-disabled">0</span>
+												<span class="demo-stat-lbl">Disabled</span>
+											</div>
+											<div class="demo-stat-box bad">
+												<span class="demo-stat-num" id="demo-stat-bad">0</span>
+												<span class="demo-stat-lbl">Bad</span>
+											</div>
+										</div>
+
+										<div class="demo-results-list-wrapper">
+											<div class="demo-results-list-header">
+												<span>Email Address</span>
+												<span>Status</span>
+											</div>
+											<div id="demo-results-list" class="demo-results-list">
+												<!-- Result rows go here -->
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
 						</div>
 
 						<!-- 2. Stats Row -->
@@ -551,8 +653,8 @@
 									abuse operations.</p>
 
 								<h3 class="font-keren legal-heading">
-									3. Accounts and VIP Access</h3>
-								<p>Access to VIP subscription tiers is provided for a single user per account.
+									3. Accounts and Premium Access</h3>
+								<p>Access to premium subscription tiers is provided for a single user per account.
 									Programmatic access to our verification endpoints requires a Developer API Key,
 									which must be secured and not shared or leaked to unauthorized third parties.</p>
 
@@ -817,7 +919,7 @@
 				</div>
 
 
-				<!-- VIP CHECKOUT MODAL -->
+				<!-- PREMIUM CHECKOUT MODAL -->
 				<div id="checkout-modal" class="modal-overlay hide modal-overlay-custom">
 					<div class="checkout-card modal-card-custom">
 
@@ -827,7 +929,7 @@
 
 						<!-- Modal Title -->
 						<div class="modal-header-text-group">
-							<h3 class="font-keren modal-title-custom" id="checkout-plan-name">VIP 1 MONTH</h3>
+							<h3 class="font-keren modal-title-custom" id="checkout-plan-name">PREMIUM PLAN</h3>
 							<p id="checkout-plan-desc" class="modal-desc-custom">Unlimited Checks/Day + Fast Checking
 								Servers</p>
 						</div>
@@ -963,31 +1065,9 @@
 									</button>
 								</div>
 							</div>
-
-							<!-- Active key in use preview (Hidden to keep raw key hidden from dashboard) -->
-							<div class="dashboard-active-key-card">
-								<div class="dashboard-active-key-header">
-									<span class="dashboard-stats-title"><i class="fa-solid fa-key m-r-8"></i> Active Key
-										in
-										Use</span>
-									<p class="dashboard-active-key-desc">
-										This is the API Key currently applied to your Bulk Gmail Checker session.
-									</p>
-								</div>
-								<div class="dashboard-active-key-input-wrapper">
-									<input type="password" id="db-active-key-display" value="••••••••••••••••" readonly
-										autocomplete="off" class="dashboard-active-key-input">
-									<button id="btn-db-reveal-key" title="Reveal Key"
-										class="btn-dashboard-active-key-action"><i class="fa-solid fa-eye"></i></button>
-									<button id="btn-db-copy-key" title="Copy Key"
-										class="btn-dashboard-active-key-action"><i
-											class="fa-solid fa-copy"></i></button>
-								</div>
-							</div>
-
 						</div>
 
-						<!-- VIP Subscription History Panel -->
+						<!-- Premium Subscription History Panel -->
 						<div class="dashboard-history-panel">
 							<div class="flex-row-between">
 								<h3 class="font-keren dashboard-panel-title">
@@ -997,22 +1077,21 @@
 							</div>
 
 							<!-- Subscriptions Container List -->
-							<div id="db-vip-payments-list" class="dashboard-list-container">
+							<div id="db-premium-payments-list" class="dashboard-list-container">
 								<div class="dashboard-list-loading">
 									<i class="fa-solid fa-spinner fa-spin m-r-8"></i> Loading your
 									subscription records...
 								</div>
 							</div>
 
-							<div id="db-vip-info-list" class="dashboard-list-empty">
+							<div id="db-premium-info-list" class="dashboard-list-empty">
 								No subscription history found.
 							</div>
 
 							<div class="dashboard-panel-actions">
-								<button id="btn-dashboard-go-pricing-sub"
-									class="btn btn-primary btn-dashboard-get-vip-keys"
+								<button id="btn-dashboard-go-pricing-sub" class="btn btn-primary btn-subscribe"
 									onclick="window.setActiveMenu('pricing', true)">
-									<i class="fa-solid fa-tags m-r-8"></i>Get More VIP Keys
+									<i class="fa-solid fa-tags m-r-8"></i>Subscribe / Renew Plan
 								</button>
 							</div>
 						</div>
@@ -1428,7 +1507,7 @@
 									<h3 class="font-keren whitelist-modal-title">Access Control
 									</h3>
 									<p id="ip-modal-key-label" class="whitelist-modal-key-label">
-										VIP Key: ...</p>
+										Premium Key: ...</p>
 								</div>
 							</div>
 							<p class="whitelist-modal-info-box">
@@ -1551,8 +1630,8 @@
 						<p class="app-instruction">
 							Enter valid Gmail addresses to verify their live status.
 						</p>
-						<div class="app-x55-container">
-							<div class="email-input" id="email-input-container-app1">
+						<div class="app-content-container">
+							<div class="input-container" id="input-container-container-app1">
 								<div id="line-numbers-app1" class="line-numbers">1</div>
 								<textarea id="gmail-checker-input"
 									placeholder="example1@gmail.com&#10;example2@gmail.com&#10;example3@gmail.com"
@@ -1613,10 +1692,10 @@
 									</p>
 
 									<select id="select-server-app1" class="btn app-sidebar-select">
-										<option value="fastServer1" selected>Fast 1</option>
-										<option value="fastServer2">Fast 2</option>
-										<option value="server1">Advanced 1</option>
-										<option value="server2">Advanced 2</option>
+										<option value="fastFreeServer" selected>☘️ Fast (Free)</option>
+										<option value="deepFreeServer">☘️ Deep (Free)</option>
+										<option value="fastServer">💎 Fast (VIP)</option>
+										<option value="deepServer">💎 Deep (VIP)</option>
 									</select>
 								</div>
 
@@ -1700,9 +1779,9 @@
 						<p class="app-instruction">
 							Enter valid Gmail addresses to generate all possible dot variations.
 						</p>
-						<div class="app-x55-container">
+						<div class="app-content-container">
 							<!-- Input Area -->
-							<div class="email-input" id="email-input-container-app2">
+							<div class="input-container" id="input-container-container-app2">
 								<div id="line-numbers-app2" class="line-numbers">1</div>
 								<textarea id="gmail-dot-trick-input"
 									placeholder="example1@gmail.com&#10;example2@gmail.com&#10;example3@gmail.com"
@@ -1796,8 +1875,8 @@
 						<p class="app-instruction">
 							Enter at least 3 unique names to generate random permutations.
 						</p>
-						<div class="app-x55-container">
-							<div class="email-input" id="email-input-container-app3">
+						<div class="app-content-container">
+							<div class="input-container" id="input-container-container-app3">
 								<div id="line-numbers-app3" class="line-numbers">1</div>
 								<textarea id="name-combiner-input"
 									placeholder="Steve Anthony Elon Musk William Henry Ricardo Jhon Trump Mohammed Bill Gates Obama Kim Jhon Andrew"
@@ -1877,7 +1956,7 @@
 					</div>
 				</div>
 
-				<!-- Page App 4 (Notepad) -->
+				<!-- Page App 4 (Email Extractor) -->
 				<div id="page-app4" class="page-content hide">
 					<div class="app-container">
 						<p class="app-instruction">
@@ -1885,10 +1964,10 @@
 							emails,
 							deduplicate, and clean them.
 						</p>
-						<div class="app-x55-container">
+						<div class="app-content-container">
 
 							<!-- Left Side: Raw Input Viewport -->
-							<div class="email-input" id="email-input-container-app5">
+							<div class="input-container" id="input-container-container-app5">
 								<div id="line-numbers-app5" class="line-numbers">1</div>
 								<textarea id="email-extractor-input"
 									placeholder="Paste raw text, source code, or mixed lists here..."
@@ -2014,7 +2093,7 @@
 					</div>
 				</div>
 
-				<!-- Page App 5 (Email Extractor & Deduplicator) -->
+				<!-- Page App 5 (Notepad) -->
 				<div id="page-app5" class="page-content hide">
 					<div class="app-container">
 						<p class="app-instruction">
@@ -2022,49 +2101,50 @@
 							or storing text snippets. All your notes are saved locally in your browser, ensuring your
 							data stays private and secure.
 						</p>
-						<div class="app-x55-container">
+						<div class="app-content-container">
 
 							<!-- Notepad Editor Viewport -->
-							<div class="app2-results-panel">
+							<div class="notepad-container">
 
 								<!-- Editor Header/Actions toolbar -->
-								<div class="app2-results-header">
+								<div class="notepad-header">
 									<!-- Title input & Save indicator -->
-									<div class="app2-results-title-group">
+									<div class="notepad-header-title-group">
 										<input type="text" id="notepad-active-title" placeholder="Untitled Note"
 											autocomplete="off" class="app2-results-input-preview">
-										<span id="notepad-save-status" class="app2-results-count-badge">New Note</span>
+										<span id="notepad-save-status" class="app2-results-count-badge"></span>
 									</div>
 
 									<!-- Toolbar buttons -->
 									<div class="whitelist-add-input-group">
-										<button class="btn btn-app2-copy-results" id="btn-notepad-save"
+										<button class="btn btn-notepad-save" id="btn-notepad-save"
 											title="Save changes to database">
 											<i class="fa-solid fa-floppy-disk color-green"></i> Save
 										</button>
-										<button class="btn btn-app2-download-results" id="btn-notepad-copy"
+										<button class="btn btn-notepad-copy" id="btn-notepad-copy"
 											title="Copy to Clipboard">
 											<i class="fa-solid fa-copy "></i> Copy
 										</button>
-										<button class="btn btn-app2-download-results" id="btn-notepad-download"
+										<button class="btn btn-notepad-download" id="btn-notepad-download"
 											title="Download as .txt">
 											<i class="fa-solid fa-download color-cyan"></i> Download
 										</button>
-										<button class="btn btn-app2-back" id="btn-notepad-delete" title="Delete Note">
+										<button class="btn btn-notepad-delete" id="btn-notepad-delete"
+											title="Delete Note">
 											<i class="fa-solid fa-trash-can"></i> Delete
 										</button>
 									</div>
 								</div>
 
 								<!-- Editor Textarea Area -->
-								<div class="email-input app2-results-scroller" id="email-input-container-app4">
+								<div class="input-container" id="input-container-container-app4">
 									<div id="line-numbers-app4" class="line-numbers">1</div>
 									<textarea id="notepad-active-content" placeholder="Start typing your notes here..."
 										spellcheck="false"></textarea>
 								</div>
 
 								<!-- Bottom stats -->
-								<div class="app2-results-footer">
+								<div class="notepad-footer">
 									<span id="notepad-word-char-count">0 words | 0 characters</span>
 									<span id="notepad-last-updated">Last saved: Never</span>
 								</div>
@@ -2081,19 +2161,19 @@
 									Quick drafts & listings stored completely offline in your browser.
 								</p>
 
-								<button class="btn btn-app2-new-note" id="btn-notepad-new">
+								<button class="btn btn-notepad-new" id="btn-notepad-new">
 									<i class="fa-solid fa-plus"></i> Create New Note
 								</button>
 
 								<!-- Search Bar -->
-								<div class="app2-notepad-search-wrapper">
+								<div class="notepad-search-wrapper">
 									<input type="text" id="notepad-search" placeholder="Search notes..."
-										class="app2-notepad-search-input">
-									<i class="fa-solid fa-magnifying-glass app2-notepad-search-icon"></i>
+										class="notepad-search-input">
+									<i class="fa-solid fa-magnifying-glass notepad-search-icon"></i>
 								</div>
 
 								<!-- Notes List container -->
-								<div id="notes-list-container" class="app2-notes-scroller">
+								<div id="notes-list-container" class="notepad-scroller">
 									<!-- Dynamically populated list of notes -->
 								</div>
 							</div>
@@ -2454,13 +2534,9 @@
 											<li><strong>Base URL:</strong>
 												<code>https://gmail-checker.blacksoftchild.workers.dev</code>
 											</li>
-											<li><strong>Advanced Gmail Check 1 Endpoint:</strong> <code>/check1</code>
+											<li><strong>Fast Premium Endpoint:</strong> <code>/fastcheck</code>
 											</li>
-											<li><strong>Advanced Gmail Check 2 Endpoint:</strong> <code>/check2</code>
-											</li>
-											<li><strong>Fast Gmail Check 1 Endpoint:</strong> <code>/fastcheck1</code>
-											</li>
-											<li><strong>Fast Gmail Check 2 Endpoint:</strong> <code>/fastcheck2</code>
+											<li><strong>Deep Premium Endpoint:</strong> <code>/deepcheck</code>
 											</li>
 											<li><strong>Method:</strong> <code>POST</code></li>
 											<li><strong>Headers:</strong>
@@ -2496,7 +2572,7 @@
 												<i class="fa-solid fa-copy"></i> Copy
 											</button>
 											<pre class="documentation-code-block">
-curl -X POST "https://gmail-checker.blacksoftchild.workers.dev/check1" \
+curl -X POST "https://gmail-checker.blacksoftchild.workers.dev/deepcheck" \
 	-H "Authorization: Bearer YOUR_API_KEY" \
 	-H "Content-Type: application/json" \
 	-d '{
@@ -2530,7 +2606,7 @@ def validate_emails(emails):
 		'mail': emails
 	}
 		
-	response = requests.post(f'{SERVER_URL}/check1', headers=headers, json=data)
+	response = requests.post(f'{SERVER_URL}/deepcheck', headers=headers, json=data)
 	response.raise_for_status()
 	return response.json()
 
@@ -2556,7 +2632,7 @@ const SERVER_URL = 'https://gmail-checker.blacksoftchild.workers.dev';
 // Check Google (Gmail) Account Status
 async function validateEmails(emails) {
 	try {
-		const response = await fetch(`${SERVER_URL}/check1`, {
+		const response = await fetch(`${SERVER_URL}/deepcheck`, {
 			method: 'POST',
 			headers: {
 				'Authorization': `Bearer ${API_KEY}`,
@@ -2601,7 +2677,7 @@ function validateEmails($emails) {
 	global $api_key, $server_url;
 	$data = json_encode(['mail' => $emails]);
 		
-	$ch = curl_init("$server_url/check1");
+	$ch = curl_init("$server_url/deepcheck");
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_POST, true);
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
@@ -2971,9 +3047,6 @@ try {
 					<div class="dashboard-content-wrapper" id="history-main-viewport">
 						<!-- Header -->
 						<div class="login-content-group">
-							<h1 class="font-keren history-title-heading">
-								<i class="fa-solid fa-clock-rotate-left inline-style-gen-62"></i>Result History
-							</h1>
 							<p class="history-subtitle-heading">
 								View, search, copy, or download previous check and generation results across all your
 								apps. Stored securely offline in your browser.
@@ -2981,7 +3054,24 @@ try {
 						</div>
 
 						<div class="history-layout-columns">
-							<!-- Left: History Search & Filtering -->
+							<!-- Left: History List Viewer -->
+							<div class="history-results-list-panel inline-style-gen-21">
+								<div class="flex-row-between">
+									<div class="font-keren history-sidebar-title">
+										<i class="fa-solid fa-list-ul "></i> History Entries
+									</div>
+									<button class="btn btn-history-clear-all" id="btn-refresh-history">
+										<i class="fa-solid fa-rotate"></i> Refresh
+									</button>
+								</div>
+
+								<!-- History entries list container -->
+								<div id="history-list-container" class="history-cards-scroller">
+									<!-- Dynamically populated or empty state -->
+								</div>
+							</div>
+
+							<!-- Right: Filters & Controls -->
 							<div class="controls">
 								<div class="font-keren history-sidebar-title">
 									<i class="fa-solid fa-filter "></i> Filters & Controls
@@ -3032,23 +3122,6 @@ try {
 									</div>
 								</div>
 							</div>
-
-							<!-- Right: History List Viewer -->
-							<div class="history-results-list-panel inline-style-gen-21">
-								<div class="flex-row-between">
-									<div class="font-keren history-sidebar-title">
-										<i class="fa-solid fa-list-ul "></i> History Entries
-									</div>
-									<button class="btn btn-history-clear-all" id="btn-refresh-history">
-										<i class="fa-solid fa-rotate"></i> Refresh
-									</button>
-								</div>
-
-								<!-- History entries list container -->
-								<div id="history-list-container" class="history-cards-scroller inline-style-gen-79">
-									<!-- Dynamically populated or empty state -->
-								</div>
-							</div>
 						</div>
 					</div>
 
@@ -3057,10 +3130,9 @@ try {
 						<p class="app-instruction">
 							Viewing historical run details and extracted outputs from local browser database.
 						</p>
-						<div class="app-x55-container inline-style-gen-103">
+						<div class="app-content-container">
 							<!-- Left/Middle: Results Viewport -->
-							<div class="results-container app2-layout-main" id="history-details-results-container"
-								class="inline-style-gen-38">
+							<div class="results-container" id="history-details-results-container">
 								<!-- Custom Loading Spinner Overlay -->
 								<div id="history-details-loading-overlay" class="hide inline-style-gen-52">
 									<i class="fa-solid fa-circle-notch fa-spin inline-style-gen-48"></i>
@@ -3166,6 +3238,9 @@ try {
 							</button>
 							<button class="db-tab-btn" data-tab="admin-support">
 								<i class="fa-solid fa-comments"></i> Support Tickets
+							</button>
+							<button class="db-tab-btn" data-tab="admin-event">
+								<i class="fa-solid fa-gift"></i> Event
 							</button>
 						</div>
 
@@ -3342,21 +3417,17 @@ try {
 									<div id="admin-users-top-scrollbar-dummy" style="height: 1px;"></div>
 								</div>
 								<div class="table-responsive">
-									<table class="db-table" id="admin-users-table">
+									<table class="admin-db-table" id="admin-users-table">
 										<thead>
 											<tr>
 												<th>Email</th>
-												<th>Plan</th>
-												<th>Expiry</th>
-												<th>API Credits</th>
 												<th>Last Seen</th>
-												<th>Role</th>
 												<th>Action</th>
 											</tr>
 										</thead>
 										<tbody id="admin-users-tbody">
 											<tr>
-												<td colspan="6" class="inline-style-gen-53">Loading users...</td>
+												<td colspan="3" class="inline-style-gen-53">Loading users...</td>
 											</tr>
 										</tbody>
 									</table>
@@ -3369,7 +3440,7 @@ try {
 							<div class="card">
 								<h3 class="font-keren inline-style-gen-107">Successful Payments</h3>
 								<div class="table-responsive">
-									<table class="db-table">
+									<table class="admin-db-table">
 										<thead>
 											<tr>
 												<th>Date</th>
@@ -3418,7 +3489,7 @@ try {
 											<option value="special_subs">SPECIAL (Custom credits)</option>
 										</select>
 										<input type="number" id="admin-sub-special-quota" class="db-input"
-											placeholder="Custom Credits (e.g. 5000)" class="display-none">
+											placeholder="Custom Credits (e.g. 5000)" class="hide">
 										<input type="number" id="admin-sub-days" class="db-input"
 											placeholder="Days (e.g. 30)">
 										<button id="admin-btn-grant-sub"
@@ -3506,7 +3577,7 @@ try {
 									</div>
 								</div>
 								<div class="table-responsive">
-									<table class="db-table" id="admin-support-table">
+									<table class="admin-db-table" id="admin-support-table">
 										<thead>
 											<tr>
 												<th>Ticket ID</th>
@@ -3524,6 +3595,113 @@ try {
 											</tr>
 										</tbody>
 									</table>
+								</div>
+							</div>
+						</div>
+
+						<!-- Event Settings Tab -->
+						<div id="admin-event" class="db-tab-content hide">
+							<style>
+								.custom-switch input:checked+.custom-slider {
+									background-color: #00f0ff !important;
+									border-color: #00f0ff !important;
+								}
+
+								.custom-switch input:checked+.custom-slider:before {
+									transform: translateX(20px);
+									background-color: #0d0915;
+								}
+
+								.custom-slider:before {
+									position: absolute;
+									content: "";
+									height: 16px;
+									width: 16px;
+									left: 3px;
+									bottom: 3px;
+									background-color: #ffffff;
+									transition: 0.3s;
+									border-radius: 50%;
+								}
+							</style>
+							<div class="admin-form-card"
+								style="max-width: 500px; margin: 20px auto; background: linear-gradient(135deg, rgba(23, 17, 41, 0.6) 0%, rgba(12, 9, 21, 0.8) 100%); border: 1px solid rgba(188, 59, 247, 0.2); border-radius: 16px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+								<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+									<div
+										style="width: 48px; height: 48px; background: rgba(188, 59, 247, 0.1); border: 1px solid rgba(188, 59, 247, 0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+										<i class="fa-solid fa-gift" style="color: #bc3bf7; font-size: 20px;"></i>
+									</div>
+									<div>
+										<h3 class="font-keren" style="color: #ffffff; margin: 0; font-size: 18px;">Daily
+											Claim Event Settings</h3>
+										<p style="color: var(--text-muted); margin: 0; font-size: 13px;">Configure the
+											daily 1,000 API Credits check-in reward event.</p>
+									</div>
+								</div>
+
+								<div style="display: flex; flex-direction: column; gap: 20px;">
+									<!-- Toggle Active -->
+									<div
+										style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 14px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+										<div>
+											<strong
+												style="color: #ffffff; display: block; font-size: 14px; font-weight: 600;">Event
+												Status</strong>
+											<span style="color: var(--text-muted); font-size: 12px;">Toggle daily claim
+												availability.</span>
+										</div>
+										<label class="custom-switch"
+											style="position: relative; display: inline-block; width: 44px; height: 24px;">
+											<input type="checkbox" id="admin-event-active"
+												style="opacity: 0; width: 0; height: 0;">
+											<span class="custom-slider"
+												style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .3s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.15);"></span>
+										</label>
+									</div>
+
+									<!-- Toggle Date Range -->
+									<div
+										style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 14px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+										<div>
+											<strong
+												style="color: #ffffff; display: block; font-size: 14px; font-weight: 600;">Limit
+												by Date Range</strong>
+											<span style="color: var(--text-muted); font-size: 12px;">Enable event only
+												within specific dates.</span>
+										</div>
+										<label class="custom-switch"
+											style="position: relative; display: inline-block; width: 44px; height: 24px;">
+											<input type="checkbox" id="admin-event-use-range"
+												style="opacity: 0; width: 0; height: 0;">
+											<span class="custom-slider"
+												style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .3s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.15);"></span>
+										</label>
+									</div>
+
+									<!-- Date Inputs Container -->
+									<div id="admin-event-date-inputs" class="hide"
+										style="display: flex; flex-direction: column; gap: 14px; background: rgba(0, 240, 255, 0.03); border: 1px dashed rgba(0, 240, 255, 0.15); padding: 16px; border-radius: 10px;">
+										<div>
+											<label
+												style="color: var(--text-secondary); display: block; font-size: 13px; margin-bottom: 6px; font-weight: 500;">Start
+												Date (UTC)</label>
+											<input type="date" id="admin-event-start-date" class="db-input"
+												style="width: 100%; border-radius: 8px;">
+										</div>
+										<div>
+											<label
+												style="color: var(--text-secondary); display: block; font-size: 13px; margin-bottom: 6px; font-weight: 500;">End
+												Date (UTC)</label>
+											<input type="date" id="admin-event-end-date" class="db-input"
+												style="width: 100%; border-radius: 8px;">
+										</div>
+									</div>
+
+									<!-- Save Button -->
+									<button id="admin-event-save-btn" class="btn btn-primary"
+										style="width: 100%; border-radius: 10px; padding: 12px; font-weight: bold; background: linear-gradient(135deg, #bc3bf7 0%, #00f0ff 100%); border: none; cursor: pointer; transition: all 0.3s;">
+										<i class="fa-solid fa-floppy-disk"></i> Save Event Settings
+									</button>
 								</div>
 							</div>
 						</div>
@@ -3586,7 +3764,8 @@ try {
 												<option value="low">Low</option>
 												<option value="medium" selected>Medium</option>
 												<option value="high">High</option>
-												<option value="vip" id="support-priority-vip-opt">👑 PRO/ULTRA Priority
+												<option value="premium" id="support-priority-premium-opt">👑 PRO/ULTRA
+													Priority
 													(PRO/ULTRA Only)</option>
 											</select>
 										</div>
@@ -3605,7 +3784,7 @@ try {
 										<label class="history-sidebar-section-title">Attach Files (Max 5)</label>
 										<div class="history-sidebar-actions">
 											<input type="file" id="support-images-input" accept="image/*" multiple
-												class="display-none">
+												class="hide">
 											<button class="btn btn-history-sidebar-action"
 												id="btn-trigger-support-images" type="button">
 												<i class="fa-solid fa-paperclip "></i> Add Files
@@ -3679,7 +3858,7 @@ try {
 
 							<div class="history-detail-modal-actions">
 								<input type="file" id="ticket-modal-reply-images-input" accept="image/*" multiple
-									class="display-none">
+									class="hide">
 								<button class="btn btn-history-detail-modal-close" id="btn-trigger-reply-images"
 									type="button">
 									<i class="fa-solid fa-paperclip whitelist-modal-icon"></i>
@@ -3731,8 +3910,7 @@ try {
 							<div id="admin-ticket-modal-reply-images-preview" class="filter-buttons-wrapper"></div>
 
 							<div class="history-detail-modal-actions">
-								<input type="file" id="admin-ticket-modal-reply-images-input" multiple
-									class="display-none">
+								<input type="file" id="admin-ticket-modal-reply-images-input" multiple class="hide">
 								<button class="btn btn-history-detail-modal-close" id="admin-btn-trigger-reply-images"
 									type="button" title="Attach Image">
 									<i class="fa-solid fa-paperclip whitelist-modal-icon"></i>
@@ -3777,14 +3955,125 @@ try {
 						</div>
 					</div>
 				</div>
+
+				<!-- ADMIN USER DETAILED POPUP MODAL -->
+				<div id="admin-user-modal" class="modal-overlay hide modal-overlay-custom">
+					<div class="history-detail-modal-card" style="max-width: 600px; width: 90%;">
+						<button id="admin-user-modal-close-btn" class="modal-btn-close-custom">
+							<i class="fa-solid fa-xmark"></i>
+						</button>
+
+						<div class="history-detail-modal-header"
+							style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+							<div class="history-sidebar-actions"
+								style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+								<div>
+									<span id="admin-user-modal-role-badge" class="history-detail-modal-app-badge"
+										style="background: rgba(175, 134, 252, 0.15); color: #af86fc; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-size: 0.75rem;">USER</span>
+									<span id="admin-user-modal-status-badge" class="history-detail-modal-meta-badge"
+										style="background: rgba(0, 240, 255, 0.1); color: #00f0ff; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-size: 0.75rem;">ONLINE</span>
+								</div>
+							</div>
+							<h3 class="font-keren history-detail-modal-title" id="admin-user-modal-email"
+								style="margin-top: 10px; font-size: 1.5rem; color: var(--text-primary);">
+								user@example.com</h3>
+							<span id="admin-user-modal-reg-date" class="history-detail-modal-subtitle"
+								style="font-size: 0.85rem; color: var(--text-muted);">Registered: 2026-05-20</span>
+						</div>
+
+						<div class="history-detail-modal-content-scroller"
+							style="padding: 10px 0; max-height: 50vh; overflow-y: auto;">
+							<!-- User Details Grid -->
+							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+								<div
+									style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+									<span
+										style="color: var(--text-muted); font-size: 0.8rem; display: block; text-transform: uppercase; margin-bottom: 4px;">Subscription
+										Plan</span>
+									<strong id="admin-user-modal-plan"
+										style="color: #bc3bf7; font-size: 1.1rem; text-transform: capitalize;">Free</strong>
+								</div>
+								<div
+									style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+									<span
+										style="color: var(--text-muted); font-size: 0.8rem; display: block; text-transform: uppercase; margin-bottom: 4px;">Subscription
+										Expiry</span>
+									<strong id="admin-user-modal-expiry"
+										style="color: var(--text-sharp); font-size: 1.1rem;">Lifetime</strong>
+								</div>
+								<div
+									style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+									<span
+										style="color: var(--text-muted); font-size: 0.8rem; display: block; text-transform: uppercase; margin-bottom: 4px;">API
+										Credits (Free / Total)</span>
+									<strong id="admin-user-modal-credits"
+										style="color: #00f0ff; font-size: 1.1rem;">1,000</strong>
+								</div>
+								<div
+									style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+									<span
+										style="color: var(--text-muted); font-size: 0.8rem; display: block; text-transform: uppercase; margin-bottom: 4px;">Country</span>
+									<strong id="admin-user-modal-country"
+										style="color: var(--text-sharp); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">-</strong>
+								</div>
+								<div
+									style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+									<span
+										style="color: var(--text-muted); font-size: 0.8rem; display: block; text-transform: uppercase; margin-bottom: 4px;">Pro
+										Credits</span>
+									<strong id="admin-user-modal-pro-credits"
+										style="color: #66ffd9; font-size: 1.1rem;">0</strong>
+								</div>
+								<div
+									style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+									<span
+										style="color: var(--text-muted); font-size: 0.8rem; display: block; text-transform: uppercase; margin-bottom: 4px;">Ultra
+										Credits</span>
+									<strong id="admin-user-modal-ultra-credits"
+										style="color: #ffd700; font-size: 1.1rem;">0</strong>
+								</div>
+								<div
+									style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+									<span
+										style="color: var(--text-muted); font-size: 0.8rem; display: block; text-transform: uppercase; margin-bottom: 4px;">IP
+										Address</span>
+									<strong id="admin-user-modal-ip"
+										style="color: var(--text-sharp); font-size: 1.1rem;">-</strong>
+								</div>
+								<div
+									style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+									<span
+										style="color: var(--text-muted); font-size: 0.8rem; display: block; text-transform: uppercase; margin-bottom: 4px;">Last
+										Active / Seen</span>
+									<strong id="admin-user-modal-last-seen"
+										style="color: var(--text-sharp); font-size: 1.1rem;">-</strong>
+								</div>
+							</div>
+
+							<!-- API Keys Section -->
+							<div style="margin-top: 20px;">
+								<h4 class="font-keren"
+									style="color: var(--text-sharp); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 1.1rem;">
+									<i class="fa-solid fa-key" style="color: #ffd700;"></i> Owned API Keys
+								</h4>
+								<div id="admin-user-modal-keys-container"
+									style="display: flex; flex-direction: column; gap: 12px;">
+									<!-- API Keys list will go here -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 
 		<script src="js/endpoints.js"></script>
+		<script src="js/notification.js"></script>
 		<script src="js/notifications.js"></script>
 		<script src="js/admin.js"></script>
 		<script type="module" src="js/main.js"></script>
 		<script src="js/maintenance.js"></script>
+		<script src="js/gmail-checker-demo.js"></script>
 </body>
 
 </html>

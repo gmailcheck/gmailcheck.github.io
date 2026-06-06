@@ -41,7 +41,7 @@ function initApp() {
 	// 4. Initialize Settings dropdown
 	const themeSelect = document.getElementById('theme-select');
 	if (themeSelect) {
-		const savedTheme = localStorage.getItem('app-theme') || 'system';
+		const savedTheme = localStorage.getItem('app-theme') || 'dark';
 		themeSelect.value = savedTheme;
 		themeSelect.addEventListener('change', (e) => {
 			window.setTheme(e.target.value);
@@ -50,7 +50,7 @@ function initApp() {
 
 	// 5. System theme changes observer
 	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-		const currentTheme = localStorage.getItem('app-theme') || 'system';
+		const currentTheme = localStorage.getItem('app-theme') || 'dark';
 		if (currentTheme === 'system') {
 			if (e.matches) {
 				document.documentElement.classList.add('dark');
@@ -69,7 +69,7 @@ function initApp() {
 	const toggleSidebar = (e) => {
 		e.stopPropagation();
 		sideBar.classList.add('open');
-		sidebarBackdrop.classList.add('show');
+		sidebarBackdrop.classList.remove('hide');
 	};
 
 	if (sideBar && sidebarBackdrop) {
@@ -83,7 +83,7 @@ function initApp() {
 
 		sidebarBackdrop.addEventListener('click', () => {
 			sideBar.classList.remove('open');
-			sidebarBackdrop.classList.remove('show');
+			sidebarBackdrop.classList.add('hide');
 		});
 
 		// Close sidebar on clicking menu or submenu items in mobile/tablet
@@ -95,7 +95,7 @@ function initApp() {
 					return;
 				}
 				sideBar.classList.remove('open');
-				sidebarBackdrop.classList.remove('show');
+				sidebarBackdrop.classList.add('hide');
 			}
 		});
 	}
@@ -158,7 +158,7 @@ function initApp() {
 		}
 	});
 
-	const activeTheme = localStorage.getItem('app-theme') || 'system';
+	const activeTheme = localStorage.getItem('app-theme') || 'dark';
 	window.updateThemePopoverUI(activeTheme);
 
 	// 7. BIND AUTHENTICATION & CTA TRIGGERS
@@ -405,11 +405,11 @@ function initApp() {
 	});
 
 	// 8. Initialize Textarea line numbers synchronization
-	window.initTextareaLineNumbers('gmail-checker-input', 'line-numbers-app1', 'email-input-container-app1');
-	window.initTextareaLineNumbers('gmail-dot-trick-input', 'line-numbers-app2', 'email-input-container-app2');
-	window.initTextareaLineNumbers('name-combiner-input', 'line-numbers-app3', 'email-input-container-app3');
-	window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'email-input-container-app4');
-	window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'email-input-container-app5');
+	window.initTextareaLineNumbers('gmail-checker-input', 'line-numbers-app1', 'input-container-container-app1');
+	window.initTextareaLineNumbers('gmail-dot-trick-input', 'line-numbers-app2', 'input-container-container-app2');
+	window.initTextareaLineNumbers('name-combiner-input', 'line-numbers-app3', 'input-container-container-app3');
+	window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'input-container-container-app4');
+	window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'input-container-container-app5');
 
 	// 11. Initialize Settings & Preferences Page UI bindings
 	function initPreferencesPage() {

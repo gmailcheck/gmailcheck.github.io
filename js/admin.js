@@ -29,6 +29,7 @@ function initAdminPanel() {
             if (targetId === 'admin-users') loadAdminUsers();
             if (targetId === 'admin-payments') loadAdminPayments();
             if (targetId === 'admin-support') loadAdminSupport();
+            if (targetId === 'admin-event') loadAdminEventConfig();
         });
     });
 
@@ -41,6 +42,7 @@ function initAdminPanel() {
             if (targetId === 'admin-users') loadAdminUsers();
             if (targetId === 'admin-payments') loadAdminPayments();
             if (targetId === 'admin-support') loadAdminSupport();
+            if (targetId === 'admin-event') loadAdminEventConfig();
         }
     };
 
@@ -59,7 +61,7 @@ function initAdminPanel() {
                     const tableScrollWidth = tableContainer.scrollWidth;
                     const tableClientWidth = tableContainer.clientWidth;
                     const topClientWidth = topScrollbar.clientWidth;
-                    
+
                     const dummyWidth = tableScrollWidth - tableClientWidth + topClientWidth;
                     topScrollbarDummy.style.width = dummyWidth + 'px';
                     topScrollbar.scrollLeft = tableContainer.scrollLeft;
@@ -308,6 +310,60 @@ function initAdminPanel() {
         });
     }
 
+    // 5b. Event Settings Listeners
+    const useRangeCheckbox = document.getElementById('admin-event-use-range');
+    if (useRangeCheckbox) {
+        useRangeCheckbox.addEventListener('change', () => {
+            const dateInputsContainer = document.getElementById('admin-event-date-inputs');
+            if (dateInputsContainer) {
+                if (useRangeCheckbox.checked) {
+                    dateInputsContainer.classList.remove('hide');
+                } else {
+                    dateInputsContainer.classList.add('hide');
+                }
+            }
+        });
+    }
+
+    const btnSaveEvent = document.getElementById('admin-event-save-btn');
+    if (btnSaveEvent) {
+        btnSaveEvent.addEventListener('click', async () => {
+            const active = document.getElementById('admin-event-active').checked;
+            const useDateRange = document.getElementById('admin-event-use-range').checked;
+            const startDate = document.getElementById('admin-event-start-date').value;
+            const endDate = document.getElementById('admin-event-end-date').value;
+
+            if (useDateRange && (!startDate || !endDate)) {
+                return window.showAppNotification('warning', 'Please specify both start and end dates.');
+            }
+
+            try {
+                btnSaveEvent.disabled = true;
+                btnSaveEvent.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+                const res = await fetch(window.API.EVENT_CONFIG, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${await getAuthToken()}`, 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({ active, useDateRange, startDate, endDate })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.showAppNotification('success', '🎁 <strong>Event settings saved successfully!</strong>');
+                } else {
+                    throw new Error(data.error || 'Failed to save event settings');
+                }
+            } catch (err) {
+                window.showAppNotification('danger', 'Error: ' + err.message);
+            } finally {
+                btnSaveEvent.disabled = false;
+                btnSaveEvent.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Event Settings';
+            }
+        });
+    }
+
     // 6. Support Tickets Event Listeners
     const btnRefreshSupport = document.getElementById('admin-btn-refresh-support');
     if (btnRefreshSupport) {
@@ -322,6 +378,13 @@ function initAdminPanel() {
         modalCloseBtn.addEventListener('click', () => {
             document.getElementById('admin-ticket-modal').classList.add('hide');
             activeAdminTicketId = null;
+        });
+    }
+
+    const userModalCloseBtn = document.getElementById('admin-user-modal-close-btn');
+    if (userModalCloseBtn) {
+        userModalCloseBtn.addEventListener('click', () => {
+            document.getElementById('admin-user-modal').classList.add('hide');
         });
     }
 
@@ -369,7 +432,6 @@ function initAdminPanel() {
             div.style.width = '55px';
             div.style.height = '55px';
             div.style.borderRadius = '8px';
-            div.style.overflow = 'hidden';
             div.style.border = '1px solid var(--border-color)';
             div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
             div.style.display = 'flex';
@@ -497,6 +559,106 @@ function initAdminPanel() {
             }
         });
     }
+    // Admin Reply Templates
+    const btnTriggerTemplates = document.getElementById('admin-btn-trigger-templates');
+    const templatesPopover = document.getElementById('admin-templates-popover');
+    const btnCloseTemplates = document.getElementById('admin-btn-close-templates');
+    const btnAddTemplate = document.getElementById('admin-btn-add-template');
+    const newTemplateInput = document.getElementById('admin-new-template-input');
+    const templatesList = document.getElementById('admin-templates-list');
+    const replyInput = document.getElementById('admin-ticket-modal-reply-input');
+
+    if (btnTriggerTemplates && templatesPopover) {
+        btnTriggerTemplates.addEventListener('click', () => {
+            templatesPopover.classList.toggle('hide');
+            if (!templatesPopover.classList.contains('hide')) {
+                renderAdminTemplates();
+            }
+        });
+
+        if (btnCloseTemplates) {
+            btnCloseTemplates.addEventListener('click', () => {
+                templatesPopover.classList.add('hide');
+            });
+        }
+
+        if (btnAddTemplate && newTemplateInput) {
+            btnAddTemplate.addEventListener('click', () => {
+                const text = newTemplateInput.value.trim();
+                if (!text) return;
+
+                let savedTemplates = [];
+                try { savedTemplates = JSON.parse(localStorage.getItem('adminReplyTemplates') || '[]'); } catch (e) { }
+                savedTemplates.push(text);
+                localStorage.setItem('adminReplyTemplates', JSON.stringify(savedTemplates));
+
+                newTemplateInput.value = '';
+                renderAdminTemplates();
+                window.showAppNotification('success', 'Template saved!');
+            });
+        }
+
+        function renderAdminTemplates() {
+            if (!templatesList) return;
+            let savedTemplates = [];
+            try { savedTemplates = JSON.parse(localStorage.getItem('adminReplyTemplates') || '[]'); } catch (e) { }
+
+            templatesList.innerHTML = '';
+            if (savedTemplates.length === 0) {
+                templatesList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 10px;">No templates saved yet.</div>';
+                return;
+            }
+
+            savedTemplates.forEach((templateText, index) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.gap = '8px';
+                item.style.alignItems = 'center';
+                item.style.background = 'rgba(255,255,255,0.02)';
+                item.style.padding = '8px';
+                item.style.borderRadius = '6px';
+                item.style.border = '1px solid var(--border-color)';
+
+                const textDiv = document.createElement('div');
+                textDiv.style.flex = '1';
+                textDiv.style.fontSize = '0.85rem';
+                textDiv.style.color = 'var(--text-primary)';
+                textDiv.style.whiteSpace = 'nowrap';
+                textDiv.style.overflow = 'hidden';
+                textDiv.style.textOverflow = 'ellipsis';
+                textDiv.style.cursor = 'pointer';
+                textDiv.title = templateText;
+                textDiv.textContent = templateText;
+
+                textDiv.addEventListener('click', () => {
+                    if (replyInput) {
+                        replyInput.value = templateText;
+                        templatesPopover.classList.add('hide');
+                        replyInput.focus();
+                    }
+                });
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn';
+                deleteBtn.style.padding = '4px 8px';
+                deleteBtn.style.fontSize = '0.75rem';
+                deleteBtn.style.background = 'rgba(255, 102, 102, 0.15)';
+                deleteBtn.style.color = '#ff6666';
+                deleteBtn.style.border = 'none';
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+
+                deleteBtn.addEventListener('click', () => {
+                    savedTemplates.splice(index, 1);
+                    localStorage.setItem('adminReplyTemplates', JSON.stringify(savedTemplates));
+                    renderAdminTemplates();
+                });
+
+                item.appendChild(textDiv);
+                item.appendChild(deleteBtn);
+                templatesList.appendChild(item);
+            });
+        }
+    }
 
     const btnResolve = document.getElementById('admin-btn-modal-resolve');
     if (btnResolve) {
@@ -539,7 +701,38 @@ function initAdminPanel() {
 }
 
 async function getAuthToken() {
-    return await window.firebaseAuth.currentUser.getIdToken(false);
+    return await window.getAuthToken();
+}
+
+async function loadAdminEventConfig() {
+    try {
+        const res = await fetch(window.API.EVENT_CONFIG, {
+            headers: { 'Authorization': `Bearer ${await getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch event settings');
+        const config = await res.json();
+
+        const activeCheckbox = document.getElementById('admin-event-active');
+        const useRangeCheckbox = document.getElementById('admin-event-use-range');
+        const startDateInput = document.getElementById('admin-event-start-date');
+        const endDateInput = document.getElementById('admin-event-end-date');
+        const dateInputsContainer = document.getElementById('admin-event-date-inputs');
+
+        if (activeCheckbox) activeCheckbox.checked = !!config.active;
+        if (useRangeCheckbox) useRangeCheckbox.checked = !!config.useDateRange;
+        if (startDateInput) startDateInput.value = config.startDate || '';
+        if (endDateInput) endDateInput.value = config.endDate || '';
+
+        if (dateInputsContainer) {
+            if (config.useDateRange) {
+                dateInputsContainer.classList.remove('hide');
+            } else {
+                dateInputsContainer.classList.add('hide');
+            }
+        }
+    } catch (err) {
+        window.showAppNotification('danger', 'Failed to load event config: ' + err.message);
+    }
 }
 
 async function loadAdminOverview() {
@@ -564,12 +757,21 @@ async function loadAdminOverview() {
         if (res.ok) {
             const config = await res.json();
             document.getElementById('admin-mt-status').value = config.isMT ? 'true' : 'false';
-            if (config.startTime) {
+            
+            // Set default start time input to current local time first
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const adjustedNow = new Date(now.getTime() - (offset * 60 * 1000));
+            const defaultFormattedNow = adjustedNow.toISOString().substring(0, 16);
+            document.getElementById('admin-mt-start-time').value = defaultFormattedNow;
+
+            // If maintenance is currently active and has a valid saved start time, override input with it
+            if (config.isMT && config.startTime) {
                 try {
                     const localDate = new Date(config.startTime);
                     if (!isNaN(localDate.getTime())) {
-                        const offset = localDate.getTimezoneOffset();
-                        const adjustedDate = new Date(localDate.getTime() - (offset * 60 * 1000));
+                        const offsetTime = localDate.getTimezoneOffset();
+                        const adjustedDate = new Date(localDate.getTime() - (offsetTime * 60 * 1000));
                         const formatted = adjustedDate.toISOString().substring(0, 16);
                         document.getElementById('admin-mt-start-time').value = formatted;
                     } else {
@@ -589,85 +791,163 @@ async function loadAdminOverview() {
 }
 
 let loadedAdminUsersList = [];
-window.adminUsersRefreshInterval = null;
+window.adminUsersWS = null;
+window.adminUsersWSInterval = null;
 
 async function loadAdminUsers() {
     const tbody = document.getElementById('admin-users-tbody');
+    
+    // If WebSocket is already open, just request users
+    if (window.adminUsersWS && window.adminUsersWS.readyState === WebSocket.OPEN) {
+        window.adminUsersWS.send(JSON.stringify({ type: "get_users" }));
+        return;
+    }
+    
+    // Display loading state first time
+    if (tbody && (!loadedAdminUsersList || loadedAdminUsersList.length === 0)) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" style="text-align: center; padding: 30px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.8rem; color: #00f0ff; margin-bottom: 10px; display: block;"></i>
+                    <span style="color: var(--text-muted);">Connecting Users Stream...</span>
+                </td>
+            </tr>
+        `;
+    }
+    
+    // Connect WebSocket
+    await connectAdminUsersWS();
+}
+
+async function connectAdminUsersWS() {
+    const idToken = await getAuthToken();
+    if (!idToken) return;
+
+    if (window.adminUsersWS) {
+        if (window.adminUsersWS.readyState === WebSocket.OPEN || window.adminUsersWS.readyState === WebSocket.CONNECTING) {
+            return;
+        }
+    }
+
     try {
-        const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/users`, {
+        const wsBase = window.API.GC_SERVER_BASE.replace(/^http/, 'ws');
+        const wsUrl = `${wsBase}/admin/ws-users?auth=${encodeURIComponent(idToken)}`;
+        const ws = new WebSocket(wsUrl);
+        window.adminUsersWS = ws;
+
+        ws.onopen = () => {
+            console.log("[Admin-WS] Connected to admin users stream.");
+            ws.send(JSON.stringify({ type: "get_users" }));
+
+            // Clean existing interval
+            if (window.adminUsersWSInterval) {
+                clearInterval(window.adminUsersWSInterval);
+            }
+
+            // Periodic heartbeat & data sync (e.g. every 30s to keep open, and sync full data)
+            window.adminUsersWSInterval = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    // Send ping to keep connection alive
+                    ws.send(JSON.stringify({ type: "ping" }));
+                    
+                    // Also periodically request full sync to catch up on credit changes, registration, country etc.
+                    const usersTab = document.getElementById('admin-users');
+                    const adminPage = document.getElementById('page-admin');
+                    const isUsersTabActive = usersTab && usersTab.classList.contains('active') && !usersTab.classList.contains('hide');
+                    const isAdminPageActive = adminPage && !adminPage.classList.contains('hide');
+
+                    if (isUsersTabActive && isAdminPageActive && window.isUserAuthenticated) {
+                        ws.send(JSON.stringify({ type: "get_users" }));
+                    } else {
+                        // If admin is no longer on the users tab, close the WebSocket to save resources!
+                        console.log("[Admin-WS] Admin left users tab, closing WebSocket stream.");
+                        ws.close();
+                    }
+                }
+            }, 30000);
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.type === "users_list") {
+                    loadedAdminUsersList = msg.users || [];
+                    const totalUsersEl = document.getElementById('admin-total-users');
+                    if (totalUsersEl) {
+                        totalUsersEl.textContent = `Total Users: ${loadedAdminUsersList.length}`;
+                    }
+                    renderAdminUsersTable();
+                } else if (msg.type === "status_update") {
+                    const user = loadedAdminUsersList.find(u => u.email === msg.email);
+                    if (user) {
+                        user.status = msg.status;
+                        user.lastSeen = msg.lastSeen;
+                        renderAdminUsersTable();
+                    }
+                } else if (msg.type === "user_details") {
+                    if (window.onAdminUserDetailsReceived) {
+                        window.onAdminUserDetailsReceived(msg.user);
+                    }
+                }
+            } catch (err) {
+                console.error("[Admin-WS] message parsing error:", err);
+            }
+        };
+
+        ws.onclose = () => {
+            console.log("[Admin-WS] Connection closed.");
+            if (window.adminUsersWSInterval) {
+                clearInterval(window.adminUsersWSInterval);
+                window.adminUsersWSInterval = null;
+            }
+            // Auto-reconnect if admin tab is still active after 5 seconds
+            setTimeout(() => {
+                const usersTab = document.getElementById('admin-users');
+                const adminPage = document.getElementById('page-admin');
+                const isUsersTabActive = usersTab && usersTab.classList.contains('active') && !usersTab.classList.contains('hide');
+                const isAdminPageActive = adminPage && !adminPage.classList.contains('hide');
+                if (isUsersTabActive && isAdminPageActive && window.isUserAuthenticated) {
+                    connectAdminUsersWS();
+                }
+            }, 5000);
+        };
+
+        ws.onerror = (err) => {
+            console.error("[Admin-WS] Connection error:", err);
+            try { ws.close(); } catch(e){}
+        };
+
+    } catch (e) {
+        console.error("[Admin-WS] Connection initialization failed:", e);
+        fallbackLoadAdminUsers();
+    }
+}
+
+// Fallback method using traditional REST API
+async function fallbackLoadAdminUsers() {
+    const tbody = document.getElementById('admin-users-tbody');
+    try {
+        const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/users?_t=${Date.now()}`, {
             headers: { 'Authorization': `Bearer ${await getAuthToken()}` }
         });
         if (!res.ok) throw new Error('Failed to fetch');
         const users = await res.json();
-
-        // Cache loaded users list in memory for fast frontend-only sorting
         loadedAdminUsersList = users || [];
-
-        // Update Total Users badge
         const totalUsersEl = document.getElementById('admin-total-users');
         if (totalUsersEl) {
             totalUsersEl.textContent = `Total Users: ${loadedAdminUsersList.length}`;
         }
-
-        // Render users list by applying active sort option
         renderAdminUsersTable();
-
-        // Start auto-refresh interval when viewing this tab
-        startAdminUsersAutoRefresh();
-
     } catch (err) {
         if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Failed to load users: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Failed to load users: ${err.message}</td></tr>`;
         }
     }
 }
 
-async function silentReloadAdminUsers() {
-    try {
-        const res = await fetch(`${window.API.GC_SERVER_BASE}/admin/users`, {
-            headers: { 'Authorization': `Bearer ${await getAuthToken()}` }
-        });
-        if (!res.ok) return;
-        const users = await res.json();
-        loadedAdminUsersList = users || [];
-
-        const totalUsersEl = document.getElementById('admin-total-users');
-        if (totalUsersEl) {
-            totalUsersEl.textContent = `Total Users: ${loadedAdminUsersList.length}`;
-        }
-
-        renderAdminUsersTable();
-    } catch (e) {
-        // silent fail on background auto-refresh
-    }
-}
-
-function startAdminUsersAutoRefresh() {
-    if (window.adminUsersRefreshInterval) {
-        clearInterval(window.adminUsersRefreshInterval);
-    }
-
-    window.adminUsersRefreshInterval = setInterval(() => {
-        // Only fetch if admin-users tab is active and visible
-        const usersTab = document.getElementById('admin-users');
-        const adminPage = document.getElementById('page-admin');
-        const isUsersTabActive = usersTab && usersTab.classList.contains('active') && !usersTab.classList.contains('hide');
-        const isAdminPageActive = adminPage && !adminPage.classList.contains('hide');
-
-        if (isUsersTabActive && isAdminPageActive && window.isUserAuthenticated) {
-            silentReloadAdminUsers();
-        } else {
-            stopAdminUsersAutoRefresh();
-        }
-    }, 30000); // silent auto-refresh every 30 seconds
-}
-
-function stopAdminUsersAutoRefresh() {
-    if (window.adminUsersRefreshInterval) {
-        clearInterval(window.adminUsersRefreshInterval);
-        window.adminUsersRefreshInterval = null;
-    }
-}
+// Legacy compatibility stubs
+function startAdminUsersAutoRefresh() {}
+function stopAdminUsersAutoRefresh() {}
 
 function renderAdminUsersTable() {
     const tbody = document.getElementById('admin-users-tbody');
@@ -681,8 +961,8 @@ function renderAdminUsersTable() {
 
     // search filter
     if (searchQuery) {
-        sortedUsers = sortedUsers.filter(u => 
-            (u.email && u.email.toLowerCase().includes(searchQuery)) || 
+        sortedUsers = sortedUsers.filter(u =>
+            (u.email && u.email.toLowerCase().includes(searchQuery)) ||
             (u.username && u.username.toLowerCase().includes(searchQuery))
         );
     }
@@ -735,7 +1015,7 @@ function renderAdminUsersTable() {
 
     tbody.innerHTML = '';
     if (sortedUsers.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No users matched search criteria</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No users matched search criteria</td></tr>`;
         return;
     }
 
@@ -744,10 +1024,45 @@ function renderAdminUsersTable() {
 
         // Format registration date
         const regDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A';
+        // Country Flag & Subscription Badge rendering
+        const countryCode = u.country || 'unknown';
+        let flagHtml = '';
+        if (countryCode !== 'unknown' && countryCode !== 'XX') {
+            flagHtml = `<img src="https://flagcdn.com/32x24/${countryCode.toLowerCase()}.png" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;" alt="${countryCode}">`;
+        } else {
+            flagHtml = `<div style="width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--text-muted); font-weight: bold; flex-shrink: 0;">?</div>`;
+        }
+
+        let planBadge = '';
+        const planLower = (u.subscription_plan || 'free').toLowerCase();
+        if (planLower.includes('ultra')) {
+            planBadge = `<span style="background: rgba(188, 59, 247, 0.15); color: #af86fc; border: 1px solid rgba(188, 59, 247, 0.25); padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; display: inline-block; vertical-align: middle;">ULTRA</span>`;
+        } else if (planLower.includes('pro')) {
+            planBadge = `<span style="background: rgba(102, 255, 217, 0.15); color: #66ffd9; border: 1px solid rgba(102, 255, 217, 0.25); padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; display: inline-block; vertical-align: middle;">PRO</span>`;
+        } else if (planLower !== 'free' && planLower !== 'none' && planLower !== '') {
+            planBadge = `<span style="background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.25); padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; display: inline-block; vertical-align: middle;">${planLower.replace('_subs', '').toUpperCase()}</span>`;
+        } else {
+            planBadge = `<span style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.1); padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; display: inline-block; vertical-align: middle;">FREE</span>`;
+        }
+
+        let abuseBadge = '';
+        if (u.ip_user_count && u.ip_user_count >= 5) {
+            abuseBadge = `<span style="background: rgba(255, 102, 102, 0.15); color: #ff6666; border: 1px solid rgba(255, 102, 102, 0.25); padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; display: inline-block; vertical-align: middle; margin-left: 6px;" title="Shared IP abuse: ${u.ip_user_count} accounts on this IP/subnet"><i class="fa-solid fa-triangle-exclamation"></i> ABUSE (${u.ip_user_count})</span>`;
+        } else if (u.ip_user_count && u.ip_user_count >= 2) {
+            abuseBadge = `<span style="background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.25); padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; display: inline-block; vertical-align: middle; margin-left: 6px;" title="Multiple accounts: ${u.ip_user_count} accounts on this IP/subnet"><i class="fa-solid fa-circle-exclamation"></i> MULTI (${u.ip_user_count})</span>`;
+        }
+
         const emailColHtml = `
-            <div style="display: flex; flex-direction: column;">
-                <span style=" color: var(--text-sharp);">${u.email}</span>
-                <small style="color: var(--text-muted); margin-top: 2px;">Reg: ${regDate}</small>
+            <div class="user-clickable-email" data-email="${u.email}" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                ${flagHtml}
+                <div style="display: flex; flex-direction: column;">
+                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        <span style="color: #00f0ff; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; transition: color 0.2s;" onmouseover="this.style.color='#af86fc'" onmouseout="this.style.color='#00f0ff'">${u.email}</span>
+                        ${planBadge}
+                        ${abuseBadge}
+                    </div>
+                    <small style="color: var(--text-muted); margin-top: 2px;">Reg: ${regDate}</small>
+                </div>
             </div>
         `;
 
@@ -763,8 +1078,6 @@ function renderAdminUsersTable() {
             }
         }
 
-        const planLabel = u.subscription_plan === 'none' ? 'free' : u.subscription_plan;
-        
         const banBtnText = u.banned ? '<i class="fa-solid fa-unlock"></i> Unban' : '<i class="fa-solid fa-ban"></i> Ban';
         const banBtnBg = u.banned ? 'rgba(102, 255, 217, 0.1)' : 'rgba(255, 102, 102, 0.1)';
         const banBtnColor = u.banned ? '#66ffd9' : '#ff6666';
@@ -772,16 +1085,7 @@ function renderAdminUsersTable() {
 
         tr.innerHTML = `
             <td>${emailColHtml}</td>
-            <td style="text-transform: capitalize; ">${planLabel}</td>
-            <td>${u.subscription_expiry ? new Date(u.subscription_expiry).toLocaleDateString() : 'Lifetime'}</td>
-            <td>${u.api_usage.toLocaleString()} / ${(u.api_credits !== undefined ? u.api_credits : u.api_quota).toLocaleString()}</td>
             <td>${lastSeenHtml}</td>
-            <td>
-                <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
-                    <span style="background: ${u.role === 'admin' ? 'rgba(175, 134, 252, 0.15)' : 'rgba(255,255,255,0.05)'}; color: ${u.role === 'admin' ? '#af86fc' : 'var(--text-muted)'}; padding: 2px 8px; border-radius: 4px;  text-transform: uppercase; font-size: 0.75rem;">${u.role}</span>
-                    ${u.banned ? '<span style="background: rgba(255, 102, 102, 0.15); color: #ff6666; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; font-size: 0.75rem;">BANNED</span>' : ''}
-                </div>
-            </td>
             <td>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <button class="btn btn-ban-user" data-email="${u.email}" data-banned="${!!u.banned}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: ${banBtnBg}; color: ${banBtnColor}; border: 1px solid ${banBtnBorder}; cursor: pointer; display: flex; align-items: center; gap: 4px;">
@@ -799,6 +1103,11 @@ function renderAdminUsersTable() {
                 </div>
             </td>
         `;
+
+        tr.querySelector('.user-clickable-email').addEventListener('click', (e) => {
+            const email = e.currentTarget.getAttribute('data-email');
+            openAdminUserDetails(email);
+        });
 
         tr.querySelector('.btn-ban-user').addEventListener('click', async (e) => {
             const email = e.currentTarget.getAttribute('data-email');
@@ -850,19 +1159,19 @@ function renderAdminUsersTable() {
 
         tr.querySelector('.btn-notify-user').addEventListener('click', (e) => {
             const email = e.currentTarget.getAttribute('data-email');
-            
+
             // Switch to push notification tab
             const notifTabBtn = document.querySelector('.db-tab-btn[data-tab="admin-notif"]');
             if (notifTabBtn) {
                 notifTabBtn.click();
             }
-            
+
             // Pre-fill email
             const emailInput = document.getElementById('admin-notif-email');
             if (emailInput) {
                 emailInput.value = email;
             }
-            
+
             // Focus on title input
             const titleInput = document.getElementById('admin-notif-title');
             if (titleInput) {
@@ -905,7 +1214,7 @@ function renderAdminUsersTable() {
             const hasHorizontalScroll = tableContainer.scrollWidth > tableContainer.clientWidth;
             if (hasHorizontalScroll) {
                 topScrollbar.style.display = 'block';
-                
+
                 // Rumus matematika agar rentang scroll maksimum sama persis:
                 // maxScroll(top) = dummyWidth - clientWidth(top)
                 // maxScroll(table) = tableScrollWidth - clientWidth(table)
@@ -913,10 +1222,10 @@ function renderAdminUsersTable() {
                 const tableScrollWidth = tableContainer.scrollWidth;
                 const tableClientWidth = tableContainer.clientWidth;
                 const topClientWidth = topScrollbar.clientWidth;
-                
+
                 const dummyWidth = tableScrollWidth - tableClientWidth + topClientWidth;
                 topScrollbarDummy.style.width = dummyWidth + 'px';
-                
+
                 // Sync top -> bottom
                 topScrollbar.onscroll = () => {
                     tableContainer.scrollLeft = topScrollbar.scrollLeft;
@@ -1086,9 +1395,8 @@ async function loadAdminSupport(silent = false) {
     }
 
     try {
-        const user = window.firebaseAuth.currentUser;
-        if (!user) return;
-        const idToken = await user.getIdToken(false);
+        const idToken = await getAuthToken();
+        if (!idToken) return;
 
         const res = await fetch(`${window.API.GC_SUPPORT_BASE}/admin/ticket/list`, {
             method: 'GET',
@@ -1450,7 +1758,7 @@ function updateAdminModalState(ticket) {
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i class="fa-solid fa-music" style="font-size: 1.4rem; color: #66ffd9;"></i>
                             <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
-                                <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+                                <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
                                 <span style="font-size: 0.75rem; color: var(--text-muted);">Audio File</span>
                             </div>
                         </div>
@@ -1472,7 +1780,7 @@ function updateAdminModalState(ticket) {
                     docCard.innerHTML = `
                         <i class="fa-solid fa-file-pdf" style="font-size: 1.8rem; color: #ff6666;"></i>
                         <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
-                            <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+                            <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
                             <span style="font-size: 0.75rem; color: var(--text-muted);">Document File</span>
                         </div>
                         <i class="fa-solid fa-up-right-from-square" style="color: var(--text-muted); font-size: 0.9rem;"></i>
@@ -1494,7 +1802,7 @@ function updateAdminModalState(ticket) {
                     fileCard.innerHTML = `
                         <i class="fa-solid fa-file-zipper" style="font-size: 1.8rem; color: #ffd700;"></i>
                         <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
-                            <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
+                            <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${filename}</span>
                             <span style="font-size: 0.75rem; color: var(--text-muted);">Archive File</span>
                         </div>
                         <a href="${url}" target="_blank" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 6px 10px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 5px;">
@@ -1682,7 +1990,7 @@ function showDocumentViewer(docUrl) {
         viewerModal.style.transition = 'opacity 0.25s ease';
 
         viewerModal.innerHTML = `
-            <div style="width: 90%; height: 85%; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.97); transition: transform 0.25s ease;" id="support-doc-container">
+            <div style="width: 90%; height: 85%; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color);  display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.97); transition: transform 0.25s ease;" id="support-doc-container">
                 <div style="padding: 15px 20px; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 600; color: var(--text-sharp); display: flex; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-file-lines" style="color: #af86fc;"></i> Document Viewer
@@ -1801,6 +2109,217 @@ async function compressImageIfNeeded(file) {
         reader.onerror = () => resolve(file);
         reader.readAsDataURL(file);
     });
+}
+
+async function openAdminUserDetails(email) {
+    const modal = document.getElementById('admin-user-modal');
+    if (!modal) return;
+
+    // Reset fields to loading state
+    document.getElementById('admin-user-modal-email').textContent = email;
+    
+    const roleBadge = document.getElementById('admin-user-modal-role-badge');
+    roleBadge.textContent = 'LOADING...';
+    roleBadge.style.background = 'rgba(255, 255, 255, 0.05)';
+    roleBadge.style.color = 'var(--text-muted)';
+
+    const statusBadge = document.getElementById('admin-user-modal-status-badge');
+    statusBadge.textContent = 'LOADING...';
+    statusBadge.style.background = 'rgba(255, 255, 255, 0.05)';
+    statusBadge.style.color = 'var(--text-muted)';
+
+    document.getElementById('admin-user-modal-plan').textContent = '...';
+    document.getElementById('admin-user-modal-expiry').textContent = '...';
+    document.getElementById('admin-user-modal-credits').textContent = '...';
+    document.getElementById('admin-user-modal-country').textContent = '...';
+    document.getElementById('admin-user-modal-ip').textContent = '...';
+    document.getElementById('admin-user-modal-pro-credits').textContent = '...';
+    document.getElementById('admin-user-modal-ultra-credits').textContent = '...';
+    document.getElementById('admin-user-modal-last-seen').textContent = '...';
+    document.getElementById('admin-user-modal-keys-container').innerHTML = `
+        <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: #00f0ff;"></i>
+            <span style="display: block; margin-top: 8px;">Fetching user details...</span>
+        </div>
+    `;
+
+    modal.classList.remove('hide');
+
+    const handleUserDetails = (u) => {
+        // Update basic details
+        document.getElementById('admin-user-modal-email').textContent = u.email;
+        
+        // Role badge styling
+        roleBadge.textContent = u.role || 'user';
+        if (u.role === 'admin') {
+            roleBadge.style.background = 'rgba(175, 134, 252, 0.15)';
+            roleBadge.style.color = '#af86fc';
+        } else {
+            roleBadge.style.background = 'rgba(255, 255, 255, 0.05)';
+            roleBadge.style.color = 'var(--text-muted)';
+        }
+
+        // Status badge styling
+        const now = Date.now();
+        const isActuallyOnline = u.status === 'online' && u.lastSeen && (now - u.lastSeen < 75000);
+        const computedStatus = isActuallyOnline ? 'online' : 'offline';
+        statusBadge.textContent = computedStatus.toUpperCase();
+        if (computedStatus === 'online') {
+            statusBadge.style.background = 'rgba(102, 255, 217, 0.1)';
+            statusBadge.style.color = '#66ffd9';
+        } else {
+            statusBadge.style.background = 'rgba(255, 255, 255, 0.05)';
+            statusBadge.style.color = 'var(--text-muted)';
+        }
+
+        // Registration date
+        const regDate = u.createdAt ? new Date(u.createdAt).toLocaleString() : 'N/A';
+        document.getElementById('admin-user-modal-reg-date').textContent = `Registered: ${regDate}`;
+
+        // Subscription details
+        const planLabel = u.subscription_plan === 'none' ? 'free' : (u.subscription_plan || 'free');
+        const planEl = document.getElementById('admin-user-modal-plan');
+        planEl.textContent = planLabel;
+        if (planLabel.toLowerCase() !== 'free') {
+            planEl.style.color = '#bc3bf7';
+        } else {
+            planEl.style.color = 'var(--text-muted)';
+        }
+
+        document.getElementById('admin-user-modal-expiry').textContent = u.subscription_expiry ? new Date(u.subscription_expiry).toLocaleDateString() : 'Lifetime';
+        
+        const apiCredits = u.api_credits !== undefined ? u.api_credits : (u.api_quota || 0);
+        const freeCredits = u.free_credits !== undefined ? u.free_credits : 0;
+        document.getElementById('admin-user-modal-credits').textContent = `${freeCredits.toLocaleString()} / ${apiCredits.toLocaleString()}`;
+        
+        // Country with Flag
+        const countryCode = u.country || 'unknown';
+        const countryEl = document.getElementById('admin-user-modal-country');
+        countryEl.innerHTML = '';
+        if (countryCode && countryCode !== 'unknown' && countryCode !== 'XX') {
+            const flagImg = document.createElement('img');
+            flagImg.src = `https://flagcdn.com/20x15/${countryCode.toLowerCase()}.png`;
+            flagImg.alt = countryCode;
+            flagImg.style.borderRadius = '2px';
+            flagImg.style.verticalAlign = 'middle';
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = countryCode.toUpperCase();
+            
+            countryEl.appendChild(flagImg);
+            countryEl.appendChild(textSpan);
+        } else {
+            countryEl.textContent = 'N/A';
+        }
+
+        // CF IP Address
+        const ipEl = document.getElementById('admin-user-modal-ip');
+        const ipVal = u.ip || 'N/A';
+        const userCount = u.ip_user_count || 1;
+        if (ipVal !== 'N/A' && userCount >= 2) {
+            let warnColor = '#ffd700'; // MULTI
+            let icon = 'fa-circle-exclamation';
+            let label = 'Shared';
+            if (userCount >= 5) {
+                warnColor = '#ff6666'; // ABUSE
+                icon = 'fa-triangle-exclamation';
+                label = 'Potential Abuse';
+            }
+            ipEl.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <span>${ipVal}</span>
+                    <div style="color: ${warnColor}; font-size: 0.72rem; font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                        <i class="fa-solid ${icon}"></i> ${label}: ${userCount} accounts
+                    </div>
+                </div>
+            `;
+        } else {
+            ipEl.textContent = ipVal;
+        }
+
+        // Pro & Ultra Credits
+        const proCredits = u.pro_subs_credits !== undefined ? u.pro_subs_credits : 0;
+        document.getElementById('admin-user-modal-pro-credits').textContent = proCredits.toLocaleString();
+
+        const ultraCredits = u.ultra_subs_credits !== undefined ? u.ultra_subs_credits : 0;
+        document.getElementById('admin-user-modal-ultra-credits').textContent = ultraCredits.toLocaleString();
+
+        document.getElementById('admin-user-modal-last-seen').textContent = u.lastSeen ? new Date(u.lastSeen).toLocaleString() : 'Never';
+
+        // Render owned API Keys
+        const keysContainer = document.getElementById('admin-user-modal-keys-container');
+        keysContainer.innerHTML = '';
+        if (!u.apiKeys || u.apiKeys.length === 0) {
+            keysContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 10px; text-align: center;">No API Keys found for this user.</div>';
+        } else {
+            u.apiKeys.forEach(k => {
+                const keyCard = document.createElement('div');
+                keyCard.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; position: relative;';
+                
+                const typeLabel = k.type === 'compensation' ? '<span style="background: rgba(255, 215, 0, 0.1); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Compensation</span>' : '<span style="background: rgba(0, 240, 255, 0.1); color: #00f0ff; border: 1px solid rgba(0, 240, 255, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">API Key</span>';
+                
+                keyCard.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: var(--text-primary); font-size: 0.9rem;">${k.projectName || 'Unnamed Project'}</strong>
+                        ${typeLabel}
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <code style="font-family: monospace; font-size: 0.85rem; color: #ffd700; flex: 1; word-break: break-all; user-select: all;">${k.key}</code>
+                        <button class="btn btn-copy-key" data-key="${k.key}" style="padding: 4px 8px; font-size: 0.8rem; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color); cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center;" title="Copy Key">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 15px; font-size: 0.8rem; color: var(--text-muted);">
+                        <span>Usage: <strong style="color: var(--text-primary);">${(k.usage || 0).toLocaleString()}</strong></span>
+                        ${k.daily_limit ? `<span>Daily Limit: <strong style="color: var(--text-primary);">${k.daily_limit.toLocaleString()}</strong></span>` : ''}
+                        <span>Expires: <strong style="color: var(--text-primary);">${k.expiresAt === 'lifetime' ? 'Lifetime' : new Date(k.expiresAt).toLocaleDateString()}</strong></span>
+                    </div>
+                `;
+                
+                keyCard.querySelector('.btn-copy-key').addEventListener('click', (e) => {
+                    const keyVal = e.currentTarget.getAttribute('data-key');
+                    navigator.clipboard.writeText(keyVal).then(() => {
+                        window.showAppNotification('success', 'API Key copied to clipboard!');
+                    }).catch(() => {
+                        window.showAppNotification('danger', 'Failed to copy API key.');
+                    });
+                });
+                
+                keysContainer.appendChild(keyCard);
+            });
+        }
+    };
+
+    // WebSocket attempt
+    if (window.adminUsersWS && window.adminUsersWS.readyState === WebSocket.OPEN) {
+        window.onAdminUserDetailsReceived = handleUserDetails;
+        window.adminUsersWS.send(JSON.stringify({ type: "get_user_details", email }));
+        return;
+    }
+
+    // Fallback to REST
+    try {
+        const response = await fetch(`${window.API.GC_SERVER_BASE}/admin/user?email=${encodeURIComponent(email)}&_t=${Date.now()}`, {
+            headers: {
+                'Authorization': `Bearer ${await getAuthToken()}`
+            }
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Failed to load user details');
+        }
+
+        const u = await response.json();
+        handleUserDetails(u);
+    } catch (err) {
+        document.getElementById('admin-user-modal-keys-container').innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #ff6666;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem; margin-bottom: 8px;"></i>
+                <span style="display: block;">Error: ${err.message}</span>
+            </div>
+        `;
+    }
 }
 
 

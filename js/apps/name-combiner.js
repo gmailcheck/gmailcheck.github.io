@@ -1,6 +1,6 @@
 (function () {
 	const textarea = document.getElementById('name-combiner-input');
-	const inputContainer = document.getElementById('email-input-container-app3');
+	const inputContainer = document.getElementById('input-container-container-app3');
 	const resultsContainer = document.getElementById('results-container-app3');
 	const tasksList = document.getElementById('tasks-list-app3');
 	const btnBack = document.getElementById('btn-back-app3');
@@ -13,7 +13,6 @@
 	const selectMode = document.getElementById('select-mode-app3');
 	const statsInput = document.getElementById('stats-input-app3');
 	const statsOutput = document.getElementById('stats-output-app3');
-	const pageApp3 = document.getElementById('page-app3');
 
 	if (!textarea || !btnGenerate) return;
 

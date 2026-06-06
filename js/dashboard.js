@@ -9,13 +9,13 @@ let countdownInterval = null;
 
 // Custom confirm dialog modal helper to replace default browser confirms
 function showCustomConfirm(title, message, onConfirm) {
-    let modal = document.getElementById('custom-confirm-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'custom-confirm-modal';
-        modal.className = 'modal-overlay hide modal-overlay-whitelist';
-        modal.style.zIndex = '99999';
-        modal.innerHTML = `
+	let modal = document.getElementById('custom-confirm-modal');
+	if (!modal) {
+		modal = document.createElement('div');
+		modal.id = 'custom-confirm-modal';
+		modal.className = 'modal-overlay hide modal-overlay-whitelist';
+		modal.style.zIndex = '99999';
+		modal.innerHTML = `
             <div class="modal-card-whitelist" style="max-width: 400px; text-align: center; display: flex; flex-direction: column; gap: 20px; padding: 24px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                 <!-- Warning Icon -->
                 <div style="display: flex; justify-content: center; align-items: center;">
@@ -41,32 +41,141 @@ function showCustomConfirm(title, message, onConfirm) {
                 </div>
             </div>
         `;
-        document.body.appendChild(modal);
+		document.body.appendChild(modal);
 
-        const closeModal = () => modal.classList.add('hide');
-        document.getElementById('btn-custom-confirm-cancel').addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-    }
+		const closeModal = () => modal.classList.add('hide');
+		document.getElementById('btn-custom-confirm-cancel').addEventListener('click', closeModal);
+		modal.addEventListener('click', (e) => {
+			if (e.target === modal) closeModal();
+		});
+	}
 
-    // Set dynamic content
-    document.getElementById('custom-confirm-title').textContent = title;
-    document.getElementById('custom-confirm-message').innerHTML = message;
+	// Set dynamic content
+	document.getElementById('custom-confirm-title').textContent = title;
+	document.getElementById('custom-confirm-message').innerHTML = message;
 
-    // Hook the confirm button
-    const confirmBtn = document.getElementById('btn-custom-confirm-ok');
-    // Recreate the confirm button to strip previous event listeners cleanly
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+	// Hook the confirm button
+	const confirmBtn = document.getElementById('btn-custom-confirm-ok');
+	// Recreate the confirm button to strip previous event listeners cleanly
+	const newConfirmBtn = confirmBtn.cloneNode(true);
+	confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
 
-    newConfirmBtn.addEventListener('click', () => {
-        modal.classList.add('hide');
-        if (typeof onConfirm === 'function') onConfirm();
-    });
+	newConfirmBtn.addEventListener('click', () => {
+		modal.classList.add('hide');
+		if (typeof onConfirm === 'function') onConfirm();
+	});
 
-    // Show modal
-    modal.classList.remove('hide');
+	// Show modal
+	modal.classList.remove('hide');
+}
+
+function showDailyClaimPopup(idToken) {
+	let modal = document.getElementById('daily-claim-modal');
+	if (!modal) {
+		modal = document.createElement('div');
+		modal.id = 'daily-claim-modal';
+		modal.className = 'modal-overlay hide modal-overlay-whitelist';
+		modal.style.zIndex = '99998';
+		modal.innerHTML = `
+            <div class="modal-card-whitelist" style="max-width: 420px; text-align: center; display: flex; flex-direction: column; gap: 24px; padding: 32px 24px; border-radius: 20px; background: linear-gradient(135deg, rgba(23, 17, 41, 0.95) 0%, rgba(12, 9, 21, 0.98) 100%); border: 1px solid rgba(188, 59, 247, 0.25); box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px rgba(188, 59, 247, 0.15); backdrop-filter: blur(10px); position: relative; overflow: hidden; animation: modalGlow 3s infinite alternate;">
+                
+                <!-- Subtle decorative glow behind -->
+                <div style="position: absolute; top: -50px; left: 50%; transform: translateX(-50%); width: 150px; height: 150px; background: radial-gradient(circle, rgba(188, 59, 247, 0.2) 0%, transparent 70%); pointer-events: none;"></div>
+
+                <!-- Reward Icon Container with Pulse effect -->
+                <div style="display: flex; justify-content: center; align-items: center; position: relative;">
+                    <div class="daily-reward-icon-container" style="width: 80px; height: 80px; background: rgba(188, 59, 247, 0.1); border: 2px solid rgba(188, 59, 247, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(188, 59, 247, 0.3); animation: floatReward 2s ease-in-out infinite;">
+                        <i class="fa-solid fa-gift" style="color: #bc3bf7; font-size: 36px; filter: drop-shadow(0 0 5px rgba(188, 59, 247, 0.5));"></i>
+                    </div>
+                </div>
+
+                <!-- Text Content -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <h3 class="font-keren" style="color: #ffffff; margin: 0; font-size: 22px; letter-spacing: 0.5px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">Daily Login Bonus!</h3>
+                    <p style="color: var(--text-secondary); margin: 0; line-height: 1.6; font-size: 14.5px;">Welcome back! Claim your daily check-in reward to boost your checking quotas.</p>
+                    
+                    <!-- Reward Badge -->
+                    <div style="margin: 12px auto 0 auto; display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.3); padding: 8px 16px; border-radius: 30px; box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);">
+                        <i class="fa-solid fa-coins" style="color: #00f0ff;"></i>
+                        <span style="color: #00f0ff; font-weight: bold; font-size: 16px; letter-spacing: 0.5px;">+1,000 API Credits</span>
+                    </div>
+                </div>
+
+                <!-- Claim Button -->
+                <div style="margin-top: 8px;">
+                    <button id="btn-claim-daily-reward" class="btn btn-primary" style="width: 100%; border-radius: 12px; padding: 14px 20px; background: linear-gradient(135deg, #bc3bf7 0%, #00f0ff 100%); color: white; border: none; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(188, 59, 247, 0.4); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fa-solid fa-circle-check"></i> Claim Reward
+                    </button>
+                </div>
+
+                <!-- Close link -->
+                <div>
+                    <span id="btn-claim-daily-close" style="color: var(--text-muted); font-size: 13px; cursor: pointer; transition: color 0.2s;">Maybe later</span>
+                </div>
+            </div>
+        `;
+		document.body.appendChild(modal);
+
+		const style = document.createElement('style');
+		style.id = 'daily-claim-styles';
+		style.textContent = `
+			@keyframes modalGlow {
+				0% { border-color: rgba(188, 59, 247, 0.25); box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px rgba(188, 59, 247, 0.15); }
+				100% { border-color: rgba(0, 240, 255, 0.4); box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 25px rgba(0, 240, 255, 0.25); }
+			}
+			@keyframes floatReward {
+				0% { transform: translateY(0px); }
+				50% { transform: translateY(-8px); }
+				100% { transform: translateY(0px); }
+			}
+		`;
+		document.head.appendChild(style);
+	}
+
+	const todayStr = new Date().toISOString().split('T')[0];
+	const closeModal = () => modal.classList.add('hide');
+
+	const closeBtn = document.getElementById('btn-claim-daily-close');
+	const newCloseBtn = closeBtn.cloneNode(true);
+	closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+	newCloseBtn.addEventListener('click', () => {
+		sessionStorage.setItem('gmailChecker_dismissDailyClaim', todayStr);
+		closeModal();
+	});
+
+	const claimBtn = document.getElementById('btn-claim-daily-reward');
+	const newClaimBtn = claimBtn.cloneNode(true);
+	claimBtn.parentNode.replaceChild(newClaimBtn, claimBtn);
+
+	newClaimBtn.addEventListener('click', async () => {
+		newClaimBtn.disabled = true;
+		newClaimBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Claiming...';
+
+		try {
+			const res = await fetch(window.API.CLAIM_DAILY, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${idToken}`
+				}
+			});
+
+			const data = await res.json();
+			if (res.ok && data.success) {
+				closeModal();
+				window.showAppNotification('success', '🎁 <strong>Daily Reward Claimed!</strong> 1,000 API Credits have been added to your account.');
+				await window.loadDashboardData(true);
+			} else {
+				throw new Error(data.message || 'Failed to claim daily reward');
+			}
+		} catch (err) {
+			window.showAppNotification('danger', `Failed to claim daily reward: ${err.message}`);
+			newClaimBtn.disabled = false;
+			newClaimBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Claim Reward';
+		}
+	});
+
+	modal.classList.remove('hide');
 }
 
 function initDashboard() {
@@ -93,68 +202,9 @@ function initDashboard() {
 		});
 	}
 
-	// 2. ACTIVE KEY VISIBILITY EYE TOGGLE
-	const btnRevealKey = document.getElementById('btn-db-reveal-key');
-	const activeKeyDisplay = document.getElementById('db-active-key-display');
-	if (btnRevealKey && activeKeyDisplay) {
-		btnRevealKey.addEventListener('click', () => {
-			if (activeKeyDisplay.type === 'password') {
-				activeKeyDisplay.type = 'text';
-				btnRevealKey.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-			} else {
-				activeKeyDisplay.type = 'password';
-				btnRevealKey.innerHTML = '<i class="fa-solid fa-eye"></i>';
-			}
-		});
-	}
 
-	// 3. COPY ACTIVE KEY
-	const btnCopyKey = document.getElementById('btn-db-copy-key');
-	if (btnCopyKey) {
-		btnCopyKey.addEventListener('click', () => {
-			if (window.APIKEY) {
-				navigator.clipboard.writeText(window.APIKEY).then(() => {
-					window.showAppNotification('success', 'ðŸ“‹ <strong>API Key copied</strong> to clipboard!');
-				});
-			} else {
-				window.showAppNotification('warning', 'No active API key to copy!');
-			}
-		});
-	}
 
-	// 4. MANUAL PASTED CUSTOM API KEY APPLIER
-	const btnApplyCustom = document.getElementById('btn-apply-custom-key');
-	const inputCustomKey = document.getElementById('input-custom-key');
-	if (btnApplyCustom && inputCustomKey) {
-		btnApplyCustom.addEventListener('click', () => {
-			const customVal = inputCustomKey.value.trim();
-			if (!customVal) {
-				window.showAppNotification('warning', 'Please enter a valid API Key string!');
-				return;
-			}
-
-			// Apply new active session key
-			let resolvedType = 'free';
-			if (customVal.startsWith('B_')) resolvedType = 'vip';
-			else if (customVal.startsWith('T_')) resolvedType = 'trial';
-
-			localStorage.setItem('gmailChecker_apiData', JSON.stringify({
-				apiKey: customVal,
-				type: resolvedType,
-				timestamp: Date.now()
-			}));
-			window.APIKEY = customVal;
-
-			// Clear input and update
-			inputCustomKey.value = '';
-			window.showAppNotification('success', 'âš¡ <strong>Active API Key updated!</strong> Reloading statistics...');
-
-			// Refresh Dashboard View
-			window.loadDashboardData(true);
-		});
-	}
-
-	// 5. UPGRADE TO PRICING BUTTON (from Dashboard VIP info panel)
+	// 5. UPGRADE TO PRICING BUTTON (from Dashboard Premium info panel)
 	const btnGoToPricing = document.getElementById('btn-dashboard-go-pricing');
 	if (btnGoToPricing) {
 		btnGoToPricing.addEventListener('click', () => {
@@ -193,14 +243,14 @@ let lastKeysLoadTime = 0;
 let isDashboardLoading = false;
 
 // MAIN FUNCTION TO LOAD DASHBOARD DATA
-window.loadDashboardData = async function (force = false, profileOnly = false) {
+window.loadDashboardData = async function (force = false, profileOnly = false, refreshPayment = false) {
 	if (isDashboardLoading) return;
 
 	const needKeys = !profileOnly;
 	const keysAge = Date.now() - lastKeysLoadTime;
 	const profileAge = Date.now() - lastDashboardLoadTime;
 
-	if (!force) {
+	if (!force && !refreshPayment) {
 		if (needKeys && keysAge < 30000 && profileAge < 30000) {
 			return;
 		}
@@ -217,764 +267,43 @@ window.loadDashboardData = async function (force = false, profileOnly = false) {
 			return;
 		}
 
-		const idToken = await user.getIdToken(true);
-
-		// Render active key
-		const keyDisplay = document.getElementById('db-active-key-display');
-		if (keyDisplay) {
-			keyDisplay.value = window.APIKEY || 'No active key';
-		}
+		const idToken = await window.getAuthToken();
 
 		// Update profile header
 		const userEmailText = document.getElementById('db-user-email');
 		if (userEmailText) userEmailText.textContent = user.email;
 
-		// 2. Fetch User Profile status from auth service
-		const profileRes = await fetch(window.API.PROFILE, {
-			method: 'GET',
-			headers: {
-				'Authorization': `Bearer ${idToken}`
-			}
-		});
-
-		if (profileRes.ok) {
-			const profile = await profileRes.json();
-			window.dashboardProfile = profile;
-			window.renderMenu();
-
-			if (window.renderNotifications) {
-				window.renderNotifications(profile.notifications, profile.unread_notifications);
-			}
-
-			// Connect to Presence WebSocket to enable real-time status and save database query cost
-			if (window.connectPresenceWS) {
-				window.connectPresenceWS(idToken);
-			}
-
-			// Connect to Unified Support WebSocket
-			if (window.connectTicketsWS) {
-				window.connectTicketsWS(idToken);
-			}
-
-			// Update Badges dynamically based on roles and keys
-			const badge = document.getElementById('db-user-badge');
-
-			let tier = 'FREE';
-			if (profile.role === 'admin') {
-				tier = 'ADMIN';
-			} else if (profile.subscription_plan && profile.subscription_plan !== 'free' && profile.subscription_plan !== 'none' && profile.subscription_expiry > Date.now()) {
-				const plan = profile.subscription_plan;
-				if (plan === 'pro_subs') tier = 'PRO';
-				else if (plan === 'ultra_subs') tier = 'ULTRA';
-				else tier = 'PRO'; // safe fallback for any unrecognized plan
-			}
-
-			if (badge) {
-				badge.textContent = tier;
-				if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
-					badge.style.color = '#00ccffff';
-					badge.style.background = 'rgba(0, 204, 255, 0.1)';
-					badge.style.borderColor = 'rgba(0, 204, 255, 0.2)';
-				} else {
-					badge.style.color = 'var(--text-muted)';
-					badge.style.background = 'rgba(255, 255, 255, 0.05)';
-					badge.style.borderColor = 'var(--border-color)';
-				}
-			}
-
-			const userBadgeDisplay = document.getElementById('user-badge-display');
-			if (userBadgeDisplay) userBadgeDisplay.textContent = tier;
-			if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
-				userBadgeDisplay.style.color = '#00ccffff';
-				userBadgeDisplay.style.background = 'rgba(0, 204, 255, 0.1)';
-				userBadgeDisplay.style.borderColor = 'rgba(0, 204, 255, 0.2)';
-			} else {
-				userBadgeDisplay.style.color = 'var(--text-muted)';
-				userBadgeDisplay.style.background = 'rgba(255, 255, 255, 0.05)';
-				userBadgeDisplay.style.borderColor = 'var(--border-color)';
-			}
-
-			const popoverBadgeDisplay = document.getElementById('profile-popover-badge-display');
-			if (popoverBadgeDisplay) popoverBadgeDisplay.textContent = tier;
-			if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
-				popoverBadgeDisplay.style.color = '#00ccffff';
-				popoverBadgeDisplay.style.background = 'rgba(0, 204, 255, 0.1)';
-				popoverBadgeDisplay.style.borderColor = 'rgba(0, 204, 255, 0.2)';
-			} else {
-				popoverBadgeDisplay.style.color = 'var(--text-muted)';
-				popoverBadgeDisplay.style.background = 'rgba(255, 255, 255, 0.05)';
-				popoverBadgeDisplay.style.borderColor = 'var(--border-color)';
-			}
-
-			// UPDATE SUBSCRIPTION EXPIRY ACTIVE PERIOD STATS
-			const subExpiryDisplay = document.getElementById('db-subscription-expiry');
-			if (subExpiryDisplay) {
-				if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
-					if (profile.subscription_expiry) {
-						const expDate = new Date(profile.subscription_expiry);
-						subExpiryDisplay.textContent = expDate.toLocaleDateString();
-						subExpiryDisplay.style.color = expDate <= new Date() ? '#ff6666' : '#0095c8';
-					} else {
-						subExpiryDisplay.textContent = 'Lifetime';
-						subExpiryDisplay.style.color = '#0095c8';
-					}
-				} else {
-					subExpiryDisplay.textContent = 'lifetime';
-					subExpiryDisplay.style.color = '#0095c8';
-				}
-			}
-
-			// UPDATE RENEW / SUBSCRIBE BUTTON TEXT
-			const btnPricingSub = document.getElementById('btn-dashboard-go-pricing-sub');
-			if (btnPricingSub) {
-				if (tier === 'PRO' || tier === 'ULTRA') {
-					btnPricingSub.innerHTML = `<i class="fa-solid fa-arrows-rotate" style="margin-right: 8px;"></i>Renew / Extend Subscription`;
-				} else {
-					btnPricingSub.innerHTML = `<i class="fa-solid fa-gem" style="margin-right: 8px;"></i>Subscribe Now`;
-				}
-			}
-
-			const paymentHistory = profile.paymentHistory || {};
-			const historyEntries = Object.entries(paymentHistory);
-
-			// Separate histories
-			const subscriptionHistory = historyEntries.filter(([id, data]) => data && (!data.product_type || data.product_type === 'subscription'));
-			const apiKeyHistory = historyEntries.filter(([id, data]) => data && data.product_type === 'api_key');
-
-			// PENDING PAYMENT UI LOGIC
-			let pendingSubscription = null;
-			let pendingApiKey = null;
-
-			// 1. Check from activeInvoice directly
-			if (profile.isProcessingPayment && profile.activeInvoice) {
-				const activeInv = profile.activeInvoice;
-				const pType = activeInv.product_type || 'subscription';
-				if (pType === 'subscription') {
-					pendingSubscription = { id: activeInv.invoice_id, data: activeInv };
-				} else if (pType === 'api_key') {
-					pendingApiKey = { id: activeInv.invoice_id, data: activeInv };
-				}
-			}
-
-			// 2. Check from paymentHistory fallback
-			if (!pendingSubscription) {
-				const pendingSub = subscriptionHistory.find(([id, data]) => !data.isUsed && data.payment_status !== 'finished' && data.payment_status !== 'failed' && data.payment_status !== 'refunded' && data.payment_status !== 'expired');
-				if (pendingSub) pendingSubscription = { id: pendingSub[0], data: pendingSub[1] };
-			}
-			if (!pendingApiKey) {
-				const pendingApi = apiKeyHistory.find(([id, data]) => !data.isUsed && data.payment_status !== 'finished' && data.payment_status !== 'failed' && data.payment_status !== 'refunded' && data.payment_status !== 'expired');
-				if (pendingApi) pendingApiKey = { id: pendingApi[0], data: pendingApi[1] };
-			}
-
-			const pendingNotif = document.getElementById('sidebar-pending-payment-notif');
-			const pricingContainer = document.getElementById('pricing-plans-container');
-			const pendingContainer = document.getElementById('pending-payment-container');
-
-			if (pendingSubscription) {
-				if (pendingNotif) pendingNotif.classList.remove('hide');
-				if (pricingContainer) pricingContainer.classList.add('hide');
-				if (pendingContainer) pendingContainer.classList.remove('hide');
-
-				const pendingIdDisplay = document.getElementById('pending-invoice-id-display');
-				const pendingPlanDisplay = document.getElementById('pending-invoice-plan-display');
-				const btnPendingPay = document.getElementById('btn-pending-pay');
-				const btnPendingCancel = document.getElementById('btn-pending-cancel');
-
-				if (pendingIdDisplay) pendingIdDisplay.textContent = pendingSubscription.id;
-				if (pendingPlanDisplay) pendingPlanDisplay.textContent = pendingSubscription.data.productName || 'Subscription Plan';
-
-				if (btnPendingPay && pendingSubscription.data.invoice_url) {
-					btnPendingPay.onclick = () => window.open(pendingSubscription.data.invoice_url, '_blank');
-				}
-
-				if (btnPendingCancel) {
-					const newBtnCancel = btnPendingCancel.cloneNode(true);
-					btnPendingCancel.parentNode.replaceChild(newBtnCancel, btnPendingCancel);
-
-					newBtnCancel.addEventListener('click', () => {
-						showCustomConfirm(
-							"Cancel Invoice",
-							"Are you sure you want to cancel and remove this invoice?",
-							async () => {
-								newBtnCancel.disabled = true;
-								newBtnCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
-								try {
-									const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
-										method: 'POST',
-										headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-										body: JSON.stringify({ invoiceId: pendingSubscription.id })
-									});
-									const cancelData = await cancelRes.json();
-									if (cancelRes.ok && cancelData.success) {
-										window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-										await window.loadDashboardData(true);
-									} else {
-										throw new Error(cancelData.error || 'Server error');
-									}
-								} catch (err) {
-									window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
-									newBtnCancel.disabled = false;
-									newBtnCancel.innerHTML = '<i class="fa-solid fa-trash"></i> Cancel Invoice';
-								}
-							}
-						);
-					});
-				}
-			} else {
-				if (pendingNotif) pendingNotif.classList.add('hide');
-				if (pricingContainer) pricingContainer.classList.remove('hide');
-				if (pendingContainer) pendingContainer.classList.add('hide');
-			}
-
-			// API KEY PENDING PAYMENT UI LOGIC
-			const devPendingContainer = document.getElementById('dev-pending-payment-container');
-			const devPricingContainer = document.getElementById('dev-pricing-plans-container');
-			const apiPendingNotif = document.getElementById('sidebar-pending-api-notif');
-			const devPurchaseForm = document.getElementById('dev-purchase-form-container'); // This is the API Key buy form in tab-dev-keys
-
-			if (pendingApiKey) {
-				if (apiPendingNotif) apiPendingNotif.classList.remove('hide');
-				if (devPricingContainer) devPricingContainer.classList.add('hide');
-				if (devPurchaseForm) devPurchaseForm.classList.add('hide');
-				if (devPendingContainer) devPendingContainer.classList.remove('hide');
-
-				const devPendingIdDisplay = document.getElementById('dev-pending-invoice-id');
-				const devPendingPlanDisplay = document.getElementById('dev-pending-invoice-plan');
-				const btnDevPendingPay = document.getElementById('btn-dev-pending-pay');
-				const btnDevPendingCancel = document.getElementById('btn-dev-pending-cancel');
-
-				if (devPendingIdDisplay) devPendingIdDisplay.textContent = pendingApiKey.id;
-				if (devPendingPlanDisplay) devPendingPlanDisplay.textContent = pendingApiKey.data.productName || 'API Key Credits';
-
-				if (btnDevPendingPay && pendingApiKey.data.invoice_url) {
-					btnDevPendingPay.onclick = () => window.open(pendingApiKey.data.invoice_url, '_blank');
-				}
-
-				if (btnDevPendingCancel) {
-					const newBtnDevCancel = btnDevPendingCancel.cloneNode(true);
-					btnDevPendingCancel.parentNode.replaceChild(newBtnDevCancel, btnDevPendingCancel);
-
-					newBtnDevCancel.addEventListener('click', () => {
-						showCustomConfirm(
-							"Cancel Invoice",
-							"Are you sure you want to cancel and remove this invoice?",
-							async () => {
-								newBtnDevCancel.disabled = true;
-								newBtnDevCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
-								try {
-									const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
-										method: 'POST',
-										headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-										body: JSON.stringify({ invoiceId: pendingApiKey.id })
-									});
-									const cancelData = await cancelRes.json();
-									if (cancelRes.ok && cancelData.success) {
-										window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-										await window.loadDashboardData(true);
-									} else {
-										throw new Error(cancelData.error || 'Server error');
-									}
-								} catch (err) {
-									window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
-									newBtnDevCancel.disabled = false;
-									newBtnDevCancel.innerHTML = '<i class="fa-solid fa-trash"></i> Cancel';
-								}
-							}
-						);
-					});
-				}
-			} else {
-				if (apiPendingNotif) apiPendingNotif.classList.add('hide');
-				if (devPricingContainer) devPricingContainer.classList.remove('hide');
-				if (devPurchaseForm) devPurchaseForm.classList.remove('hide');
-				if (devPendingContainer) devPendingContainer.classList.add('hide');
-			}
-			// END PENDING PAYMENT UI LOGIC
-
-			// Render active payments & invoices list in VIP panel (Subscriptions ONLY)
-			const paymentsList = document.getElementById('db-vip-payments-list');
-			const infoList = document.getElementById('db-vip-info-list');
-
-			if (paymentsList && infoList) {
-				if (subscriptionHistory.length > 0) {
-					infoList.style.display = 'none';
-					paymentsList.style.display = 'flex';
-					paymentsList.innerHTML = '';
-
-					subscriptionHistory.forEach(([invoiceId, data]) => {
-						const item = document.createElement('div');
-						item.style.display = 'flex';
-						item.style.alignItems = 'center';
-						item.style.justifyContent = 'space-between';
-						item.style.background = 'var(--bg-primary)';
-						item.style.border = '1px solid var(--border-color)';
-						item.style.borderRadius = '10px';
-						item.style.padding = '8px 12px';
-
-						const label = data.productName || 'Subscription Plan';
-						const dateStr = data.completed_at ? new Date(data.completed_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
-
-						let actionBtnHtml = '';
-						if (data.isUsed) {
-							actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
-						} else if (data.payment_status === 'finished') {
-							actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
-						} else {
-							const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
-							actionBtnHtml = `
-								<div style="display:flex;align-items:center;gap:6px">
-									<span style="color:#ffd700;text-transform:capitalize;margin-right:2px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px"></i>${data.payment_status || 'Pending'}</span>
-									${payBtn}
-									<button class="btn-refresh-invoice-status" data-invoice="${invoiceId}" title="Check status" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-rotate"></i></button>
-									<button class="btn-cancel-invoice" data-invoice="${invoiceId}" title="Cancel invoice" style="background:rgba(255,102,102,0.15);color:#ff6666;border:1px solid rgba(255,102,102,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-trash"></i></button>
-								</div>
-							`;
-						}
-
-						let paymentDetailsHtml = '';
-						if (data.pay_currency && data.pay_amount) {
-							const usdValue = data.price_amount_usd ? ` (~$${data.price_amount_usd})` : '';
-							let txLink = '';
-							if (data.payin_hash) {
-								const curr = data.pay_currency.toLowerCase();
-								if (curr === 'trx' || curr === 'usdttrc20') explorerUrl = `https://tronscan.org/#/transaction/${data.payin_hash}`;
-								else if (curr === 'bnbbsc' || curr === 'usdtbsc') explorerUrl = `https://bscscan.com/tx/${data.payin_hash}`;
-								else if (curr === 'eth' || curr === 'usdt' || curr === 'usdterc20') explorerUrl = `https://etherscan.io/tx/${data.payin_hash}`;
-								else if (curr === 'matic' || curr === 'usdtmatic') explorerUrl = `https://polygonscan.com/tx/${data.payin_hash}`;
-								else if (curr === 'sol') explorerUrl = `https://solscan.io/tx/${data.payin_hash}`;
-								txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-link" style="margin-right:5px;"></i> See on Block Explorer</a></div>`;
-							}
-							const addrHtml = data.pay_address ? `<br><span style="color:var(--text-muted); margin-top:5px;">Address: ${data.pay_address.slice(0, 20)}...</span>` : '';
-							paymentDetailsHtml = `<div style="color:var(--text-muted);font-size:14px;" ><span style="text-transform:uppercase;"><i class="fa-solid fa-money-check-dollar" style="color:#ff9900;margin-right:5px"></i> ${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
-						}
-
-						item.innerHTML = `
-							<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start">
-								<span style="color:var(--text-sharp); font-weight:bold;" class="font-roboto">${label}</span>
-								<span style="color:var(--text-muted);font-size:14px;font-weight:light;">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
-								${paymentDetailsHtml}
-							</div>
-							<div>${actionBtnHtml}</div>
-						`;
-						paymentsList.appendChild(item);
-					});
-
-					// Bind generation click events
-					paymentsList.querySelectorAll('.btn-generate-vip-invoice').forEach(btn => {
-						btn.addEventListener('click', async (e) => {
-							e.stopPropagation();
-							const invId = btn.getAttribute('data-invoice');
-							btn.disabled = true;
-							btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating...';
-
-							try {
-								const genRes = await fetch(window.API.GENERATE_API_KEY, {
-									method: 'POST',
-									headers: {
-										'Content-Type': 'application/json',
-										'Authorization': `Bearer ${idToken}`
-									},
-									body: JSON.stringify({ invoiceId: invId })
-								});
-
-								const genData = await genRes.json();
-								if (genRes.ok && genData.apiKey) {
-									window.showAppNotification('success', '⚡ <strong>Key generated successfully!</strong> Active key updated.');
-									localStorage.setItem('gmailChecker_apiData', JSON.stringify({
-										apiKey: genData.apiKey,
-										type: 'vip',
-										timestamp: Date.now()
-									}));
-									window.APIKEY = genData.apiKey;
-									await window.loadDashboardData(true);
-								} else {
-									window.showAppNotification('danger', `Generation failed: ${genData.error || 'Server Error'}`);
-									btn.disabled = false;
-									btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px"></i>Generate Key';
-								}
-							} catch (err) {
-								console.error(err);
-								window.showAppNotification('danger', `Error generating VIP Key: ${err.message}`);
-								btn.disabled = false;
-								btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px"></i>Generate Key';
-							}
-						});
-					});
-
-					// Bind refreshing click events
-					paymentsList.querySelectorAll('.btn-refresh-invoice-status').forEach(btn => {
-						btn.addEventListener('click', async (e) => {
-							e.stopPropagation();
-							const icon = btn.querySelector('i');
-							icon.classList.add('fa-spin');
-							btn.disabled = true;
-
-							window.showAppNotification('info', 'Checking latest payment status...');
-							await window.loadDashboardData(true);
-						});
-					});
-
-					// Bind cancellation click events
-					paymentsList.querySelectorAll('.btn-cancel-invoice').forEach(btn => {
-						btn.addEventListener('click', (e) => {
-							e.stopPropagation();
-							const invId = btn.getAttribute('data-invoice');
-							showCustomConfirm(
-								"Cancel Invoice",
-								"Are you sure you want to cancel and remove this invoice?",
-								async () => {
-									btn.disabled = true;
-									btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-									try {
-										const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
-											method: 'POST',
-											headers: {
-												'Content-Type': 'application/json',
-												'Authorization': `Bearer ${idToken}`
-											},
-											body: JSON.stringify({ invoiceId: invId })
-										});
-
-										const cancelData = await cancelRes.json();
-										if (cancelRes.ok && cancelData.success) {
-											window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-											await window.loadDashboardData(true);
-										} else {
-											window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
-											btn.disabled = false;
-											btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-										}
-									} catch (err) {
-										console.error("Cancellation error", err);
-										window.showAppNotification('danger', 'Failed to cancel invoice due to network error.');
-										btn.disabled = false;
-										btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-									}
-								}
-							);
-						});
-					});
-				} else {
-					infoList.style.display = 'flex';
-					paymentsList.style.display = 'none';
-				}
-			}
-
-			// Render active payments & invoices list in Developer panel (API Keys ONLY)
-			const devPaymentsList = document.getElementById('dev-api-payments-list');
-			const devInfoList = document.getElementById('dev-api-info-list');
-
-			if (devPaymentsList && devInfoList) {
-				if (apiKeyHistory.length > 0) {
-					devInfoList.style.display = 'none';
-					devPaymentsList.style.display = 'flex';
-					devPaymentsList.innerHTML = '';
-
-					apiKeyHistory.forEach(([invoiceId, data]) => {
-						const item = document.createElement('div');
-						item.style.display = 'flex';
-						item.style.alignItems = 'center';
-						item.style.justifyContent = 'space-between';
-						item.style.background = 'var(--bg-primary)';
-						item.style.border = '1px solid var(--border-color)';
-						item.style.borderRadius = '10px';
-						item.style.padding = '8px 12px';
-
-						const label = data.productName;
-						const dateStr = data.completed_at ? new Date(data.completed_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
-
-						let actionBtnHtml = '';
-						if (data.isUsed) {
-							actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
-						} else if (data.payment_status === 'finished') {
-							actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
-						} else {
-							const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
-							actionBtnHtml = `
-								<div style="display:flex;align-items:center;gap:6px">
-									<span style="color:#ffd700;text-transform:capitalize;margin-right:2px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px"></i>${data.payment_status || 'Pending'}</span>
-									${payBtn}
-									<button class="btn-refresh-invoice-status" data-invoice="${invoiceId}" title="Check status" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-rotate"></i></button>
-									<button class="btn-cancel-invoice" data-invoice="${invoiceId}" title="Cancel invoice" style="background:rgba(255,102,102,0.15);color:#ff6666;border:1px solid rgba(255,102,102,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-trash"></i></button>
-								</div>
-							`;
-						}
-
-						let paymentDetailsHtml = '';
-						if (data.pay_currency && data.pay_amount) {
-							const usdValue = data.price_amount_usd ? ` (~$${data.price_amount_usd})` : '';
-							let txLink = '';
-							if (data.payin_hash) {
-								let explorerUrl = `https://blockchair.com/search?q=${data.payin_hash}`;
-								const curr = data.pay_currency.toLowerCase();
-								if (curr === 'trx' || curr === 'usdttrc20') explorerUrl = `https://tronscan.org/#/transaction/${data.payin_hash}`;
-								else if (curr === 'bnbbsc' || curr === 'usdtbsc') explorerUrl = `https://bscscan.com/tx/${data.payin_hash}`;
-								else if (curr === 'eth' || curr === 'usdt' || curr === 'usdterc20') explorerUrl = `https://etherscan.io/tx/${data.payin_hash}`;
-								else if (curr === 'matic' || curr === 'usdtmatic') explorerUrl = `https://polygonscan.com/tx/${data.payin_hash}`;
-								else if (curr === 'sol') explorerUrl = `https://solscan.io/tx/${data.payin_hash}`;
-								txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-cube" style="color:#00f0ff"></i> Block Explorer</a></div>`;
-							}
-							const addrHtml = data.pay_address ? `<br><span style="color:var(--text-muted)">Address: ${data.pay_address.slice(0, 20)}...</span>` : '';
-							paymentDetailsHtml = `<div style="color:#00f0ff;margin-top:4px;"><span style="text-transform:uppercase;">${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
-						}
-
-						item.innerHTML = `
-							<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">
-								<span style="color:var(--text-sharp);">${label}</span>
-								<span style="color:var(--text-muted);">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
-								${paymentDetailsHtml}
-							</div>
-							<div>${actionBtnHtml}</div>
-						`;
-						devPaymentsList.appendChild(item);
-					});
-
-					// Bind generation click events
-					devPaymentsList.querySelectorAll('.btn-generate-api-invoice').forEach(btn => {
-						btn.addEventListener('click', async (e) => {
-							e.stopPropagation();
-							const invId = btn.getAttribute('data-invoice');
-							btn.disabled = true;
-							btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating...';
-
-							try {
-								const genRes = await fetch(window.API.GENERATE_API_KEY, {
-									method: 'POST',
-									headers: {
-										'Content-Type': 'application/json',
-										'Authorization': `Bearer ${idToken}`
-									},
-									body: JSON.stringify({ invoiceId: invId })
-								});
-
-								const genData = await genRes.json();
-								if (genRes.ok && genData.apiKey) {
-									window.showAppNotification('success', '⚡ <strong>Developer API Key generated successfully!</strong> It has been added to your table below.');
-									// Pembelian API key tidak mengubah internal user API key (window.APIKEY)
-									await window.loadDashboardData(true);
-								} else {
-									window.showAppNotification('danger', `Generation failed: ${genData.error || 'Server Error'}`);
-									btn.disabled = false;
-									btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px"></i>Generate Key';
-								}
-							} catch (err) {
-								console.error(err);
-								window.showAppNotification('danger', `Error generating API Key: ${err.message}`);
-								btn.disabled = false;
-								btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" style="margin-right:4px"></i>Generate Key';
-							}
-						});
-					});
-
-					// Bind refreshing click events
-					devPaymentsList.querySelectorAll('.btn-refresh-invoice-status').forEach(btn => {
-						btn.addEventListener('click', async (e) => {
-							e.stopPropagation();
-							const icon = btn.querySelector('i');
-							icon.classList.add('fa-spin');
-							btn.disabled = true;
-
-							window.showAppNotification('info', 'Checking latest payment status...');
-							await window.loadDashboardData(true);
-						});
-					});
-
-					// Bind cancellation click events
-					devPaymentsList.querySelectorAll('.btn-cancel-invoice').forEach(btn => {
-						btn.addEventListener('click', (e) => {
-							e.stopPropagation();
-							const invId = btn.getAttribute('data-invoice');
-							showCustomConfirm(
-								"Cancel Invoice",
-								"Are you sure you want to cancel and remove this invoice?",
-								async () => {
-									btn.disabled = true;
-									btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-									try {
-										const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
-											method: 'POST',
-											headers: {
-												'Content-Type': 'application/json',
-												'Authorization': `Bearer ${idToken}`
-											},
-											body: JSON.stringify({ invoiceId: invId })
-										});
-
-										const cancelData = await cancelRes.json();
-										if (cancelRes.ok && cancelData.success) {
-											window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
-											await window.loadDashboardData(true);
-										} else {
-											window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
-											btn.disabled = false;
-											btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-										}
-									} catch (err) {
-										window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
-										btn.disabled = false;
-										btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-									}
-								}
-							);
-						});
-					});
-				} else {
-					devInfoList.style.display = 'block';
-					devPaymentsList.style.display = 'none';
-				}
-			}
-
-			// Update subscription info panel description dynamically
-			const dbVipKeyDesc = document.getElementById('db-vip-key-desc');
-			if (dbVipKeyDesc) {
-				if (profile.role === 'admin') {
-					dbVipKeyDesc.textContent = 'Admin Console: All actions authorized.';
-				} else if (tier === 'PRO' || tier === 'ULTRA') {
-					dbVipKeyDesc.textContent = 'Each subscription purchase is logged here. Your active plan allows generating API checks via your personal key.';
-				} else {
-					dbVipKeyDesc.textContent = 'Purchase a PRO or ULTRA subscription to unlock premium daily credits.';
-				}
-			}
-
-
-			// 3. Update Credits and Limits UI
-			let plan = profile.subscription_plan || 'none';
-			const expiry = profile.subscription_expiry || 0;
-			if (plan !== 'none' && expiry < Date.now()) plan = 'none';
-
-			const freeCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
-			const proSubsCredits = profile.pro_subs_credits !== undefined ? profile.pro_subs_credits : 0;
-			const ultraSubsCredits = profile.ultra_subs_credits !== undefined ? profile.ultra_subs_credits : 0;
-			const premiumCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
-
-			// Hitung subs credits berdasarkan plan aktif
-			let subsCredits = 0;
-			if (plan === 'pro_subs') subsCredits = proSubsCredits;
-			else if (plan === 'ultra_subs') subsCredits = ultraSubsCredits;
-			else if (plan === 'special_subs') subsCredits = profile.special_credits !== undefined ? profile.special_credits : 0;
-
-			// Total kredit harian yang tersedia = subs credits + free credits (1K harian)
-			// Jika free tier: hanya free_credits
-			const isSubscribed = plan !== 'none' && plan !== 'free';
-			const availableCredits = isSubscribed ? (subsCredits + freeCredits) : freeCredits;
-
-			const totalAvailable = premiumCredits + freeCredits;
-
-			// App Dashboard Credits
-			const appUsageLabel = document.getElementById('db-quota-usage-label');
-			const appQuotaBar = document.getElementById('db-quota-bar');
-			const appRemaining = document.getElementById('db-remaining-requests');
-
-			// maxDailyCredits dari server (tidak ada hardcode di frontend)
-			// Backend mengembalikan daily_limit berdasarkan plan aktif
-			const maxDailyCredits = profile.daily_limit || availableCredits || 1; // null = unlimited → pakai availableCredits
-			const quotaPct = Math.min(100, Math.round((availableCredits / maxDailyCredits) * 100));
-
-			if (appUsageLabel) {
-				// Tampilkan total gabungan (subs + free) langsung — lebih bersih
-				appUsageLabel.textContent = `Credits: ${availableCredits.toLocaleString()}`;
-			}
-			if (appQuotaBar) {
-				appQuotaBar.style.width = `${quotaPct}%`;
-				if (quotaPct <= 50) {
-					appQuotaBar.style.background = 'linear-gradient(90deg, #ff4d4d 0%, #ff1a1a 100%)';
-					appQuotaBar.style.boxShadow = '0 0 10px rgba(255, 77, 77, 0.4)';
-				} else {
-					appQuotaBar.style.background = '';
-					appQuotaBar.style.boxShadow = '';
-				}
-			}
-
-			// Remaining Checks = total harian tersedia + api_credits
-			const totalRemainingSum = availableCredits + premiumCredits;
-			if (appRemaining) appRemaining.textContent = totalRemainingSum.toLocaleString();
-
-			// Developer Dashboard Credits (Global API Credits)
-
-			const dbApiCreditsValue = document.getElementById('db-api-credits-value');
-			if (dbApiCreditsValue) dbApiCreditsValue.textContent = totalAvailable.toLocaleString();
-
-			const dbApiCreditsBreakdown = document.getElementById('db-api-credits-breakdown');
-			if (dbApiCreditsBreakdown) {
-				dbApiCreditsBreakdown.textContent = `(${freeCredits.toLocaleString()} - Daily Bonus + ${premiumCredits.toLocaleString()} - Purchased)`;
-			}
-
-			const apiAvailable = premiumCredits;
-
-			// Low credit alert check with webhook integration
-			if (apiAvailable < 1000) {
-				if (localStorage.getItem('gmailChecker_creditAlert') === 'true') {
-					window.showAppNotification('warning', `⚠️ <strong>Low Credits Alert:</strong> Your developer API quota has dropped to <strong>${apiAvailable.toLocaleString()}</strong> remaining checks! Please top up soon to avoid interruption.`);
-				}
-				// Webhook support
-				const webhookUrl = localStorage.getItem('gmailChecker_webhookUrl');
-				if (webhookUrl && webhookUrl.startsWith('http')) {
-					const lastWebhookSent = localStorage.getItem('gmailChecker_lastWebhookSent') || 0;
-					if (Date.now() - lastWebhookSent > 3600000) { // 1 hour throttle
-						localStorage.setItem('gmailChecker_lastWebhookSent', Date.now());
-						fetch(webhookUrl, {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({
-								username: "Gmail Checker Bot",
-								content: `🚨 **Low API Credits Alert** 🚨\nActive account email: \`${profile.email || 'N/A'}\`\nRemaining API Credits: \`${apiAvailable.toLocaleString()}\` checks.\n\n_Please top up your account credits soon!_`
-							})
-						}).catch(e => console.error("Webhook post failed:", e));
-					}
-				}
-			}
-
-			const devUsageLabel = document.getElementById('dev-quota-usage-label');
-			const devQuotaBar = document.getElementById('dev-quota-bar');
-			const devRemaining = document.getElementById('dev-remaining-requests');
-
-			if (devUsageLabel) devUsageLabel.textContent = `Credits: ${apiAvailable.toLocaleString()}`;
-			if (devQuotaBar) devQuotaBar.style.width = `100%`; // Static 100% since it's just a balance now
-			if (devRemaining) devRemaining.textContent = apiAvailable.toLocaleString();
-
-			// Clear previous countdown interval
-			if (countdownInterval) clearInterval(countdownInterval);
-
-			const dbCountdown = document.getElementById('db-reset-countdown');
-			const devCountdown = document.getElementById('dev-reset-countdown');
-
-			if (dbCountdown || devCountdown) {
-				// Calculate seconds until next UTC midnight
-				const now = new Date();
-				const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-				let sec = Math.floor((tomorrow.getTime() - now.getTime()) / 1000);
-
-				const updateTimer = () => {
-					if (sec <= 0) {
-						if (dbCountdown) dbCountdown.textContent = '00:00:00';
-						if (devCountdown) devCountdown.textContent = '00:00:00';
-						clearInterval(countdownInterval);
-						return;
-					}
-
-					const h = Math.floor(sec / 3600);
-					const m = Math.floor((sec % 3600) / 60);
-					const s = sec % 60;
-					const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-
-					if (dbCountdown) dbCountdown.textContent = timeStr;
-					if (devCountdown) devCountdown.textContent = "Lifetime Credits"; // Lifetime credits don't reset
-					sec--;
-				};
-
-				updateTimer();
-				countdownInterval = setInterval(updateTimer, 1000);
-			}
-		} // closes if (profileRes.ok)
-
-		// 4. Load owned keys list (refreshed after profile loads)
-		if (!profileOnly) {
-			await loadOwnedKeysList(idToken);
-			lastKeysLoadTime = Date.now();
+		// 2. Fetch User Profile status (Use WebSocket if open, fall back to REST GET)
+		let profileLoaded = false;
+		// If refreshPayment is true, we want to actively refresh payment gateway statuses, which requires a REST GET request.
+		if (!force && !refreshPayment && window.presenceWS && window.presenceWS.readyState === WebSocket.OPEN) {
+			window.presenceWS.send(JSON.stringify({ type: "get_profile" }));
+			profileLoaded = true;
 		}
 
+		if (!profileLoaded) {
+			const profileUrl = `${window.API.PROFILE}${refreshPayment ? '?refresh_payment=true' : ''}`;
+			const profileRes = await fetch(profileUrl, {
+				method: 'GET',
+				headers: {
+					'Authorization': `Bearer ${idToken}`
+				}
+			});
+
+			if (profileRes.ok) {
+				const profile = await profileRes.json();
+				await window.updateDashboardProfileUI(profile, profileOnly);
+				profileLoaded = true;
+			}
+		}
+
+		if (profileLoaded) {
+			if (!profileOnly) {
+				await loadOwnedKeysList(idToken);
+				lastKeysLoadTime = Date.now();
+			}
+			return;
+		}
 	} catch (e) {
 		console.error("Dashboard failed to retrieve full data:", e);
 	} finally {
@@ -1018,7 +347,6 @@ async function loadOwnedKeysList(idToken) {
 		}
 
 		developerKeys.forEach(k => {
-			const isKeyActive = window.APIKEY === k.key;
 			const isExpired = k.expiresAt !== 'lifetime' && new Date(k.expiresAt) <= new Date();
 
 			// Format expiry
@@ -1079,26 +407,6 @@ async function loadOwnedKeysList(idToken) {
 			});
 		});
 
-		document.querySelectorAll('.btn-apply-key-tbl').forEach(btn => {
-			btn.addEventListener('click', (e) => {
-				e.stopPropagation();
-				const keyVal = btn.getAttribute('data-key');
-				const keyType = btn.getAttribute('data-type');
-
-				// Set active key
-				localStorage.setItem('gmailChecker_apiData', JSON.stringify({
-					apiKey: keyVal,
-					type: keyType,
-					timestamp: Date.now()
-				}));
-				window.APIKEY = keyVal;
-
-				window.showAppNotification('success', 'âš¡ <strong>Active API Key updated!</strong> Statistics re-calibrating...');
-
-				// Refresh Dashboard
-				window.loadDashboardData(true);
-			});
-		});
 
 		document.querySelectorAll('.btn-delete-key-tbl').forEach(btn => {
 			btn.addEventListener('click', async (e) => {
@@ -1203,7 +511,7 @@ async function renderDevStatsCards(keys = []) {
 		const expiresStr = k.expiresAt === 'lifetime' || s.expiresAt === 'lifetime' ? 'Lifetime' : new Date(k.expiresAt || s.expiresAt).toLocaleDateString();
 
 		html += `
-			<div class="pricing-card" style="width:100%; min-width: 300px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; gap: 20px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; box-sizing: border-box; margin-bottom: 10px;">
+			<div class="pricing-card" style="width:100%; min-width: 300px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; gap: 20px; box-shadow: var(--shadow-md); position: relative;  box-sizing: border-box; margin-bottom: 10px;">
 				<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
 					<div style="display: flex; align-items: center; gap: 12px;">
 						<div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(175, 134, 252, 0.1); display: flex; align-items: center; justify-content: center; color: #af86fc; ">
@@ -1291,7 +599,7 @@ window.renderCreditsTab = function () {
 			const dailyLimit = k.daily_limit || 0;
 			const maskedKey = k.key.slice(0, 8) + '...' + k.key.slice(-8);
 			compHtml += `
-				<div style="background: rgba(0,0,0,0.15); padding: 18px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
+				<div style="background: var(--bg-primary); padding: 18px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
 					<div style="display: flex; flex-direction: column; gap: 4px; text-align: left;">
 						<span style=" color: var(--text-sharp); ">
 							${k.projectName || 'Compensation Key'}
@@ -1316,7 +624,7 @@ window.renderCreditsTab = function () {
 	}
 
 	container.innerHTML = `
-		<div style="flex: 1; min-width: 320px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; display: flex; flex-direction: column; gap: 24px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; width: 100%; box-sizing: border-box;">
+		<div style="flex: 1; min-width: 320px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; display: flex; flex-direction: column; gap: 24px; box-shadow: var(--shadow-md); position: relative;  width: 100%; box-sizing: border-box;">
 			<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
 				<div style="display: flex; align-items: center; gap: 12px;">
 					<div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(0,240,255,0.1); display: flex; align-items: center; justify-content: center; color: #00f0ff; ">
@@ -1388,18 +696,21 @@ async function loadUsageHistory() {
 	const tableBody = document.getElementById('db-history-table-body');
 	if (!tableBody) return;
 
+	const firstKey = (window.ownedKeys && window.ownedKeys.length > 0) ? window.ownedKeys[0].key : 'FREE_KEY';
+	const keyPrefix = firstKey.slice(0, 8);
+
 	// Populate beautiful structured simulation history log entries that feel extremely high fidelity!
 	tableBody.innerHTML = `
 		<tr style="border-bottom: 1px solid var(--border-color); color: var(--text-primary);">
 			<td style="padding: 15px 10px; color: var(--text-secondary);">${new Date().toLocaleString()}</td>
-			<td style="padding: 15px 10px;  ">${(window.APIKEY || 'FREE_KEY').slice(0, 8)}...</td>
+			<td style="padding: 15px 10px;  ">${keyPrefix}...</td>
 			<td style="padding: 15px 10px;">150 emails</td>
 			<td style="padding: 15px 10px; color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> 89 Live / 12 Disabled / 4 Failed</td>
 			<td style="padding: 15px 10px; text-align: right;  color: var(--text-secondary);">Advanced 1</td>
 		</tr>
 		<tr style="border-bottom: 1px solid var(--border-color); color: var(--text-primary);">
 			<td style="padding: 15px 10px; color: var(--text-secondary);">${new Date(Date.now() - 3600000).toLocaleString()}</td>
-			<td style="padding: 15px 10px;  ">${(window.APIKEY || 'FREE_KEY').slice(0, 8)}...</td>
+			<td style="padding: 15px 10px;  ">${keyPrefix}...</td>
 			<td style="padding: 15px 10px;">10 emails</td>
 			<td style="padding: 15px 10px; color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> 10 Live / 0 Disabled</td>
 			<td style="padding: 15px 10px; text-align: right;  color: var(--text-secondary);">Fast 1</td>
@@ -1410,7 +721,7 @@ async function loadUsageHistory() {
 	const copyHistoryBtn = document.getElementById('btn-db-copy-history');
 	if (copyHistoryBtn) {
 		copyHistoryBtn.addEventListener('click', () => {
-			const text = `Timestamp,APIKeyPrefix,EmailsChecked,ResultsMatches,Server\n${new Date().toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},150,89 Live / 12 Disabled / 4 Failed,Advanced 1\n${new Date(Date.now() - 3600000).toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},10,10 Live,Fast 1`;
+			const text = `Timestamp,APIKeyPrefix,EmailsChecked,ResultsMatches,Server\n${new Date().toISOString()},${keyPrefix},150,89 Live / 12 Disabled / 4 Failed,Advanced 1\n${new Date(Date.now() - 3600000).toISOString()},${keyPrefix},10,10 Live,Fast 1`;
 			navigator.clipboard.writeText(text).then(() => {
 				window.showAppNotification('success', 'ðŸ“‹ <strong>Logs history copied</strong> to clipboard!');
 			});
@@ -1420,7 +731,7 @@ async function loadUsageHistory() {
 	const downloadHistoryBtn = document.getElementById('btn-db-download-history');
 	if (downloadHistoryBtn) {
 		downloadHistoryBtn.addEventListener('click', () => {
-			const text = `Timestamp,APIKeyPrefix,EmailsChecked,ResultsMatches,Server\n${new Date().toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},150,89 Live / 12 Disabled / 4 Failed,Advanced 1\n${new Date(Date.now() - 3600000).toISOString()},${(window.APIKEY || 'FREE').slice(0, 8)},10,10 Live,Fast 1`;
+			const text = `Timestamp,APIKeyPrefix,EmailsChecked,ResultsMatches,Server\n${new Date().toISOString()},${keyPrefix},150,89 Live / 12 Disabled / 4 Failed,Advanced 1\n${new Date(Date.now() - 3600000).toISOString()},${keyPrefix},10,10 Live,Fast 1`;
 			const blob = new Blob([text], { type: 'text/csv' });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
@@ -1447,7 +758,7 @@ async function openWhitelistModal(apiKey, tab) {
 	const modal = document.getElementById('ip-whitelist-modal');
 	if (!modal) return;
 	const keyLabel = document.getElementById('ip-modal-key-label');
-	if (keyLabel) keyLabel.textContent = 'VIP Key: ' + apiKey.slice(0, 14) + '...';
+	if (keyLabel) keyLabel.textContent = 'Premium Key: ' + apiKey.slice(0, 14) + '...';
 	modal.classList.remove('hide');
 	switchWlTab(tab);
 	refreshWhitelistData(apiKey);
@@ -1474,9 +785,8 @@ function switchWlTab(tab) {
 
 async function refreshWhitelistData(apiKey) {
 	try {
-		const user = window.firebaseAuth && window.firebaseAuth.currentUser;
-		if (!user) return;
-		const token = await user.getIdToken();
+		const token = await window.getAuthToken();
+		if (!token) return;
 		const ipRes = await fetch(GC_API + '/get-ip-whitelist?key=' + encodeURIComponent(apiKey), {
 			headers: { 'Authorization': 'Bearer ' + token }
 		});
@@ -1523,9 +833,8 @@ function renderDomainList(domains, max) {
 }
 
 async function _wlPost(endpoint, body) {
-	const user = window.firebaseAuth && window.firebaseAuth.currentUser;
-	if (!user) { window.showAppNotification('error', 'Not logged in!'); return null; }
-	const token = await user.getIdToken();
+	const token = await window.getAuthToken();
+	if (!token) { window.showAppNotification('error', 'Not logged in!'); return null; }
 	return fetch(GC_API + endpoint, {
 		method: 'POST',
 		headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -1676,9 +985,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			btnCreateKey.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin style-mr-8"></i> Creating...';
 
 			try {
-				const user = window.firebaseAuth.currentUser;
-				if (!user) throw new Error("Firebase User not resolved.");
-				const idToken = await user.getIdToken(true);
+				const idToken = await window.getAuthToken();
+				if (!idToken) throw new Error("Firebase User not resolved.");
 
 				const res = await fetch(window.API.GENERATE_API_KEY, {
 					method: 'POST',
@@ -1807,6 +1115,7 @@ window.connectPresenceWS = function (idToken) {
 		};
 
 		ws.onopen = () => {
+			window.presenceLastPong = Date.now();
 			// Set initial status to online explicitly
 			sendWSStatus("online");
 
@@ -1833,7 +1142,11 @@ window.connectPresenceWS = function (idToken) {
 		ws.onmessage = (event) => {
 			try {
 				const data = JSON.parse(event.data);
-				// Welcome message can be captured silently
+				if (data.type === "pong") {
+					window.presenceLastPong = Date.now();
+				} else if (data.type === "profile" && data.profile) {
+					window.updateDashboardProfileUI(data.profile, true);
+				}
 			} catch (err) {
 				// Ignore JSON parse errors for non-JSON traffic
 			}
@@ -1852,12 +1165,11 @@ window.connectPresenceWS = function (idToken) {
 			}
 
 			// Reconnect automatically if user is still logged in
-			if (window.isUserAuthenticated && window.firebaseAuth && window.firebaseAuth.currentUser) {
+			if (window.isUserAuthenticated) {
 				setTimeout(async () => {
 					try {
-						const user = window.firebaseAuth.currentUser;
-						if (user) {
-							const freshToken = await user.getIdToken(true);
+						const freshToken = await window.getAuthToken();
+						if (freshToken) {
 							window.connectPresenceWS(freshToken);
 						}
 					} catch (e) {
@@ -1876,6 +1188,780 @@ window.connectPresenceWS = function (idToken) {
 
 	} catch (err) {
 		console.error("❌ Failed to initialize WebSocket Presence:", err);
+	}
+};
+
+// ========== WEB-SOCKETS ZOMBIE DETECTOR & HEALER ==========
+// Automatically detects and reconnects dead (zombie) WebSocket connections 
+// when the browser tab is focused, minimized, or restored.
+window.healWebSockets = async function () {
+	if (!window.isUserAuthenticated || !window.firebaseAuth || !window.firebaseAuth.currentUser) {
+		return;
+	}
+
+	const now = Date.now();
+	let needPresenceReconnect = false;
+
+	// 1. Check Presence WS (reconnect if closed or if no pong received for > 60 seconds)
+	if (!window.presenceWS ||
+		window.presenceWS.readyState !== WebSocket.OPEN ||
+		(window.presenceLastPong && (now - window.presenceLastPong > 60000))) {
+		needPresenceReconnect = true;
+	}
+
+	if (needPresenceReconnect) {
+		if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+			console.log(`[DEBUG] Visibility/Focus event: Healing WebSockets (Presence=${needPresenceReconnect})`);
+		}
+		try {
+			const idToken = await window.getAuthToken();
+			if (idToken) {
+				if (window.presenceWS) {
+					try { window.presenceWS.close(); } catch (e) { }
+					window.presenceWS = null;
+				}
+				if (window.connectPresenceWS) {
+					window.connectPresenceWS(idToken);
+				}
+			}
+		} catch (err) {
+			console.error("Failed to heal WebSockets:", err);
+		}
+	}
+};
+
+// Listen to focus and visibility events to trigger healing
+document.addEventListener('visibilitychange', () => {
+	if (document.visibilityState === 'visible') {
+		window.healWebSockets();
+	}
+});
+
+window.addEventListener('focus', () => {
+	window.healWebSockets();
+});
+
+window.getProfile = function () {
+	return window.dashboardProfile || {};
+};
+
+window.refreshRealtimeProfile = function () {
+	if (window.presenceWS && window.presenceWS.readyState === WebSocket.OPEN) {
+		window.presenceWS.send(JSON.stringify({ type: "get_profile" }));
+	} else {
+		window.loadDashboardData(true, true);
+	}
+};
+
+window.normalizeProfileData = function (profile) {
+	if (!profile) return {};
+	const normalized = { ...profile };
+
+	// 1. Normalize paymentHistory / payment_history
+	if (normalized.payment_history && !normalized.paymentHistory) {
+		normalized.paymentHistory = normalized.payment_history;
+	}
+
+	if (normalized.paymentHistory) {
+		const formatted = {};
+		for (const [id, data] of Object.entries(normalized.paymentHistory)) {
+			if (!data || typeof data !== 'object') continue;
+			const pType = data.product_type || data.productId || 'subscription';
+			formatted[id] = {
+				...data,
+				product_type: (pType.includes('api') || data.credits) ? 'api_key' : 'subscription',
+				isUsed: data.isUsed !== undefined ? data.isUsed : (data.payment_status === 'finished'),
+				productId: data.productId || data.product_id || 'pro_subs',
+				productName: data.productName || (data.productId?.includes('api') ? 'API Key Pack' : 'GMAIL CHECKER PRO'),
+				price_amount_usd: data.price_amount_usd || data.amount || 2.99
+			};
+		}
+		normalized.paymentHistory = formatted;
+	}
+
+	// 2. Normalize activeInvoice / activeInvoiceId
+	if (!normalized.activeInvoice && normalized.activeInvoiceId) {
+		const invoices = Object.values(normalized.activeInvoiceId);
+		if (invoices.length > 0) {
+			const activeInv = invoices[0];
+			normalized.activeInvoice = {
+				invoice_id: activeInv.invoice_id,
+				payment_status: activeInv.payment_status,
+				invoice_url: activeInv.invoice_url,
+				created_at: activeInv.timestamp,
+				product_id: activeInv.productId,
+				product_type: activeInv.product_type || (activeInv.productId?.includes('api') ? 'api_key' : 'subscription'),
+				productName: activeInv.productId?.includes('api') ? 'API Key Pack' : 'GMAIL CHECKER PRO'
+			};
+			normalized.isProcessingPayment = true;
+		}
+	}
+
+	// 3. Normalize notifications
+	if (normalized.notifications && typeof normalized.notifications === 'object' && !Array.isArray(normalized.notifications)) {
+		const allNotifs = [];
+		Object.values(normalized.notifications).forEach(n => {
+			if (n && n.title && n.message) {
+				allNotifs.push(n);
+			}
+		});
+		allNotifs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+		normalized.notifications = allNotifs.slice(0, 10);
+		normalized.unread_notifications = allNotifs.filter(n => !n.read).length;
+	}
+
+	return normalized;
+};
+
+window.updateDashboardProfileUI = async function (profile, profileOnly = false) {
+	profile = window.normalizeProfileData(profile);
+	window.dashboardProfile = profile;
+	const idToken = await window.getAuthToken();
+
+	window.renderMenu();
+
+	// Auto claim daily popup trigger & sidebar button control
+	const todayStr = new Date().toISOString().split('T')[0];
+	if (profile.daily_claim_active) {
+		if (profile.last_claim_date !== todayStr && sessionStorage.getItem('gmailChecker_dismissDailyClaim') !== todayStr) {
+			showDailyClaimPopup(idToken);
+		}
+
+		const dailyRewardBtn = document.getElementById('daily-reward-sidebar-btn');
+		if (dailyRewardBtn) {
+			if (profile.last_claim_date !== todayStr) {
+				dailyRewardBtn.classList.remove('hide');
+				dailyRewardBtn.onclick = () => {
+					showDailyClaimPopup(idToken);
+				};
+			} else {
+				dailyRewardBtn.classList.add('hide');
+			}
+		}
+	} else {
+		const dailyRewardBtn = document.getElementById('daily-reward-sidebar-btn');
+		if (dailyRewardBtn) dailyRewardBtn.classList.add('hide');
+	}
+
+	if (window.renderNotifications) {
+		window.renderNotifications(profile.notifications, profile.unread_notifications);
+	}
+
+	// Connect to Presence WebSocket to enable real-time status and save database query cost
+	if (window.connectPresenceWS) {
+		window.connectPresenceWS(idToken);
+	}
+
+	// Connect to Unified Support WebSocket
+	if (window.connectTicketsWS) {
+		window.connectTicketsWS(idToken);
+	}
+
+	// Update Badges dynamically based on roles and keys
+	const badge = document.getElementById('db-user-badge');
+
+	let tier = 'FREE';
+	if (profile.role === 'admin') {
+		tier = 'ADMIN';
+	} else if (profile.subscription_plan && profile.subscription_plan !== 'free' && profile.subscription_plan !== 'none' && profile.subscription_expiry > Date.now()) {
+		const plan = profile.subscription_plan;
+		if (plan === 'pro_subs') tier = 'PRO';
+		else if (plan === 'ultra_subs') tier = 'ULTRA';
+		else tier = 'PRO'; // safe fallback for any unrecognized plan
+	}
+
+	if (badge) {
+		badge.textContent = tier;
+		if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
+			badge.style.color = '#00ccffff';
+			badge.style.background = 'rgba(0, 204, 255, 0.1)';
+			badge.style.borderColor = 'rgba(0, 204, 255, 0.2)';
+		} else {
+			badge.style.color = 'var(--text-muted)';
+			badge.style.background = 'rgba(255, 255, 255, 0.05)';
+			badge.style.borderColor = 'var(--border-color)';
+		}
+	}
+
+	const userBadgeDisplay = document.getElementById('user-badge-display');
+	if (userBadgeDisplay) userBadgeDisplay.textContent = tier;
+	if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
+		userBadgeDisplay.style.color = '#00ccffff';
+		userBadgeDisplay.style.background = 'rgba(0, 204, 255, 0.1)';
+		userBadgeDisplay.style.borderColor = 'rgba(0, 204, 255, 0.2)';
+	} else {
+		userBadgeDisplay.style.color = 'var(--text-muted)';
+		userBadgeDisplay.style.background = 'rgba(255, 255, 255, 0.05)';
+		userBadgeDisplay.style.borderColor = 'var(--border-color)';
+	}
+
+	const popoverBadgeDisplay = document.getElementById('profile-popover-badge-display');
+	if (popoverBadgeDisplay) popoverBadgeDisplay.textContent = tier;
+	if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
+		popoverBadgeDisplay.style.color = '#00ccffff';
+		popoverBadgeDisplay.style.background = 'rgba(0, 204, 255, 0.1)';
+		popoverBadgeDisplay.style.borderColor = 'rgba(0, 204, 255, 0.2)';
+	} else {
+		popoverBadgeDisplay.style.color = 'var(--text-muted)';
+		popoverBadgeDisplay.style.background = 'rgba(255, 255, 255, 0.05)';
+		popoverBadgeDisplay.style.borderColor = 'var(--border-color)';
+	}
+
+	// UPDATE SUBSCRIPTION EXPIRY ACTIVE PERIOD STATS
+	const subExpiryDisplay = document.getElementById('db-subscription-expiry');
+	if (subExpiryDisplay) {
+		if (tier === 'PRO' || tier === 'ULTRA' || tier === 'ADMIN') {
+			if (profile.subscription_expiry) {
+				const expDate = new Date(profile.subscription_expiry);
+				subExpiryDisplay.textContent = expDate.toLocaleDateString();
+				subExpiryDisplay.style.color = expDate <= new Date() ? '#ff6666' : '#0095c8';
+			} else {
+				subExpiryDisplay.textContent = 'Lifetime';
+				subExpiryDisplay.style.color = '#0095c8';
+			}
+		} else {
+			subExpiryDisplay.textContent = 'lifetime';
+			subExpiryDisplay.style.color = '#0095c8';
+		}
+	}
+
+	// UPDATE RENEW / SUBSCRIBE BUTTON TEXT
+	const btnPricingSub = document.getElementById('btn-dashboard-go-pricing-sub');
+	if (btnPricingSub) {
+		if (tier === 'PRO' || tier === 'ULTRA') {
+			btnPricingSub.innerHTML = `<i class="fa-solid fa-arrows-rotate" style="margin-right: 8px;"></i>Renew / Extend Subscription`;
+		} else {
+			btnPricingSub.innerHTML = `<i class="fa-solid fa-gem" style="margin-right: 8px;"></i>Subscribe Now`;
+		}
+	}
+
+	const paymentHistory = profile.paymentHistory || {};
+	const historyEntries = Object.entries(paymentHistory);
+
+	// Separate histories
+	const subscriptionHistory = historyEntries.filter(([id, data]) => data && (!data.product_type || data.product_type === 'subscription'));
+	const apiKeyHistory = historyEntries.filter(([id, data]) => data && data.product_type === 'api_key');
+
+	// PENDING PAYMENT UI LOGIC
+	let pendingSubscription = null;
+	let pendingApiKey = null;
+
+	// 1. Check from activeInvoice directly
+	if (profile.isProcessingPayment && profile.activeInvoice) {
+		const activeInv = profile.activeInvoice;
+		const pType = activeInv.product_type || 'subscription';
+		if (pType === 'subscription') {
+			pendingSubscription = { id: activeInv.invoice_id, data: activeInv };
+		} else if (pType === 'api_key') {
+			pendingApiKey = { id: activeInv.invoice_id, data: activeInv };
+		}
+	}
+
+	// 2. Check from paymentHistory fallback
+	if (!pendingSubscription) {
+		const pendingSub = subscriptionHistory.find(([id, data]) => !data.isUsed && data.payment_status !== 'finished' && data.payment_status !== 'failed' && data.payment_status !== 'refunded' && data.payment_status !== 'expired');
+		if (pendingSub) pendingSubscription = { id: pendingSub[0], data: pendingSub[1] };
+	}
+	if (!pendingApiKey) {
+		const pendingApi = apiKeyHistory.find(([id, data]) => !data.isUsed && data.payment_status !== 'finished' && data.payment_status !== 'failed' && data.payment_status !== 'refunded' && data.payment_status !== 'expired');
+		if (pendingApi) pendingApiKey = { id: pendingApi[0], data: pendingApi[1] };
+	}
+
+	const pendingNotif = document.getElementById('sidebar-pending-payment-notif');
+	const pricingContainer = document.getElementById('pricing-plans-container');
+	const pendingContainer = document.getElementById('pending-payment-container');
+
+	if (pendingSubscription) {
+		if (pendingNotif) pendingNotif.classList.remove('hide');
+		if (pricingContainer) pricingContainer.classList.add('hide');
+		if (pendingContainer) pendingContainer.classList.remove('hide');
+
+		const pendingIdDisplay = document.getElementById('pending-invoice-id-display');
+		const pendingPlanDisplay = document.getElementById('pending-invoice-plan-display');
+		const btnPendingPay = document.getElementById('btn-pending-pay');
+		const btnPendingCancel = document.getElementById('btn-pending-cancel');
+
+		if (pendingIdDisplay) pendingIdDisplay.textContent = pendingSubscription.id;
+		if (pendingPlanDisplay) pendingPlanDisplay.textContent = pendingSubscription.data.productName || 'Subscription Plan';
+
+		if (btnPendingPay && pendingSubscription.data.invoice_url) {
+			btnPendingPay.onclick = () => window.open(pendingSubscription.data.invoice_url, '_blank');
+		}
+
+		if (btnPendingCancel) {
+			const newBtnCancel = btnPendingCancel.cloneNode(true);
+			btnPendingCancel.parentNode.replaceChild(newBtnCancel, btnPendingCancel);
+
+			newBtnCancel.addEventListener('click', () => {
+				showCustomConfirm(
+					"Cancel Invoice",
+					"Are you sure you want to cancel and remove this invoice?",
+					async () => {
+						newBtnCancel.disabled = true;
+						newBtnCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
+						try {
+							const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+								body: JSON.stringify({ invoiceId: pendingSubscription.id })
+							});
+							const cancelData = await cancelRes.json();
+							if (cancelRes.ok && cancelData.success) {
+								window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
+								await window.loadDashboardData(true);
+							} else {
+								throw new Error(cancelData.error || 'Server error');
+							}
+						} catch (err) {
+							window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
+							newBtnCancel.disabled = false;
+							newBtnCancel.innerHTML = '<i class="fa-solid fa-trash"></i> Cancel Invoice';
+						}
+					}
+				);
+			});
+		}
+	} else {
+		if (pendingNotif) pendingNotif.classList.add('hide');
+		if (pricingContainer) pricingContainer.classList.remove('hide');
+		if (pendingContainer) pendingContainer.classList.add('hide');
+	}
+
+	// API KEY PENDING PAYMENT UI LOGIC
+	const devPendingContainer = document.getElementById('dev-pending-payment-container');
+	const devPricingContainer = document.getElementById('dev-pricing-plans-container');
+	const apiPendingNotif = document.getElementById('sidebar-pending-api-notif');
+	const devPurchaseForm = document.getElementById('dev-purchase-form-container'); // This is the API Key buy form in tab-dev-keys
+
+	if (pendingApiKey) {
+		if (apiPendingNotif) apiPendingNotif.classList.remove('hide');
+		if (devPricingContainer) devPricingContainer.classList.add('hide');
+		if (devPurchaseForm) devPurchaseForm.classList.add('hide');
+		if (devPendingContainer) devPendingContainer.classList.remove('hide');
+
+		const devPendingIdDisplay = document.getElementById('dev-pending-invoice-id');
+		const devPendingPlanDisplay = document.getElementById('dev-pending-invoice-plan');
+		const btnDevPendingPay = document.getElementById('btn-dev-pending-pay');
+		const btnDevPendingCancel = document.getElementById('btn-dev-pending-cancel');
+
+		if (devPendingIdDisplay) devPendingIdDisplay.textContent = pendingApiKey.id;
+		if (devPendingPlanDisplay) devPendingPlanDisplay.textContent = pendingApiKey.data.productName || 'API Key Pack';
+
+		if (btnDevPendingPay && pendingApiKey.data.invoice_url) {
+			btnDevPendingPay.onclick = () => window.open(pendingApiKey.data.invoice_url, '_blank');
+		}
+
+		if (btnDevPendingCancel) {
+			const newBtnCancel = btnDevPendingCancel.cloneNode(true);
+			btnDevPendingCancel.parentNode.replaceChild(newBtnCancel, btnDevPendingCancel);
+
+			newBtnCancel.addEventListener('click', () => {
+				showCustomConfirm(
+					"Cancel Invoice",
+					"Are you sure you want to cancel and remove this invoice?",
+					async () => {
+						newBtnCancel.disabled = true;
+						newBtnCancel.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cancelling...';
+						try {
+							const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+								body: JSON.stringify({ invoiceId: pendingApiKey.id })
+							});
+							const cancelData = await cancelRes.json();
+							if (cancelRes.ok && cancelData.success) {
+								window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
+								await window.loadDashboardData(true);
+							} else {
+								throw new Error(cancelData.error || 'Server error');
+							}
+						} catch (err) {
+							window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
+							newBtnCancel.disabled = false;
+							newBtnCancel.innerHTML = '<i class="fa-solid fa-trash"></i> Cancel Invoice';
+						}
+					}
+				);
+			});
+		}
+	} else {
+		if (apiPendingNotif) apiPendingNotif.classList.add('hide');
+		if (devPricingContainer) devPricingContainer.classList.remove('hide');
+		if (devPurchaseForm) devPurchaseForm.classList.remove('hide');
+		if (devPendingContainer) devPendingContainer.classList.add('hide');
+	}
+
+	// Render active payments & invoices list in Premium panel (Subscriptions ONLY)
+	const paymentsList = document.getElementById('db-premium-payments-list');
+	const infoList = document.getElementById('db-premium-info-list');
+
+	if (paymentsList && infoList) {
+		if (subscriptionHistory.length > 0) {
+			infoList.style.display = 'none';
+			paymentsList.style.display = 'flex';
+			paymentsList.innerHTML = '';
+
+			subscriptionHistory.forEach(([invoiceId, data]) => {
+				const item = document.createElement('div');
+				item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;';
+
+				const label = data.productName || 'Subscription Plan';
+				const dateStr = data.completed_at ? new Date(data.completed_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
+
+				let actionBtnHtml = '';
+				if (data.isUsed) {
+					actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
+				} else if (data.payment_status === 'finished') {
+					actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#66ffd9;margin-right:4px"></i>Applied</span>`;
+				} else {
+					const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
+					actionBtnHtml = `
+						<div style="display:flex;align-items:center;gap:6px">
+							<span style="color:#ffd700;text-transform:capitalize;margin-right:2px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px"></i>${data.payment_status || 'Pending'}</span>
+							${payBtn}
+							<button class="btn-refresh-invoice-status" data-invoice="${invoiceId}" title="Check status" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-rotate"></i></button>
+							<button class="btn-cancel-invoice" data-invoice="${invoiceId}" title="Cancel invoice" style="background:rgba(255,102,102,0.15);color:#ff6666;border:1px solid rgba(255,102,102,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-trash"></i></button>
+						</div>
+					`;
+				}
+
+				let paymentDetailsHtml = '';
+				if (data.pay_currency && data.pay_amount) {
+					const usdValue = data.price_amount_usd ? ` (~$${data.price_amount_usd})` : '';
+					let txLink = '';
+					if (data.payin_hash) {
+						let explorerUrl = `https://blockchair.com/search?q=${data.payin_hash}`;
+						const curr = data.pay_currency.toLowerCase();
+						if (curr === 'trx' || curr === 'usdttrc20') explorerUrl = `https://tronscan.org/#/transaction/${data.payin_hash}`;
+						else if (curr === 'bnbbsc' || curr === 'usdtbsc') explorerUrl = `https://bscscan.com/tx/${data.payin_hash}`;
+						else if (curr === 'eth' || curr === 'usdt' || curr === 'usdterc20') explorerUrl = `https://etherscan.io/tx/${data.payin_hash}`;
+						else if (curr === 'matic' || curr === 'usdtmatic') explorerUrl = `https://polygonscan.com/tx/${data.payin_hash}`;
+						else if (curr === 'sol') explorerUrl = `https://solscan.io/tx/${data.payin_hash}`;
+						txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-link" style="margin-right:5px;"></i> See on Block Explorer</a></div>`;
+					}
+					const addrHtml = data.pay_address ? `<br><span style="color:var(--text-muted); margin-top:5px;">Address: ${data.pay_address.slice(0, 20)}...</span>` : '';
+					paymentDetailsHtml = `<div style="color:var(--text-muted);font-size:14px;" ><span style="text-transform:uppercase;"><i class="fa-solid fa-money-check-dollar" style="color:#ff9900;margin-right:5px"></i> ${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
+				}
+
+				item.innerHTML = `
+					<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start">
+						<span style="color:var(--text-sharp); font-weight:bold;" class="font-roboto">${label}</span>
+						<span style="color:var(--text-muted);font-size:14px;font-weight:light;">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
+						${paymentDetailsHtml}
+					</div>
+					<div>${actionBtnHtml}</div>
+				`;
+				paymentsList.appendChild(item);
+			});
+
+			// Bind refreshing click events
+			paymentsList.querySelectorAll('.btn-refresh-invoice-status').forEach(btn => {
+				btn.addEventListener('click', async (e) => {
+					e.stopPropagation();
+					const icon = btn.querySelector('i');
+					if (icon) icon.classList.add('fa-spin');
+					btn.disabled = true;
+
+					window.showAppNotification('info', 'Checking latest payment status...');
+					await window.loadDashboardData(true);
+				});
+			});
+
+			// Bind cancellation click events
+			paymentsList.querySelectorAll('.btn-cancel-invoice').forEach(btn => {
+				btn.addEventListener('click', (e) => {
+					e.stopPropagation();
+					const invId = btn.getAttribute('data-invoice');
+					showCustomConfirm(
+						"Cancel Invoice",
+						"Are you sure you want to cancel and remove this invoice?",
+						async () => {
+							btn.disabled = true;
+							btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+							try {
+								const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+										'Authorization': `Bearer ${idToken}`
+									},
+									body: JSON.stringify({ invoiceId: invId })
+								});
+
+								const cancelData = await cancelRes.json();
+								if (cancelRes.ok && cancelData.success) {
+									window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
+									await window.loadDashboardData(true);
+								} else {
+									window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
+									btn.disabled = false;
+									btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+								}
+							} catch (err) {
+								console.error("Cancellation error", err);
+								window.showAppNotification('danger', 'Failed to cancel invoice due to network error.');
+								btn.disabled = false;
+								btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+							}
+						}
+					);
+				});
+			});
+		} else {
+			infoList.style.display = 'flex';
+			paymentsList.style.display = 'none';
+		}
+	}
+
+	// Render active payments & invoices list in Developer panel (API Keys ONLY)
+	const devPaymentsList = document.getElementById('dev-api-payments-list');
+	const devInfoList = document.getElementById('dev-api-info-list');
+
+	if (devPaymentsList && devInfoList) {
+		if (apiKeyHistory.length > 0) {
+			devInfoList.style.display = 'none';
+			devPaymentsList.style.display = 'flex';
+			devPaymentsList.innerHTML = '';
+
+			apiKeyHistory.forEach(([invoiceId, data]) => {
+				const item = document.createElement('div');
+				item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;';
+
+				const label = data.productName || 'API Key Pack';
+				const dateStr = data.completed_at ? new Date(data.completed_at).toLocaleDateString() : (data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Recent');
+
+				let actionBtnHtml = '';
+				if (data.isUsed) {
+					actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
+				} else if (data.payment_status === 'finished') {
+					actionBtnHtml = `<span style="color: var(--text-muted); "><i class="fa-solid fa-circle-check" style="color:#00f0ff;margin-right:4px"></i>Applied</span>`;
+				} else {
+					const payBtn = data.invoice_url ? `<a href="${data.invoice_url}" target="_blank" title="Pay Invoice" style="background:linear-gradient(135deg,#ffd700,#ffa500);color:#111;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s"><i class="fa-solid fa-wallet"></i> Pay</a>` : '';
+					actionBtnHtml = `
+						<div style="display:flex;align-items:center;gap:6px">
+							<span style="color:#ffd700;text-transform:capitalize;margin-right:2px"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px"></i>${data.payment_status || 'Pending'}</span>
+							${payBtn}
+							<button class="btn-refresh-invoice-status" data-invoice="${invoiceId}" title="Check status" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);border:1px solid var(--border-color);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-rotate"></i></button>
+							<button class="btn-cancel-invoice" data-invoice="${invoiceId}" title="Cancel invoice" style="background:rgba(255,102,102,0.15);color:#ff6666;border:1px solid rgba(255,102,102,0.2);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.2s"><i class="fa-solid fa-trash"></i></button>
+						</div>
+					`;
+				}
+
+				let paymentDetailsHtml = '';
+				if (data.pay_currency && data.pay_amount) {
+					const usdValue = data.price_amount_usd ? ` (~$${data.price_amount_usd})` : '';
+					let txLink = '';
+					if (data.payin_hash) {
+						let explorerUrl = `https://blockchair.com/search?q=${data.payin_hash}`;
+						const curr = data.pay_currency.toLowerCase();
+						if (curr === 'trx' || curr === 'usdttrc20') explorerUrl = `https://tronscan.org/#/transaction/${data.payin_hash}`;
+						else if (curr === 'bnbbsc' || curr === 'usdtbsc') explorerUrl = `https://bscscan.com/tx/${data.payin_hash}`;
+						else if (curr === 'eth' || curr === 'usdt' || curr === 'usdterc20') explorerUrl = `https://etherscan.io/tx/${data.payin_hash}`;
+						else if (curr === 'matic' || curr === 'usdtmatic') explorerUrl = `https://polygonscan.com/tx/${data.payin_hash}`;
+						else if (curr === 'sol') explorerUrl = `https://solscan.io/tx/${data.payin_hash}`;
+						txLink = `<div style="margin-top:6px;"><a href="${explorerUrl}" target="_blank" style="background:rgba(255,255,255,0.08);color:var(--text-sharp);padding:4px 8px;border-radius:4px;text-decoration:none;border:1px solid var(--border-color);display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"><i class="fa-solid fa-cube" style="color:#00f0ff"></i> Block Explorer</a></div>`;
+					}
+					const addrHtml = data.pay_address ? `<br><span style="color:var(--text-muted)">Address: ${data.pay_address.slice(0, 20)}...</span>` : '';
+					paymentDetailsHtml = `<div style="color:#00f0ff;margin-top:4px;"><span style="text-transform:uppercase;">${data.pay_currency}</span> ${data.pay_amount}${usdValue}${addrHtml}${txLink}</div>`;
+				}
+
+				item.innerHTML = `
+					<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start">
+						<span style="color:var(--text-sharp);">${label}</span>
+						<span style="color:var(--text-muted);">ID: ${invoiceId.slice(0, 10)}... | ${dateStr}</span>
+						${paymentDetailsHtml}
+					</div>
+					<div>${actionBtnHtml}</div>
+				`;
+				devPaymentsList.appendChild(item);
+			});
+
+			// Bind refreshing click events
+			devPaymentsList.querySelectorAll('.btn-refresh-invoice-status').forEach(btn => {
+				btn.addEventListener('click', async (e) => {
+					e.stopPropagation();
+					const icon = btn.querySelector('i');
+					if (icon) icon.classList.add('fa-spin');
+					btn.disabled = true;
+
+					window.showAppNotification('info', 'Checking latest payment status...');
+					await window.loadDashboardData(true);
+				});
+			});
+
+			// Bind cancellation click events
+			devPaymentsList.querySelectorAll('.btn-cancel-invoice').forEach(btn => {
+				btn.addEventListener('click', (e) => {
+					e.stopPropagation();
+					const invId = btn.getAttribute('data-invoice');
+					showCustomConfirm(
+						"Cancel Invoice",
+						"Are you sure you want to cancel and remove this invoice?",
+						async () => {
+							btn.disabled = true;
+							btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+							try {
+								const cancelRes = await fetch(window.API.CANCEL_INVOICE, {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+										'Authorization': `Bearer ${idToken}`
+									},
+									body: JSON.stringify({ invoiceId: invId })
+								});
+
+								const cancelData = await cancelRes.json();
+								if (cancelRes.ok && cancelData.success) {
+									window.showAppNotification('success', '🗑️ <strong>Invoice cancelled successfully</strong>.');
+									await window.loadDashboardData(true);
+								} else {
+									window.showAppNotification('danger', `Failed to cancel invoice: ${cancelData.error || 'Server Error'}`);
+									btn.disabled = false;
+									btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+								}
+							} catch (err) {
+								window.showAppNotification('danger', `Failed to cancel invoice: ${err.message}`);
+								btn.disabled = false;
+								btn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+							}
+						}
+					);
+				});
+			});
+		} else {
+			devInfoList.style.display = 'block';
+			devPaymentsList.style.display = 'none';
+		}
+	}
+
+	// UPDATE LIMIT DISPLAYS AND TIMERS
+	let plan = profile.subscription_plan || 'none';
+	const expiry = profile.subscription_expiry || 0;
+	if (plan !== 'none' && expiry < Date.now()) plan = 'none';
+
+	const freeCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
+	const proSubsCredits = profile.pro_subs_credits !== undefined ? profile.pro_subs_credits : 0;
+	const ultraSubsCredits = profile.ultra_subs_credits !== undefined ? profile.ultra_subs_credits : 0;
+	const premiumCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
+
+	// Hitung subs credits berdasarkan plan aktif
+	let subsCredits = 0;
+	if (plan === 'pro_subs') subsCredits = proSubsCredits;
+	else if (plan === 'ultra_subs') subsCredits = ultraSubsCredits;
+	else if (plan === 'special_subs') subsCredits = profile.special_credits !== undefined ? profile.special_credits : 0;
+
+	// Total kredit harian yang tersedia = subs credits + free credits (1K harian)
+	// Jika free tier: hanya free_credits
+	const isSubscribed = plan !== 'none' && plan !== 'free';
+	const availableCredits = isSubscribed ? (subsCredits + freeCredits) : freeCredits;
+
+	const totalAvailable = premiumCredits + freeCredits;
+
+	// App Dashboard Credits
+	const appUsageLabel = document.getElementById('db-quota-usage-label');
+	const appQuotaBar = document.getElementById('db-quota-bar');
+	const appRemaining = document.getElementById('db-remaining-requests');
+
+	// maxDailyCredits dari server (tidak ada hardcode di frontend)
+	// Backend mengembalikan daily_limit berdasarkan plan aktif
+	const maxDailyCredits = profile.daily_limit || availableCredits || 1; // null = unlimited → pakai availableCredits
+	const quotaPct = Math.min(100, Math.round((availableCredits / maxDailyCredits) * 100));
+
+	if (appUsageLabel) {
+		// Tampilkan total gabungan (subs + free) langsung — lebih bersih
+		appUsageLabel.textContent = `Credits: ${availableCredits.toLocaleString()}`;
+	}
+	if (appQuotaBar) {
+		appQuotaBar.style.width = `${quotaPct}%`;
+		if (quotaPct <= 50) {
+			appQuotaBar.style.background = 'linear-gradient(90deg, #ff4d4d 0%, #ff1a1a 100%)';
+			appQuotaBar.style.boxShadow = '0 0 10px rgba(255, 77, 77, 0.4)';
+		} else {
+			appQuotaBar.style.background = '';
+			appQuotaBar.style.boxShadow = '';
+		}
+	}
+
+	// Remaining Checks = total harian tersedia + api_credits
+	const totalRemainingSum = availableCredits + premiumCredits;
+	if (appRemaining) appRemaining.textContent = totalRemainingSum.toLocaleString();
+
+	// Developer Dashboard Credits (Global API Credits)
+	const dbApiCreditsValue = document.getElementById('db-api-credits-value');
+	if (dbApiCreditsValue) dbApiCreditsValue.textContent = totalAvailable.toLocaleString();
+
+	const dbApiCreditsBreakdown = document.getElementById('db-api-credits-breakdown');
+	if (dbApiCreditsBreakdown) {
+		dbApiCreditsBreakdown.textContent = `(${freeCredits.toLocaleString()} - Daily Bonus + ${premiumCredits.toLocaleString()} - Purchased)`;
+	}
+
+	const apiAvailable = premiumCredits;
+
+	// Low credit alert check with webhook integration
+	if (apiAvailable < 1000) {
+		if (localStorage.getItem('gmailChecker_creditAlert') === 'true') {
+			window.showAppNotification('warning', `⚠️ <strong>Low Credits Alert:</strong> Your developer API quota has dropped to <strong>${apiAvailable.toLocaleString()}</strong> remaining checks! Please top up soon to avoid interruption.`);
+		}
+		// Webhook support
+		const webhookUrl = localStorage.getItem('gmailChecker_webhookUrl');
+		if (webhookUrl && webhookUrl.startsWith('http')) {
+			const lastWebhookSent = localStorage.getItem('gmailChecker_lastWebhookSent') || 0;
+			if (Date.now() - lastWebhookSent > 3600000) { // 1 hour throttle
+				localStorage.setItem('gmailChecker_lastWebhookSent', Date.now());
+				fetch(webhookUrl, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						username: "Gmail Checker Bot",
+						content: `🚨 **Low API Credits Alert** 🚨\nActive account email: \`${profile.email || 'N/A'}\`\nRemaining API Credits: \`${apiAvailable.toLocaleString()}\` checks.\n\n_Please top up your account credits soon!_`
+					})
+				}).catch(e => console.error("Webhook post failed:", e));
+			}
+		}
+	}
+
+	const devUsageLabel = document.getElementById('dev-quota-usage-label');
+	const devQuotaBar = document.getElementById('dev-quota-bar');
+	const devRemaining = document.getElementById('dev-remaining-requests');
+
+	if (devUsageLabel) devUsageLabel.textContent = `Credits: ${apiAvailable.toLocaleString()}`;
+	if (devQuotaBar) devQuotaBar.style.width = `100%`; // Static 100% since it's just a balance now
+	if (devRemaining) devRemaining.textContent = apiAvailable.toLocaleString();
+
+	// Clear previous countdown interval
+	if (countdownInterval) clearInterval(countdownInterval);
+
+	const dbCountdown = document.getElementById('db-reset-countdown');
+	const devCountdown = document.getElementById('dev-reset-countdown');
+
+	if (dbCountdown || devCountdown) {
+		// Calculate seconds until next UTC midnight
+		const now = new Date();
+		const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+		let sec = Math.floor((tomorrow.getTime() - now.getTime()) / 1000);
+
+		const updateTimer = () => {
+			if (sec <= 0) {
+				if (dbCountdown) dbCountdown.textContent = '00:00:00';
+				if (devCountdown) devCountdown.textContent = '00:00:00';
+				clearInterval(countdownInterval);
+				return;
+			}
+
+			const h = Math.floor(sec / 3600);
+			const m = Math.floor((sec % 3600) / 60);
+			const s = sec % 60;
+			const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+			if (dbCountdown) dbCountdown.textContent = timeStr;
+			if (devCountdown) devCountdown.textContent = "Lifetime Credits"; // Lifetime credits don't reset
+			sec--;
+		};
+
+		updateTimer();
+		countdownInterval = setInterval(updateTimer, 1000);
 	}
 };
 

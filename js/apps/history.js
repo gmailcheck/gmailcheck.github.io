@@ -246,10 +246,10 @@ function showHistoryDetailsModal(entry) {
             const serverCode = (entry.metadata && entry.metadata.server) || entry.server || null;
             if (entry.appId === 'app1' && serverCode) {
                 const serverMap = {
-                    fastServer1: 'Fast 1',
-                    fastServer2: 'Fast 2',
-                    server1: 'Advanced 1',
-                    server2: 'Advanced 2'
+                    fastFreeServer: 'Fast (Free)',
+                    deepFreeServer: 'Deep (Free)',
+                    fastServer: 'Fast (VIP)',
+                    deepServer: 'Deep (VIP)'
                 };
                 serverVal.textContent = serverMap[serverCode] || serverCode;
                 serverRow.style.display = 'flex';
@@ -331,9 +331,11 @@ function showHistoryDetailsModal(entry) {
                     const parts = line.split(' - ');
                     const email = parts[0]?.trim() || '';
                     const statusText = parts[1]?.trim() || 'BAD';
+                    let status = statusText.toLowerCase();
+                    if (status === 'good') status = 'live';
                     return {
                         email: email,
-                        status: statusText.toLowerCase()
+                        status: status
                     };
                 }).filter(x => x.email.length > 0 && x.status !== 'failed');
 
@@ -349,7 +351,7 @@ function showHistoryDetailsModal(entry) {
                 } else {
                     // Heuristic
                     const hasAdvanced = items.some(x => ['verify', 'disabled', 'unregistered'].includes(x.status));
-                    const hasFast = items.some(x => x.status === 'bad');
+                    const hasFast = items.some(x => x.status === 'bad') || (entry.content && entry.content.toLowerCase().includes(' - good'));
                     if (hasFast && !hasAdvanced) {
                         serverType = 'fast';
                     } else {
@@ -362,7 +364,7 @@ function showHistoryDetailsModal(entry) {
                     : ['live', 'verify', 'disabled', 'unregistered', 'failed'];
 
                 const statusDetails = {
-                    live: { label: 'LIVE', color: '#66ffd9', icon: '<i class="fa-solid fa-circle-check"></i>' },
+                    live: { label: serverType === 'fast' ? 'GOOD' : 'LIVE', color: '#66ffd9', icon: '<i class="fa-solid fa-circle-check"></i>' },
                     verify: { label: 'VER', color: '#ffd700', icon: '<i class="fa-solid fa-circle-question"></i>' },
                     disabled: { label: 'DISABLED', color: '#ff6347', icon: '<i class="fa-solid fa-circle-minus"></i>' },
                     unregistered: { label: 'UNREGISTERED', color: '#00f0ff', icon: '<i class="fa-solid fa-user-xmark"></i>' },
@@ -437,7 +439,7 @@ function showHistoryDetailsModal(entry) {
                     row.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; margin-right: 8px;">
                             <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${details.color}; flex-shrink: 0; box-shadow: 0 0 6px ${details.color};"></span>
-                            <span style="color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${details.label}">${details.label} (${count})</span>
+                            <span style="color: var(--text-sharp); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${details.label}">${details.label} (${count})</span>
                         </div>
                         <div style="display: flex; gap: 6px; flex-shrink: 0;">
                             <button class="btn-split-copy" style="background: rgba(175, 134, 252, 0.1); border: 1px solid rgba(175, 134, 252, 0.2); color: #af86fc; border-radius: 6px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 24px;  transition: all 0.2s; ${count === 0 ? 'opacity: 0.4; cursor: not-allowed;' : ''}" ${count === 0 ? 'disabled' : ''} title="Copy ${details.label} (${count})">
@@ -596,7 +598,6 @@ function renderMonospaceHistoryVirtualScroll(entry, viewport) {
             row.style.height = `${LINE_HEIGHT_REM}rem`;
             row.style.display = 'flex';
             row.style.alignItems = 'center';
-            row.style.overflow = 'hidden';
 
             const gutter = document.createElement('span');
             gutter.textContent = i + 1;
@@ -650,10 +651,12 @@ function renderGmailCheckerHistoryVirtualScroll(entry, viewport) {
         const parts = line.split(' - ');
         const email = parts[0]?.trim() || '';
         const statusText = parts[1]?.trim() || 'BAD';
+        let status = statusText.toLowerCase();
+        if (status === 'good') status = 'live';
         return {
             email: email,
-            status: statusText.toLowerCase(),
-            details: 'checked'
+            status: status,
+            details: ''
         };
     }).filter(x => x.email.length > 0 && x.status !== 'failed')
         .map(item => {
@@ -702,7 +705,6 @@ function renderGmailCheckerHistoryVirtualScroll(entry, viewport) {
             if (!item) continue;
 
             const itemRow = document.createElement('div');
-            itemRow.className = 'task-card';
             itemRow.style.height = `2.375rem`; // 38px / 16
             itemRow.style.padding = '0 0.875rem';
             itemRow.style.display = 'flex';
@@ -711,6 +713,22 @@ function renderGmailCheckerHistoryVirtualScroll(entry, viewport) {
             itemRow.style.alignItems = 'center';
             itemRow.style.boxSizing = 'border-box';
             itemRow.style.margin = '0 0 0.5rem 0'; // Gap between rows
+            itemRow.style.background = 'rgba(255, 255, 255, 0.02)';
+            itemRow.style.border = '1px solid var(--border-color)';
+            itemRow.style.borderRadius = '8px';
+
+            // Detect server type dynamically
+            let serverType = 'advanced';
+            const serverCode = (entry.metadata && entry.metadata.server) || entry.server || null;
+            if (serverCode) {
+                if (serverCode.startsWith('fast')) {
+                    serverType = 'fast';
+                }
+            } else {
+                if (entry.content && entry.content.toLowerCase().includes(' - good')) {
+                    serverType = 'fast';
+                }
+            }
 
             let color = '#ff6666'; // bad (tomato red)
             let icon = '<i class="fa-solid fa-circle-xmark"></i>';
@@ -731,14 +749,16 @@ function renderGmailCheckerHistoryVirtualScroll(entry, viewport) {
                 icon = '<i class="fa-solid fa-circle-exclamation"></i>';
             }
 
+            const label = item.status === 'live' && serverType === 'fast' ? 'GOOD' : item.status.toUpperCase();
+
             itemRow.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
                     <span style="color: var(--text-muted);">#${item.index}</span>
-                    <span style="color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.email}</span>
+                    <span style="color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${item.email}</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: var(--text-muted);">${item.details}</span>
-                    <span style=" color: ${color}; display: flex; align-items: center; gap: 4px; ">${icon} ${item.status.toUpperCase()}</span>
+                    ${item.details ? `<span style="color: var(--text-muted);">${item.details}</span>` : ''}
+                    <span style=" color: ${color}; display: flex; align-items: center; gap: 4px; ">${icon} ${label}</span>
                 </div>
             `;
             viewport.appendChild(itemRow);
@@ -818,10 +838,10 @@ function renderGmailDotTricksHistoryTasks(entry, viewport) {
         card.innerHTML = `
             <div class="task-card-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <span class="task-badge">Task #${task.index}</span>
-                <span class="task-email" style="color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 50%;" title="${task.email}">${task.email}</span>
+                <span class="task-email" style="color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap; max-width: 50%;" title="${task.email}">${task.email}</span>
                 <span class="task-status" style="color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> Completed</span>
             </div>
-            <div class="task-progress-container" style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin: 4px 0;">
+            <div class="task-progress-container" style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px;  margin: 4px 0;">
                 <div class="task-progress-bar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #af86fc, #00f0ff); border-radius: 3px;"></div>
             </div>
             <div class="task-card-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -882,7 +902,7 @@ function renderNameCombinerHistoryTasks(entry, viewport) {
             <span class="task-email" style=" color: var(--text-sharp);">Fisher-Yates Permutator Engine</span>
             <span class="task-status" style="color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> Completed</span>
         </div>
-        <div class="task-progress-container" style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin: 4px 0;">
+        <div class="task-progress-container" style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px;  margin: 4px 0;">
             <div class="task-progress-bar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #af86fc, #00f0ff); border-radius: 3px;"></div>
         </div>
         <div class="task-card-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -1051,10 +1071,10 @@ window.loadHistoryList = async function (forceRefresh = false) {
                 <div class="history-card-header" style="flex: 1; min-height: 0;">
                     <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1;">
                         <span class="history-badge ${entry.appId}" style="display: inline-block; width: max-content;">${entry.appName}</span>
-                        <div class="history-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <div class="history-title" style=" text-overflow: ellipsis; white-space: nowrap;">
                             <i class="fa-regular fa-calendar-check" style="margin-right: 6px; color: var(--text-muted);"></i>${entry.title}
                         </div>
-                        <div class="history-meta" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <div class="history-meta" style=" text-overflow: ellipsis; white-space: nowrap;">
                             <i class="fa-solid fa-list-check" style="margin-right: 6px;"></i>${displayLabel}
                         </div>
                     </div>

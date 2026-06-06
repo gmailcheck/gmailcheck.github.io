@@ -68,10 +68,10 @@ function runExtractor() {
     }
 
     // Populate Results
-    const inputContainer = document.getElementById('email-input-container-app5');
+    const inputContainer = document.getElementById('input-container-container-app5');
     const resultsContainer = document.getElementById('results-container-app5');
     const outputTextarea = document.getElementById('email-extractor-output');
-    
+
     if (outputTextarea) {
         outputTextarea.value = formattedOutput;
     }
@@ -117,12 +117,12 @@ function runExtractor() {
 function clearExtractor() {
     const input = document.getElementById('email-extractor-input');
     const output = document.getElementById('email-extractor-output');
-    const inputContainer = document.getElementById('email-input-container-app5');
+    const inputContainer = document.getElementById('input-container-container-app5');
     const resultsContainer = document.getElementById('results-container-app5');
-    
+
     if (input) input.value = '';
     if (output) output.value = '';
-    
+
     if (inputContainer) {
         inputContainer.classList.remove('hide');
     }
@@ -148,17 +148,17 @@ function clearExtractor() {
     if (window.clearAppNotification) window.clearAppNotification();
 
     // Synchronize custom line numbers
-    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'email-input-container-app5');
+    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'input-container-container-app5');
 }
 
 // Back/Reset Extractor (returns to input view without clearing input)
 function backExtractor() {
     const output = document.getElementById('email-extractor-output');
-    const inputContainer = document.getElementById('email-input-container-app5');
+    const inputContainer = document.getElementById('input-container-container-app5');
     const resultsContainer = document.getElementById('results-container-app5');
-    
+
     if (output) output.value = '';
-    
+
     if (inputContainer) {
         inputContainer.classList.remove('hide');
     }
@@ -184,7 +184,7 @@ function backExtractor() {
     if (window.clearAppNotification) window.clearAppNotification();
 
     // Synchronize custom line numbers
-    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'email-input-container-app5');
+    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'input-container-container-app5');
 }
 
 // Copy to clipboard
@@ -244,7 +244,7 @@ function initEmailExtractor() {
     }
 
     // Initialize line numbers synchronization
-    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'email-input-container-app5');
+    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'input-container-container-app5');
 }
 
 // Bootstrapping

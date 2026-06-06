@@ -309,3 +309,21 @@
     justify-content: center;
     margin-top: 10px;
 }
+
+.login-loading-spinner {
+    color: #04afff;
+}
+
+.login-loading-card-content {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.login-loading-text {
+    color: var(--text-secondary);
+
+}
+
+.login-loading-icon-wrapper {
+    margin: 35px auto 25px auto;
+}

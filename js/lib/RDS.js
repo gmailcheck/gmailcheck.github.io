@@ -269,6 +269,7 @@ const RDS = (() => {
 	 */
 	const convertSVGElement = (svgEl, base) => {
 		if (!svgEl || svgEl.nodeType !== Node.ELEMENT_NODE) return;
+		if (svgEl.closest('[data-rds-skip]') || svgEl.closest('.rds-skip')) return;
 
 		SVG_LENGTH_ATTRS.forEach(attr => {
 			if (!svgEl.hasAttribute(attr)) return;

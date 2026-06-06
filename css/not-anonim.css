@@ -1,0 +1,24 @@
+/* ==========================================================================
+   AUTHENTICATED CLIENT STATE SPECIFIC STYLES (NOT ANONYMOUS)
+   ========================================================================== */
+
+.container:not(.anonim):not(.home-active) .anon-logo {
+    display: none !important;
+}
+
+.container:not(.anonim) #btn-home-get-started {
+    display: none !important;
+}
+
+.container:not(.anonim) #btn-home-open-dashboard {
+    display: inline-flex !important;
+}
+
+/* Toggle Top Bar Back to App button based on auth state and active page */
+.container.home-active:not(.anonim) #btn-back-to-app {
+    display: flex !important;
+}
+
+.container:not(.anonim) .home-demo-card {
+    display: none !important;
+}

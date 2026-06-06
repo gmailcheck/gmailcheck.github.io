@@ -39,15 +39,9 @@
         const durasiMenit = data.duration || 120;
         const estimasiSelesai = new Date(waktuMulai.getTime() + (durasiMenit * 60000));
 
-        // Save to localStorage
-        let savedEndTime = parseInt(localStorage.getItem('maintenance_end_time'));
-        let endDate = new Date(savedEndTime);
-
-        const now = new Date();
-        if (isNaN(savedEndTime) || savedEndTime < now.getTime()) {
-            endDate = estimasiSelesai;
-            localStorage.setItem('maintenance_end_time', endDate.getTime());
-        }
+        // Always calculate end time directly from server response to avoid stale local cache issues
+        const endDate = estimasiSelesai;
+        localStorage.removeItem('maintenance_end_time'); // Clean up old storage if any exists
 
         // Timer updater
         let timerInterval;

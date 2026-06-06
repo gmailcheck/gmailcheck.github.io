@@ -28,7 +28,13 @@ function initNotifications() {
                 e.stopPropagation();
                 if (!window.dashboardProfile || !window.dashboardProfile.notifications) return;
 
-                const unreadNotifs = window.dashboardProfile.notifications.filter(n => !n.read).map(n => n.id);
+                let notifList = window.dashboardProfile.notifications;
+                if (notifList && typeof notifList === 'object' && !Array.isArray(notifList)) {
+                    notifList = Object.values(notifList);
+                }
+                if (!Array.isArray(notifList)) return;
+
+                const unreadNotifs = notifList.filter(n => !n.read).map(n => n.id);
                 if (unreadNotifs.length === 0) return;
 
                 // Persist read status locally in LocalStorage immediately
@@ -37,7 +43,8 @@ function initNotifications() {
                 localStorage.setItem('read_notification_ids', JSON.stringify(updatedReadIds));
 
                 try {
-                    const idToken = await window.firebaseAuth.currentUser.getIdToken(true);
+                    const idToken = await window.getAuthToken();
+                    if (!idToken) throw new Error("Not logged in");
                     await fetch(`${window.API.GC_SERVER_BASE}/notifications/mark-read`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
@@ -48,20 +55,41 @@ function initNotifications() {
                 }
 
                 // Optimistic UI update
-                window.dashboardProfile.notifications.forEach(n => n.read = true);
+                notifList.forEach(n => n.read = true);
                 window.dashboardProfile.unread_notifications = 0;
-                renderNotifications(window.dashboardProfile.notifications, 0);
+                renderNotifications(notifList, 0);
             });
         }
     }
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g,
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
 }
 
 window.renderNotifications = function (notifications = [], unreadCount = 0) {
     const badge = document.getElementById('notif-badge');
     const list = document.getElementById('notif-list');
 
+    // Convert object (such as Firebase Realtime DB object map) to array
+    if (notifications && typeof notifications === 'object' && !Array.isArray(notifications)) {
+        notifications = Object.values(notifications);
+    }
+    if (!Array.isArray(notifications)) {
+        notifications = [];
+    }
+
     // Filter out invalid/empty notifications (title/message is undefined or null)
-    notifications = (notifications || []).filter(n => n && n.title && n.message);
+    notifications = notifications.filter(n => n && n.title && n.message);
 
     // Retrieve locally read notification IDs from LocalStorage
     const localReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
@@ -118,16 +146,16 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
             const header = document.createElement('div');
             header.style.cssText = `display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; width: 100%;`;
             header.innerHTML = `
-                <strong style="color: var(--text-sharp); display: block; flex-grow: 1; text-align: left; padding-right: 8px; line-height: 1.35;">${n.title}</strong>
+                <strong style="color: var(--text-sharp); display: block; flex-grow: 1; text-align: left; padding-right: 8px; line-height: 1.35;">${escapeHTML(n.title)}</strong>
                 <i class="fa-solid fa-chevron-down notif-chevron" style="color: var(--text-muted); transition: transform 0.2s ease; margin-top: 3px; flex-shrink: 0;"></i>
             `;
 
             // Create Body
             const body = document.createElement('div');
             body.className = 'notif-body';
-            body.style.cssText = `max-height: 0px; overflow: hidden; transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin-top 0.2s ease; opacity: 0; margin-top: 0px; white-space: pre-wrap;`;
+            body.style.cssText = `max-height: 0px;  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin-top 0.2s ease; opacity: 0; margin-top: 0px; white-space: pre-wrap;`;
             body.innerHTML = `
-                <span style="color: var(--text-primary); display: block; line-height: 1.35; ">${n.message}</span>
+                <span style="color: var(--text-primary); display: block; line-height: 1.35; ">${escapeHTML(n.message)}</span>
                 <small style="color: var(--text-muted); margin-top: 4px; display: block;">${new Date(n.createdAt).toLocaleString()}</small>
             `;
 
@@ -158,7 +186,7 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
                 // If it was collapsed, expand it and mark it as read!
                 if (!isExpanded) {
                     card.classList.add('expanded');
-                    body.style.maxHeight = '100%';
+                    body.style.maxHeight = body.scrollHeight + 'px';
                     body.style.opacity = '1';
                     body.style.marginTop = '6px';
                     if (chevron) chevron.style.transform = 'rotate(180deg)';
@@ -175,15 +203,15 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
                         }
 
                         // Fire and forget server persistence in the background
-                        if (window.firebaseAuth && window.firebaseAuth.currentUser) {
-                            window.firebaseAuth.currentUser.getIdToken(true).then(idToken => {
+                        window.getAuthToken().then(idToken => {
+                            if (idToken) {
                                 fetch(`${window.API.GC_SERVER_BASE}/notifications/mark-read`, {
                                     method: 'POST',
                                     headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ notifIds: [n.id] })
                                 }).catch(err => console.error('Failed to sync mark read', err));
-                            }).catch(err => console.error('Token fetch failed', err));
-                        }
+                            }
+                        }).catch(err => console.error('Token fetch failed', err));
 
                         // Instantly update UI indicators
                         card.style.borderLeftWidth = '3px';

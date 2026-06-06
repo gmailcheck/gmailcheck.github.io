@@ -1,0 +1,358 @@
+/* ==========================================================================
+   RESPONSIVE DESIGN STYLES (RDS) - MOBILE & TABLET MODES
+   ========================================================================== */
+
+
+
+/* ==========================================================================
+   FROM TOPBAR.CSS
+   ========================================================================== */
+body[data-rds-mode="mobile"] #top-bar-notification-container {
+    display: none !important;
+}
+
+body[data-rds-mode="mobile"] .anon-logo span {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   FROM SIDEBAR.CSS
+   ========================================================================== */
+body[data-rds-mode="mobile"] .btn-toggle-sidebar {
+    display: inline-flex;
+}
+
+body[data-rds-mode="tablet"] .btn-toggle-sidebar {
+    display: inline-flex;
+}
+
+
+body[data-rds-mode="mobile"] .side-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 75%;
+    z-index: 1000;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.25);
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-rds-mode="mobile"] .side-bar.open {
+    transform: translateX(0);
+}
+
+body[data-rds-mode="tablet"] .side-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 50%;
+    z-index: 1000;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.25);
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-rds-mode="tablet"] .side-bar.open {
+    transform: translateX(0);
+}
+
+body[data-rds-mode="mobile"] .container.doc-active #btn-toggle-sidebar-anon {
+    display: inline-flex !important;
+}
+
+body[data-rds-mode="mobile"] .container.home-active #btn-toggle-sidebar {
+    display: none !important;
+}
+
+body[data-rds-mode="tablet"] .container.doc-active #btn-toggle-sidebar-anon {
+    display: inline-flex !important;
+}
+
+body[data-rds-mode="tablet"] .container.home-active #btn-toggle-sidebar {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   FROM DASHBOARD.CSS
+   ========================================================================== */
+body[data-rds-mode="mobile"] .dashboard-wrapper {
+    padding: 15px 10px;
+    gap: 20px;
+}
+
+body[data-rds-mode="mobile"] .dashboard-wrapper>div[style*="display: flex"] {
+    flex-direction: column;
+    gap: 15px !important;
+}
+
+body[data-rds-mode="mobile"] #page-documentation .dashboard-header-card {
+    padding: 15px !important;
+}
+
+body[data-rds-mode="mobile"] .dashboard-stats-row {
+    grid-template-columns: 1fr;
+}
+
+
+/* ==========================================================================
+   FROM BASE.CSS
+   ========================================================================== */
+body[data-rds-mode="mobile"] .container {
+    position: relative;
+}
+
+body[data-rds-mode="mobile"] .controls {
+    width: 100%;
+    height: auto;
+    flex: none;
+    padding: 15px;
+    gap: 10px;
+}
+
+body[data-rds-mode="mobile"] .control-title {
+    display: none;
+}
+
+body[data-rds-mode="mobile"] .tab-pane>div[style*="display: flex"] {
+    flex-direction: column;
+    gap: 15px !important;
+}
+
+body[data-rds-mode="mobile"] .settings-panel {
+    width: calc(100% - 20px);
+    left: 10px;
+    bottom: 120px;
+}
+
+body[data-rds-mode="mobile"] .pricing-container {
+    padding: 20px 10px;
+    gap: 30px;
+}
+
+body[data-rds-mode="mobile"] .pricing-card {
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
+}
+
+body[data-rds-mode="mobile"] #page-support>div {
+    flex-direction: column;
+    gap: 20px;
+}
+
+body[data-rds-mode="mobile"] #page-support>div>div {
+    width: 100% !important;
+    flex: none !important;
+}
+
+body[data-rds-mode="mobile"] .checkout-card,
+body[data-rds-mode="mobile"] #ticket-modal>div {
+    width: calc(100% - 24px);
+    margin: 12px;
+    padding: 20px 15px;
+}
+
+body[data-rds-mode="mobile"] #btn-nav-get-started {
+    padding: 6px 14px;
+}
+
+body[data-rds-mode="mobile"] .content {
+    height: calc(100dvh - 56px);
+    overflow-y: auto;
+    padding: 12px 10px 20px;
+    box-sizing: border-box;
+}
+
+body[data-rds-mode="mobile"] #history-list-container {
+    height: calc(100dvh - 220px) !important;
+    max-height: none !important;
+}
+
+body[data-rds-mode="mobile"] .results-container,
+body[data-rds-mode="mobile"] #results-container-app2,
+body[data-rds-mode="mobile"] #results-container-app3 {
+    width: 100%;
+    height: calc(100dvh - 180px);
+    overflow-y: auto;
+}
+
+body[data-rds-mode="mobile"] .tasks-list {
+    height: calc(100dvh - 260px);
+    overflow-y: auto;
+}
+
+body[data-rds-mode="mobile"] #history-details-modal>div {
+    width: calc(100% - 16px) !important;
+    max-width: 100% !important;
+    min-height: 60dvh;
+    max-height: calc(100dvh - 32px);
+    margin: 8px;
+    padding: 16px 14px 20px;
+    border-radius: 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    gap: 14px;
+}
+
+body[data-rds-mode="mobile"] #history-modal-content {
+    height: calc(100dvh - 340px) !important;
+    max-height: none !important;
+    counter-reset: history-line-num;
+    padding-left: 0;
+}
+
+body[data-rds-mode="mobile"] #history-modal-content>div:not([style*="height"]) {
+    counter-increment: history-line-num;
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+}
+
+body[data-rds-mode="mobile"] #history-modal-content>div:not([style*="height"])::before {
+    content: counter(history-line-num);
+    display: inline-block;
+    min-width: 2.8rem;
+    padding-right: 0.6rem;
+    text-align: right;
+    line-height: 1.2rem;
+    color: rgba(175, 134, 252, 0.45);
+
+    user-select: none;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(175, 134, 252, 0.15);
+    margin-right: 0.5rem;
+}
+
+body[data-rds-mode="mobile"] .modal-overlay>div {
+    width: calc(100% - 16px) !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 32px);
+    margin: 8px;
+    overflow-y: auto;
+    border-radius: 16px;
+    box-sizing: border-box;
+}
+
+body[data-rds-mode="mobile"] .history-layout-columns {
+    flex-direction: column !important;
+    gap: 15px !important;
+}
+
+body[data-rds-mode="mobile"] .history-layout-columns>div {
+    flex: none !important;
+    width: 100% !important;
+}
+
+
+body[data-rds-mode="mobile"] .doc-wrapper {
+    padding: 15px 10px;
+    gap: 15px;
+}
+
+body[data-rds-mode="mobile"] #page-documentation pre {
+    padding: 10px !important;
+}
+
+body[data-rds-mode="mobile"] .pricing-cards-grid {
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+body[data-rds-mode="mobile"] .settings-stat-keys-container {
+    grid-template-columns: repeat(2, minmax(300px, 400px));
+    justify-content: center;
+}
+
+body[data-rds-mode="mobile"] .settings-pricing-grid {
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+body[data-rds-mode="mobile"] #ticket-modal .history-detail-modal-card,
+body[data-rds-mode="mobile"] #admin-ticket-modal .history-detail-modal-card {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    padding: 20px !important;
+}
+
+body[data-rds-mode="mobile"] #ticket-modal .history-detail-modal-content-scroller,
+body[data-rds-mode="mobile"] #admin-ticket-modal .history-detail-modal-content-scroller {
+    max-height: none !important;
+    flex: 1 !important;
+}
+
+
+/* ==========================================================================
+   FROM APPS.CSS
+   ========================================================================== */
+body[data-rds-mode="mobile"] .app-content-container {
+    flex-direction: column;
+    gap: 15px;
+}
+
+body[data-rds-mode="mobile"] .filter-button-group {
+    justify-content: flex-start;
+    width: 100%;
+    margin-top: 5px;
+}
+
+
+/* ==========================================================================
+   FROM HOME.CSS
+   ========================================================================== */
+body[data-rds-mode="mobile"] .home-container {
+    padding: 40px 10px;
+}
+
+body[data-rds-mode="mobile"] .home-container h1 {
+    margin-bottom: 15px;
+}
+
+body[data-rds-mode="mobile"] .home-container p {
+    margin-bottom: 25px;
+}
+
+body[data-rds-mode="mobile"] #home-cta-container {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+}
+
+body[data-rds-mode="mobile"] #home-cta-container button {
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Allow application pages to scroll vertically in mobile & tablet modes due to stacked layout */
+body[data-rds-mode="mobile"] .page-content:has(.app-container),
+body[data-rds-mode="tablet"] .page-content:has(.app-container) {
+    overflow-y: auto !important;
+}
+
+
+/* ==========================================================================
+   FROM HISTORY.CSS
+   ========================================================================== */
+
+/* 1. Global Override: Mobile/Tablet should NOT restrict height */
+body[data-rds-mode="mobile"] #history-list-container,
+body[data-rds-mode="tablet"] #history-list-container {
+    max-height: 300px !important;
+}

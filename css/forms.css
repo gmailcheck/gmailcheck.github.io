@@ -3,25 +3,6 @@
    ========================================================================== */
 
 
-/* Transisi halus agar pergantian tema terasa premium */
-body,
-.side-bar,
-.side-bar-bottom,
-.top-bar,
-.page-name,
-.content,
-.menu-item,
-.submenu-item,
-.dashboard-card,
-select,
-input {
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-}
-
-/* ==========================================================================
-   GLOBAL PROFESSIONAL INPUT & SELECT STYLES (PREMIUM)
-   ========================================================================== */
-
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -59,173 +40,56 @@ input::placeholder,
     opacity: 0.65 !important;
 }
 
-.email-input {
-    position: relative;
+.input-container {
     flex: 1;
     min-height: 200px;
     display: flex;
     min-width: 0;
     height: 100%;
-    overflow: hidden;
+    font-size: 12px;
     background: var(--bg-primary);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-md);
     border: 1px solid var(--border-input);
-    border-radius: 5px;
-}
-
-body[data-rds-mode="mobile"] .email-input {
-    width: 100%;
-}
-
-body[data-rds-mode="tablet"] .container {
-    position: relative;
+    border-radius: 3px;
     overflow: hidden;
 }
 
-/* App containers vertical stacking with comfortable tablet proportions */
-body[data-rds-mode="tablet"] .app-x55-container {
-    overflow-y: auto;
-    flex-direction: column;
-    gap: 15px;
-}
-
-body[data-rds-mode="tablet"] .email-input {
+textarea {
     width: 100%;
+    height: 100%;
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+    padding: 15px !important;
+    resize: none;
+    outline: none;
+    border: none;
+    line-height: 1.5 !important;
 }
 
-body[data-rds-mode="tablet"] .controls {
-    width: 100%;
-    height: auto;
-    flex: none;
-    padding: 15px;
-    gap: 12px;
-}
-
-body[data-rds-mode="tablet"] .control-title {
-    display: none;
-}
-
-body[data-rds-mode="tablet"] .results-container {
-    width: 100%;
-}
-
-/* Support view stacking for tablet */
-body[data-rds-mode="tablet"] #page-support>div {
-    flex-direction: column;
-    gap: 25px;
-}
-
-body[data-rds-mode="tablet"] #page-support>div>div {
-    width: 100% !important;
-    flex: none !important;
-}
-
-/* Pricing cards wrapping support */
-body[data-rds-mode="tablet"] .pricing-card {
-    max-width: 45%;
-    min-width: 320px;
-}
-
-/* ── TABLET: Fullscreen Viewport Optimizations ───────────────────────────── */
-
-/* Content area: fills screen minus topbar with comfortable padding */
-body[data-rds-mode="tablet"] .content {
-    height: calc(100dvh - 60px);
-    overflow-y: auto;
-    padding: 16px 18px 24px;
-    box-sizing: border-box;
-}
-
-/* History list: auto-calc leaves room for header, search, and filter pills */
-body[data-rds-mode="tablet"] #history-list-container {
-    height: calc(100dvh - 240px) !important;
-    max-height: none !important;
-}
-
-/* App result panels */
-body[data-rds-mode="tablet"] .results-container,
-body[data-rds-mode="tablet"] #results-container-app2,
-body[data-rds-mode="tablet"] #results-container-app3 {
-    height: calc(100dvh - 190px);
-    overflow-y: auto;
-}
-
-/* Tasks list inside dashboards */
-body[data-rds-mode="tablet"] .tasks-list {
-    height: calc(100dvh - 270px);
-    overflow-y: auto;
-}
-
-/* History detail modal: near-fullscreen on tablet */
-body[data-rds-mode="tablet"] #history-details-modal>div {
-    width: calc(100% - 40px) !important;
-    max-width: 700px !important;
-    max-height: calc(100dvh - 48px);
-    overflow-y: auto;
-    border-radius: 20px;
-    padding: 24px 20px 28px;
-    box-sizing: border-box;
-    gap: 18px;
-}
-
-/* Modal content box: taller on tablet */
-body[data-rds-mode="tablet"] #history-modal-content {
-    height: calc(100dvh - 360px) !important;
-    max-height: none !important;
-}
-
-/* Line numbers gutter for history modal content on tablet */
-body[data-rds-mode="tablet"] #history-modal-content {
-    counter-reset: history-line-num;
-}
-
-body[data-rds-mode="tablet"] #history-modal-content>div:not([style*="height"]) {
-    counter-increment: history-line-num;
-    display: flex;
-    align-items: baseline;
-    gap: 0;
-}
-
-body[data-rds-mode="tablet"] #history-modal-content>div:not([style*="height"])::before {
-    content: counter(history-line-num);
-    display: inline-block;
-    min-width: 3rem;
-    padding-right: 0.6rem;
+.line-numbers {
+    padding: 15px !important;
+    color: var(--text-muted);
     text-align: right;
-    line-height: 1.2rem;
-    color: rgba(175, 134, 252, 0.45);
-
-    user-select: none;
-    flex-shrink: 0;
-    border-right: 1px solid rgba(175, 134, 252, 0.15);
-    margin-right: 0.5rem;
+    height: 100%;
+    line-height: 1.5 !important;
+    background-color: var(--bg-input);
+    border-right: 1px solid var(--border-color);
+    overflow: hidden;
 }
 
-/* Generic modals on tablet: comfortable modal sizing */
-body[data-rds-mode="tablet"] .modal-overlay>div {
-    width: calc(100% - 40px) !important;
-    max-width: 720px !important;
-    max-height: calc(100dvh - 48px);
-    overflow-y: auto;
-    border-radius: 20px;
-    box-sizing: border-box;
+.control-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--text-sharp);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* History two-column layout: single column on tablet */
-body[data-rds-mode="tablet"] .history-layout-columns {
-    flex-direction: column !important;
-    gap: 20px !important;
-}
 
-body[data-rds-mode="tablet"] .history-layout-columns>div {
-    flex: none !important;
-    width: 100% !important;
-}
 
-/* Responsive Documentation Adjustments (RDS Compliant) */
-body[data-rds-mode="tablet"] .doc-wrapper {
-    padding: 20px 15px;
-    gap: 20px;
-}
 
 .checkout-form-crypto {
     display: flex;
@@ -302,7 +166,6 @@ body[data-rds-mode="tablet"] .doc-wrapper {
     flex-direction: column;
     max-height: 90vh;
     max-width: 600px;
-    overflow: hidden;
     position: relative;
     width: 100%;
 }
@@ -552,7 +415,6 @@ body[data-rds-mode="tablet"] .doc-wrapper {
     border-radius: 12px;
     display: flex;
     flex: 1;
-    overflow: hidden;
     position: relative;
 }
 
@@ -577,7 +439,7 @@ body[data-rds-mode="tablet"] .doc-wrapper {
     width: 100%;
 }
 
-.app2-results-input-preview {
+.results-input-preview {
     background: var(--bg-input);
     border: 1px solid var(--border-color);
     color: var(--text-sharp);
@@ -585,7 +447,7 @@ body[data-rds-mode="tablet"] .doc-wrapper {
     outline: none;
 }
 
-.app2-notepad-search-input {
+.notepad-search-input {
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -596,21 +458,15 @@ body[data-rds-mode="tablet"] .doc-wrapper {
     width: 100%;
 }
 
-.history-detail-modal-input-field {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-sharp);
-    flex: 1;
 
-    outline: none;
-    padding: 12px;
-}
 
 /* Premium Dashboard & Admin Tables */
 .table-responsive {
+    padding: 10px;
     width: 100%;
     overflow-x: auto;
+    max-height: 70vh;
+    overflow-y: auto;
     border-radius: 12px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -620,20 +476,19 @@ body[data-rds-mode="tablet"] .doc-wrapper {
     -webkit-backdrop-filter: blur(8px);
 }
 
-.db-table {
+.admin-db-table {
     width: 100%;
     border-collapse: collapse;
-
     text-align: left;
     min-width: 800px;
 }
 
-.db-table thead {
+.admin-db-table thead {
     background: var(--bg-secondary);
     border-bottom: 2px solid var(--border-color);
 }
 
-.db-table th {
+.admin-db-table th {
     padding: 14px 18px;
     color: var(--text-sharp);
 
@@ -641,22 +496,22 @@ body[data-rds-mode="tablet"] .doc-wrapper {
     letter-spacing: 0.5px;
 }
 
-.db-table td {
+.admin-db-table td {
     padding: 14px 18px;
     color: var(--text-secondary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     vertical-align: middle;
 }
 
-.db-table tbody tr {
+.admin-db-table tbody tr {
     transition: background-color 0.2s ease;
 }
 
-.db-table tbody tr:hover {
+.admin-db-table tbody tr:hover {
     background: rgba(255, 255, 255, 0.02);
 }
 
-.db-table tbody tr:last-child td {
+.admin-db-table tbody tr:last-child td {
     border-bottom: none;
 }
 
@@ -727,7 +582,7 @@ body[data-rds-mode="tablet"] .doc-wrapper {
 }
 
 /* ==========================================================================
-   PREMIUM PREFERENCES PAGE TOGGLE SWITCHES
+    PREFERENCES PAGE TOGGLE SWITCHES
    ========================================================================== */
 
 .pref-switch input:checked+.pref-slider {

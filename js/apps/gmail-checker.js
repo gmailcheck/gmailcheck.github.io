@@ -1,6 +1,7 @@
 (function () {
+	const body = document.body;
 	const textarea = document.getElementById('gmail-checker-input');
-	const inputContainer = document.getElementById('email-input-container-app1');
+	const inputContainer = document.getElementById('input-container-container-app1');
 	const resultsContainer = document.getElementById('results-container-app1');
 	const tasksList = document.getElementById('tasks-list-app1');
 	const btnBack = document.getElementById('btn-back-app1');
@@ -14,7 +15,6 @@
 	const btnDownloadAll = document.getElementById('btn-download-all-app1');
 	const selectServerContainer = document.getElementById('select-server-container-app1');
 	const selectServer = document.getElementById('select-server-app1');
-	const pageApp1 = document.getElementById('page-app1');
 
 	// Stats Elements
 	const statsInput = document.getElementById('stats-input-app1');
@@ -51,17 +51,131 @@
 	let isRunning = false;
 	let abortController = null;
 	let sanitizerWorker = null;
-	let syncTimeout = null;
-	let activeQueue = null;
 
-	function triggerCreditsSync() {
-		if (syncTimeout) clearTimeout(syncTimeout);
-		syncTimeout = setTimeout(() => {
-			if (typeof window.loadDashboardData === 'function') {
-				// Paksa fetch ulang (jangan pakai cache UI, hanya profile saja)
-				window.loadDashboardData(true, true);
-			}
-		}, 2000); // Naikkan delay ke 2000ms agar memberi waktu Firebase DB transaksional (retry ETag) selesai commit
+	function showProgressOverlay() {
+		if (!document.getElementById('progress-overlay-styles')) {
+			const style = document.createElement('style');
+			style.id = 'progress-overlay-styles';
+			style.innerHTML = `
+				@keyframes progressFadeIn {
+					from { opacity: 0; }
+					to { opacity: 1; }
+				}
+			`;
+			document.head.appendChild(style);
+		}
+
+		let overlay = document.getElementById('gmail-checker-progress-overlay');
+		if (!overlay) {
+			overlay = document.createElement('div');
+			overlay.id = 'gmail-checker-progress-overlay';
+
+			overlay.style.cssText = `
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				top: 0;
+				left: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				z-index: 10;
+				animation: progressFadeIn 0.3s ease;
+				background: rgba(0, 0, 0, 0.1);
+				pointer-events: none;
+			`;
+			overlay.innerHTML = `
+				<div style="position: relative; min-width: 200px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.5); box-shadow: 0 2px 8px rgba(3, 141, 206, 0.6); border-radius: 15px; padding: 36px; border-radius: 15%;">
+					<div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;">
+						<svg data-rds-skip="true" viewBox="0 0 120 120" style="width: 120px; height: 120px; transform: rotate(-90deg); overflow: visible; ">
+							<circle cx="60" cy="60" r="50" 
+									fill="rgba(0, 0, 0, 0.5)" 
+									stroke="rgba(0, 136, 170, 0.05)" 
+									stroke-width="10" />
+							<circle id="progress-circle-bar" cx="60" cy="60" r="50" 
+									fill="transparent" 
+									stroke="url(#progress-grad)" 
+									stroke-width="8" 
+									stroke-dasharray="314.159" 
+									stroke-dashoffset="314.159" 
+									stroke-linecap="round"
+									filter="url(#progress-shadow)"
+									style="transition: stroke-dashoffset 0.3s ease;" />
+							<defs>
+								<linearGradient id="progress-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+									<stop offset="0%" stop-color="#af86fc" stop-opacity="1" />
+									<stop offset="100%" stop-color="#00ffff" stop-opacity="1" />
+								</linearGradient>
+								<filter id="progress-shadow" x="-30%" y="-30%" width="160%" height="160%">
+									<feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#af86fc" flood-opacity="0.6"/>
+								</filter>
+							</defs>
+						</svg>
+						<div style="
+							position: absolute;
+							top: 0;
+							left: 0;
+							width: 100%;
+							height: 100%;
+							display: flex;
+							flex-direction: column;
+							align-items: center;
+							justify-content: center;
+						">
+							<span id="progress-percentage" style="font-size: 1.6rem; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">0%</span>
+							<span id="progress-fraction" style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); margin-top: 2px; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">0/0</span>
+						</div>
+					</div>
+					<div id="progress-status-text" style="
+						margin-top: 24px;
+						font-size: 0.95rem;
+						color: #ffffff;
+						font-weight: 500;
+						text-align: center;
+						max-width: 85%;
+						text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+						background: rgba(1, 46, 83, 0.5);
+						padding: 6px 16px;
+						border-radius: 20px;
+						border: 1px solid rgba(255,255,255,0.06);
+					">
+					Preparing...
+				</div>
+				</div>
+			`;
+			body.appendChild(overlay);
+		}
+	}
+
+	function updateProgressOverlay(percentage, completed, total, statusText) {
+		const circleBar = document.getElementById('progress-circle-bar');
+		const pctSpan = document.getElementById('progress-percentage');
+		const fractionSpan = document.getElementById('progress-fraction');
+		const statusTextDiv = document.getElementById('progress-status-text');
+
+		if (circleBar) {
+			const circumference = 314.159;
+			const offset = circumference - (percentage / 100) * circumference;
+			circleBar.setAttribute('stroke-dashoffset', offset);
+			circleBar.style.strokeDashoffset = String(offset);
+		}
+		if (pctSpan) {
+			pctSpan.textContent = `${Math.round(percentage)}%`;
+		}
+		if (fractionSpan) {
+			fractionSpan.textContent = `${completed}/${total}`;
+		}
+		if (statusTextDiv && statusText) {
+			statusTextDiv.innerHTML = statusText;
+		}
+	}
+
+	function hideProgressOverlay() {
+		const overlay = document.getElementById('gmail-checker-progress-overlay');
+		if (overlay) {
+			overlay.remove();
+		}
 	}
 
 	// Dynamic script loading for JSZip
@@ -82,9 +196,22 @@
 		const server = selectServer.value;
 		const detailedRows = document.querySelectorAll('.stat-row-detailed-app1');
 		const sidebarBadRow = document.getElementById('sidebar-bad-row-app1');
+		const sidebarLiveText = document.querySelector('#stats-live-app1') ? document.querySelector('#stats-live-app1').previousElementSibling : null;
+		const filterLiveBtn = document.getElementById('filter-live-app1');
 
-		if (server === 'server1' || server === 'server2') {
-			// Normal Server (Detailed Stats - Advanced 1 & 2)
+		// Check for PRO/ULTRA restriction
+		const isPremiumServer = server === 'fastServer' || server === 'deepServer';
+		const profile = window.dashboardProfile || {};
+		const isProUltra = profile.role === 'admin' || (profile.subscription_plan && profile.subscription_plan !== 'free' && profile.subscription_plan !== 'none' && profile.subscription_expiry > Date.now());
+
+		if (isPremiumServer && !isProUltra) {
+			window.showAppNotification('warning', '<strong>Premium Server:</strong> Fast (VIP) and Deep (VIP) are exclusive to PRO & ULTRA members. Please upgrade to unlock.');
+		}
+
+		const isFast = server.startsWith('fast');
+
+		if (!isFast) {
+			// Normal Server (Detailed Stats - Advanced 1 & 2 & Deep PRO)
 			detailedRows.forEach(row => row.classList.remove('hide'));
 			if (filterVer) filterVer.classList.remove('hide');
 			if (filterDisabled) filterDisabled.classList.remove('hide');
@@ -93,8 +220,19 @@
 			// Advanced doesn't have "Bad" status (which is Fast-only)
 			if (filterBad) filterBad.classList.add('hide');
 			if (sidebarBadRow) sidebarBadRow.classList.add('hide');
+
+			// Restore labels to "Live"
+			if (sidebarLiveText) sidebarLiveText.innerHTML = '<i class="fa-solid fa-circle-check app-stats-icon-live"></i> Live:';
+			if (filterLiveBtn) {
+				const countSpan = document.getElementById('count-live-app1');
+				if (countSpan) {
+					filterLiveBtn.innerHTML = '';
+					filterLiveBtn.appendChild(document.createTextNode('Live '));
+					filterLiveBtn.appendChild(countSpan);
+				}
+			}
 		} else {
-			// Fast Server (Basic Live / Bad Stats - Fast 1 & 2)
+			// Fast Server (Basic Live / Bad Stats - Fast 1 & Fast PRO)
 			detailedRows.forEach(row => row.classList.add('hide'));
 			if (filterVer) filterVer.classList.add('hide');
 			if (filterDisabled) filterDisabled.classList.add('hide');
@@ -103,6 +241,17 @@
 			// Fast/Dast server uses "Bad"
 			if (filterBad) filterBad.classList.remove('hide');
 			if (sidebarBadRow) sidebarBadRow.classList.remove('hide');
+
+			// Change labels to "Good"
+			if (sidebarLiveText) sidebarLiveText.innerHTML = '<i class="fa-solid fa-circle-check app-stats-icon-live"></i> Good:';
+			if (filterLiveBtn) {
+				const countSpan = document.getElementById('count-live-app1');
+				if (countSpan) {
+					filterLiveBtn.innerHTML = '';
+					filterLiveBtn.appendChild(document.createTextNode('Good '));
+					filterLiveBtn.appendChild(countSpan);
+				}
+			}
 		}
 	}
 	selectServer.addEventListener('change', handleServerChange);
@@ -144,7 +293,7 @@
 		invalidListBox.classList.remove('hide');
 
 		let itemsHTML = invalidEmails.map(item => {
-			const reason = item.message || 'Invalid format';
+			const reason = escapeHTML(item.message || 'Invalid format');
 			return `
 				<div class="invalid-item">
 					<span>
@@ -238,9 +387,11 @@
 	textarea.addEventListener('paste', () => {
 		hideInvalidListNow();
 	});
+
 	textarea.addEventListener('focus', () => {
 		hideInvalidListNow();
 	});
+
 	textarea.addEventListener('blur', () => {
 		statsInput.textContent = `${getEmailsArray().length} email(s)`;
 		// Validate for notification bar only – do NOT show invalid list on blur
@@ -292,30 +443,7 @@
 		};
 	});
 
-	// Task Queue for concurrency control
-	class ConcurrencyQueue {
-		constructor(concurrency) {
-			this.concurrency = concurrency;
-			this.active = 0;
-			this.queue = [];
-		}
-		push(taskFn) {
-			this.queue.push(taskFn);
-			this.process();
-		}
-		process() {
-			if (this.active >= this.concurrency || this.queue.length === 0) return;
-			const task = this.queue.shift();
-			this.active++;
-			task(() => {
-				this.active--;
-				this.process();
-			});
-		}
-		clear() {
-			this.queue = [];
-		}
-	}
+
 
 	// Fetch helper with timeout per User Plan
 	function fetchWithTimeout(url, options, timeoutMs = 180000) {
@@ -343,8 +471,7 @@
 				});
 			}
 
-			options.signal = controller.signal;
-			fetch(url, options).then(res => {
+			fetch(url, { ...options, signal: controller.signal }).then(res => {
 				clearTimeout(timeoutId);
 				if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
 					console.log(`[DEBUG] Received Response from ${url}: Status ${res.status}`);
@@ -360,164 +487,18 @@
 		});
 	}
 
-	// Persistent WebSocket Manager with Multiplexing callbacks
-	function getOrCreateGmailCheckerWS(serverUrl, idToken) {
-		window.gmailCheckerWSCallbacks = window.gmailCheckerWSCallbacks || new Map();
-
-		if (window.gmailCheckerWS && window.gmailCheckerWS.readyState === WebSocket.OPEN) {
-			return Promise.resolve(window.gmailCheckerWS);
-		}
-
-		if (window.gmailCheckerWSConnectPromise && window.gmailCheckerWS && window.gmailCheckerWS.readyState === WebSocket.CONNECTING) {
-			return window.gmailCheckerWSConnectPromise;
-		}
-
-		window.gmailCheckerWSConnectPromise = new Promise((resolve, reject) => {
-			const wsBase = serverUrl.replace(/^http/, 'ws');
-			const wsUrl = `${wsBase}/ws-check?auth=${encodeURIComponent(idToken)}`;
-
-			if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
-				console.log(`[DEBUG] Initializing Persistent WebSocket: ${wsUrl}`);
-			}
-
-			const ws = new WebSocket(wsUrl);
-			window.gmailCheckerWS = ws;
-
-			let isInitialized = false;
-
-			ws.onopen = () => {
-				isInitialized = true;
-				window.gmailCheckerWSConnectPromise = null;
-				resolve(ws);
-			};
-
-			ws.onmessage = (event) => {
-				try {
-					const data = JSON.parse(event.data);
-					if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
-						console.log(`[DEBUG] Persistent WS Message:`, data);
-					}
-
-					const batchId = data.batchId;
-					if (batchId && window.gmailCheckerWSCallbacks.has(batchId)) {
-						const callback = window.gmailCheckerWSCallbacks.get(batchId);
-						if (data.type === "results") {
-							window.gmailCheckerWSCallbacks.delete(batchId);
-							callback.resolve({
-								ok: true,
-								status: 200,
-								json: async () => data.results
-							});
-						} else if (data.type === "error") {
-							window.gmailCheckerWSCallbacks.delete(batchId);
-							callback.resolve({
-								ok: false,
-								status: data.error === "Insufficient Credits" ? 402 : 500,
-								json: async () => ({ error: data.error, message: data.message || data.error })
-							});
-						}
-					}
-				} catch (e) {
-					console.error("WS message parse error:", e);
-				}
-			};
-
-			ws.onerror = (err) => {
-				if (window.gmailCheckerWS === ws) {
-					window.gmailCheckerWSConnectPromise = null;
-					window.gmailCheckerWS = null;
-				}
-				if (!isInitialized) {
-					reject(new Error('WebSocket connection error'));
-				}
-				if (window.gmailCheckerWS === ws || window.gmailCheckerWS === null) {
-					for (const [batchId, callback] of window.gmailCheckerWSCallbacks.entries()) {
-						callback.reject(new Error('WebSocket error occurred'));
-					}
-					window.gmailCheckerWSCallbacks.clear();
-				}
-			};
-
-			ws.onclose = (event) => {
-				if (window.gmailCheckerWS === ws) {
-					window.gmailCheckerWSConnectPromise = null;
-					window.gmailCheckerWS = null;
-				}
-				if (!isInitialized) {
-					reject(new Error(`WebSocket closed (Code: ${event.code})`));
-				}
-				if (window.gmailCheckerWS === ws || window.gmailCheckerWS === null) {
-					for (const [batchId, callback] of window.gmailCheckerWSCallbacks.entries()) {
-						callback.reject(new Error('WebSocket connection lost'));
-					}
-					window.gmailCheckerWSCallbacks.clear();
-				}
-			};
-		});
-
-		return window.gmailCheckerWSConnectPromise;
-	}
-
-	// WebSocket checking client helper for authenticated users using shared connection
-	function checkWithWebSocket(serverUrl, chunk, selectedService, idToken, signal) {
-		return new Promise(async (resolve, reject) => {
-			const batchId = 'batch_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-
-			try {
-				const ws = await getOrCreateGmailCheckerWS(serverUrl, idToken);
-
-				// Register promise in multiplexed callback map
-				window.gmailCheckerWSCallbacks.set(batchId, { resolve, reject });
-
-				if (signal) {
-					const onAbort = () => {
-						if (window.gmailCheckerWSCallbacks.has(batchId)) {
-							window.gmailCheckerWSCallbacks.delete(batchId);
-							// [TAMBAHAN]: Beritahu Backend untuk STOP dan REFUND!
-							if (window.gmailCheckerWS && window.gmailCheckerWS.readyState === WebSocket.OPEN) {
-								window.gmailCheckerWS.send(JSON.stringify({ type: "cancel_batch", batchId: batchId }));
-							}
-							reject(new Error('Aborted'));
-						}
-					};
-					if (signal.aborted) {
-						onAbort();
-					} else {
-						signal.addEventListener('abort', onAbort);
-					}
-				}
-
-				if (signal && signal.aborted) return; // Prevent sending if already aborted
-				if (ws.readyState !== WebSocket.OPEN) {
-					reject(new Error('WebSocket is not open'));
-					return;
-				}
-
-				let serviceName = 'check1';
-				if (selectedService === 'server2') serviceName = 'check2';
-				else if (selectedService === 'fastServer1') serviceName = 'fastcheck1';
-				else if (selectedService === 'fastServer2') serviceName = 'fastcheck2';
-
-				if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
-					console.log(`[DEBUG] Sending execute_check over persistent WS:`, { serviceName, batchId, count: chunk.length });
-				}
-
-				ws.send(JSON.stringify({
-					type: "execute_check",
-					batchId: batchId,
-					emails: chunk,
-					fastCheck: selectedService.startsWith('fast'),
-					service: serviceName
-				}));
-
-			} catch (err) {
-				reject(err);
-			}
-		});
-	}
-
 	// Execute Verification Flow
 	btnExecute.addEventListener('click', async function () {
+		const selected = selectServer.value;
+		const isPremiumServer = selected === 'fastServer' || selected === 'deepServer';
+		const profile = window.dashboardProfile || {};
+		const isProUltra = profile.role === 'admin' || (profile.subscription_plan && profile.subscription_plan !== 'free' && profile.subscription_plan !== 'none' && profile.subscription_expiry > Date.now());
+
+		if (isPremiumServer && !isProUltra) {
+			window.showAppNotification('danger', '<strong>Access Blocked:</strong> Fast (VIP) and Deep (VIP) servers are exclusive to PRO & ULTRA members. Please upgrade your plan.');
+			return;
+		}
+
 		const emails = getEmailsArray();
 		if (emails.length === 0) {
 			window.showAppNotification('danger', '<strong>Error:</strong> Please enter at least one email address first!');
@@ -542,16 +523,26 @@
 		// Send start notification if tab is hidden
 		window.sendBrowserNotification("Gmail Checker Started", `Verifying ${getEmailsArray().length.toLocaleString()} email(s) in the background...`);
 
-		const selected = selectServer.value;
 		const isFastServer = selected.startsWith('fast');
-		const chunkSize = isFastServer ? 10000 : 100;
-		const concurrency = isFastServer ? 5 : 3;
+		const cleanedEmails = getEmailsArray();
+		const chunkSize = selected === 'fastServer' ? 100
+			: selected === 'fastFreeServer' ? 1000
+				: selected === 'deepServer' ? 40
+					: selected === 'deepFreeServer' ? 40
+						: 100;
+
+
+		const chunks = [];
+		for (let i = 0; i < cleanedEmails.length; i += chunkSize) {
+			chunks.push(cleanedEmails.slice(i, i + chunkSize));
+		}
 
 		// UI transitions
 		inputContainer.classList.add('hide');
 		resultsContainer.classList.remove('hide');
 		tasksList.innerHTML = '';
 
+		btnBack.classList.add('hide');
 		btnExecute.classList.add('hide');
 		btnClear.classList.add('hide');
 		btnAddDomain.classList.add('hide');
@@ -560,106 +551,72 @@
 		btnDownload.classList.add('hide');
 		btnDownloadAll.classList.add('hide');
 
-		triggerCreditsSync();
-
 		results = [];
 		isRunning = true;
 		abortController = new AbortController();
 		window.clearAppNotification();
-
-		// Divide into chunks
-		const chunks = [];
-		const cleanedEmails = getEmailsArray();
-		for (let i = 0; i < cleanedEmails.length; i += chunkSize) {
-			chunks.push(cleanedEmails.slice(i, i + chunkSize));
-		}
+		showProgressOverlay();
+		updateProgressOverlay(0, 0, chunks.length, `Preparing verification of ${cleanedEmails.length} email(s)...`);
 
 		statsInput.textContent = `${cleanedEmails.length} email(s)`;
 		updateCounters();
 		renderResultsList();
 
 		let completedChunks = 0;
-		activeQueue = new ConcurrencyQueue(concurrency);
 
 		// Resolve Firebase Auth ID Token for Cloudflare Worker Authorization
 		let idToken = '';
 		try {
-			if (window.firebaseAuth && window.firebaseAuth.currentUser) {
-				idToken = await window.firebaseAuth.currentUser.getIdToken(false);
-			}
+			idToken = await window.getAuthToken();
 		} catch (e) {
 			console.error("Auth Token generation failed:", e);
 		}
 
 		// API endpoint resolution
-		let endpoint = 'check1';
-		if (selected === 'fastServer1') endpoint = idToken ? 'auth-fastcheck1' : 'fastcheck1';
-		else if (selected === 'fastServer2') endpoint = idToken ? 'auth-fastcheck2' : 'fastcheck2';
-		else if (selected === 'server1') endpoint = idToken ? 'auth-check1' : 'check1';
-		else if (selected === 'server2') endpoint = idToken ? 'auth-check2' : 'check2';
+		let endpoint = 'free-fastcheck';
+		if (selected === 'fastFreeServer') endpoint = idToken ? 'auth-free-fastcheck' : 'free-fastcheck';
+		else if (selected === 'fastServer') endpoint = idToken ? 'auth-fastcheck' : 'fastcheck';
+		else if (selected === 'deepFreeServer') endpoint = idToken ? 'auth-free-deepcheck' : 'free-deepcheck';
+		else if (selected === 'deepServer') endpoint = idToken ? 'auth-deepcheck' : 'deepcheck';
 		const requestUrl = `${SERVER_URL}/${endpoint}`;
 
-		chunks.forEach((chunk, index) => {
-			// Card UI for progress logging
-			const card = document.createElement('div');
-			card.className = 'task-card';
-			const cardId = `task-app1-${index}`;
-			card.id = cardId;
-			card.innerHTML = `
-				<div class="task-card-header">
-					<span class="task-badge">Batch #${index + 1}</span>
-					<span class="task-email">Verifying ${chunk.length.toLocaleString()} email(s)</span>
-					<span class="task-status" id="${cardId}-status" style="color: var(--text-muted);"><i class="fa-solid fa-clock"></i> In queue...</span>
-				</div>
-				<div class="task-progress-container">
-					<div class="task-progress-bar" id="${cardId}-progress" style="width: 0%"></div>
-				</div>
-				<div class="task-card-footer">
-					<span class="task-stats" id="${cardId}-stats">Waiting in queue...</span>
-				</div>
-			`;
-			tasksList.appendChild(card);
+		const maxRetries = isProUltra ? 3 : 2;
+		const retryDelay = isProUltra ? 1000 : 500;
 
-			const statusEl = document.getElementById(`${cardId}-status`);
-			const progressEl = document.getElementById(`${cardId}-progress`);
-			const statsEl = document.getElementById(`${cardId}-stats`);
+		for (let index = 0; index < chunks.length; index++) {
+			if (!isRunning) break;
 
-			activeQueue.push(async (next) => {
-				if (!isRunning) {
-					next();
-					return;
-				}
+			const chunk = chunks[index];
+			let chunkSuccess = false;
+			let chunkResults = null;
 
-				statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
-				statusEl.style.color = '#af86fc';
-				progressEl.style.width = '30%';
-				statsEl.textContent = 'Contacting secure worker API...';
+			for (let attempt = 0; attempt < maxRetries; attempt++) {
+				if (!isRunning) break;
 
-				if (tasksList) {
-					tasksList.scrollTo({
-						top: tasksList.scrollHeight,
-						behavior: 'smooth'
-					});
-				}
+				const currentPercent = (completedChunks / chunks.length) * 100;
+				updateProgressOverlay(
+					currentPercent,
+					completedChunks,
+					chunks.length,
+					`Verifying batch #${completedChunks + 1} of ${chunks.length}... (Attempt ${attempt + 1}/${maxRetries})`
+				);
 
 				try {
-					let response;
+					const headers = {
+						'Content-Type': 'application/json'
+					};
 					if (idToken) {
-						// Authenticated dashboard user: use WebSocket checker to bypass Cloudflare's 10s request timeout
-						response = await checkWithWebSocket(SERVER_URL, chunk, selected, idToken, abortController.signal);
-					} else {
-						// Anonymous user / External API fallback
-						response = await fetchWithTimeout(requestUrl, {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json'
-							},
-							body: JSON.stringify({ mail: chunk }),
-							signal: abortController.signal
-						}, 180000);
+						headers['Authorization'] = `Bearer ${idToken}`;
 					}
 
-					if (!isRunning) throw new Error('Aborted');
+					const response = await fetchWithTimeout(requestUrl, {
+						method: 'POST',
+						headers: headers,
+						body: JSON.stringify({ mail: chunk }),
+						signal: abortController.signal
+					}, 180000);
+
+					if (!isRunning) break;
 
 					if (!response.ok) {
 						if (response.status === 402) {
@@ -673,24 +630,22 @@
 							// Abort other tasks and stop checker running state
 							if (abortController) abortController.abort();
 							isRunning = false;
-							btnExecute.classList.remove('hide'); // Ubah dari style.display
-							btnStop.classList.add('hide');       // Ubah dari style.display
+							btnExecute.classList.remove('hide');
+							btnStop.classList.add('hide');
+							btnBack.classList.remove('hide');
 
-							progressEl.style.width = '100%';
-							progressEl.style.background = 'linear-gradient(90deg, #ff6666 0%, #ff3333 100%)';
-							statusEl.innerHTML = '<span style="color: #ff6666;"><i class="fa-solid fa-circle-exclamation"></i> Insufficient Credits</span>';
-							statsEl.textContent = errorMsg;
+							hideProgressOverlay();
+							inputContainer.classList.add('hide');
 
 							showInsufficientCreditsModal(errorMsg, remaining);
-
 							throw new Error('Insufficient Credits');
 						}
+
 						let errorMsg = `Server returned ${response.status}`;
 						try {
 							const errData = await response.json();
 							if (errData && errData.error) {
 								errorMsg = `Server error: ${errData.error}`;
-								console.error("Backend Error Details:", errData);
 							}
 						} catch (e) { }
 						throw new Error(errorMsg);
@@ -702,25 +657,25 @@
 					}
 
 					// Parse API Status
+					chunkResults = [];
 					let batchFailedCount = 0;
 					data.forEach(item => {
 						let status = (item.status || 'bad').toLowerCase();
 						if (isFastServer) {
-							status = status === 'live' ? 'live' : 'bad';
+							status = (status === 'live' || status === 'good') ? 'good' : 'bad';
 						} else {
 							const allowed = ['live', 'verify', 'disabled', 'unregistered', 'bad'];
 							if (!allowed.includes(status)) status = 'bad';
 						}
 
-
 						if (status === 'failed') {
 							batchFailedCount++;
 						}
 
-						results.push({
+						chunkResults.push({
 							email: item.email,
 							status: status,
-							details: item.details || 'Successfully checked'
+							details: item.details || ''
 						});
 					});
 
@@ -729,7 +684,7 @@
 					chunk.forEach(email => {
 						const lowerEmail = email.toLowerCase().trim();
 						if (!returnedEmails.has(lowerEmail)) {
-							results.push({
+							chunkResults.push({
 								email: email,
 								status: 'failed',
 								details: 'No response from verification server'
@@ -738,84 +693,99 @@
 						}
 					});
 
-					// [TAMBAHAN] Beri notifikasi ringan jika 1 batch gagal total (agar user tidak bingung kenapa kreditnya tidak kurang)
+					// [TAMBAHAN] Beri notifikasi ringan jika 1 batch gagal total (agar user tidak bingung)
 					if (batchFailedCount === chunk.length && chunk.length > 0) {
 						window.showAppNotification('warning', `<strong>Notice:</strong> Provider gagal memvalidasi batch #${index + 1}. Kredit Anda otomatis dikembalikan.`);
 					}
 
-					progressEl.style.width = '100%';
-					progressEl.style.background = 'linear-gradient(90deg, #66ffd9 0%, #00ffff 100%)';
-					statusEl.innerHTML = '<span style="color: #66ffd9;"><i class="fa-solid fa-circle-check"></i> Success</span>';
-					statsEl.textContent = `Completed batch. Found ${chunk.length} entries.`;
-
+					chunkSuccess = true;
+					break; // Success! Exit retry loop for this chunk
 				} catch (err) {
-					console.error("Batch failure:", err);
-					progressEl.style.width = '100%';
-					progressEl.style.background = 'linear-gradient(90deg, #ff6666 0%, #ff3333 100%)';
-					statusEl.innerHTML = '<span style="color: #ff6666;"><i class="fa-solid fa-circle-xmark"></i> Failed</span>';
-					statsEl.textContent = err.message || 'Error occurred';
-
-					// Map remaining chunk emails as failed
-					chunk.forEach(email => {
-						results.push({
-							email: email,
-							status: 'failed',
-							details: err.message || 'API Connection Error'
-						});
-					});
-
-				}
-
-				completedChunks++;
-				updateCounters();
-
-				if (tasksList) {
-					tasksList.scrollTo({
-						top: tasksList.scrollHeight,
-						behavior: 'smooth'
-					});
-				}
-
-				if (completedChunks === chunks.length) {
-					// Entire Verification completed
-					isRunning = false;
-					btnExecute.classList.remove('hide');
-					btnStop.classList.add('hide');
-
-					// Auto switch to 'All' tab on completion
-					currentFilter = 'all';
-					filterButtons.forEach(b => {
-						if (b) b.classList.remove('active');
-					});
-					if (filterAll) filterAll.classList.add('active');
-					renderResultsList(true);
-
-					selectServerContainer.classList.add('hide');
-					btnExecute.classList.add('hide');
-					btnAddDomain.classList.add('hide');
-					btnClear.classList.add('hide');
-					btnCopy.classList.remove('hide');
-					btnDownload.classList.remove('hide');
-					if (results.length > 50) btnDownloadAll.classList.remove('hide');
-					updateDownloadButtonsLabels();
-
-					window.showAppNotification('success', `<strong>Verification Completed:</strong> Successfully processed <strong>${results.length.toLocaleString()} email(s)</strong>!`);
-
-					// Play premium chime sound if enabled
-					if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
-						window.playSuccessChime();
+					console.warn(`[RETRY] Batch #${index + 1} Attempt ${attempt + 1}/${maxRetries} failed:`, err.message);
+					if (err.message === 'Insufficient Credits' || err.message === 'Aborted') {
+						break;
 					}
-
-					// Send finished system notification
-					window.sendBrowserNotification("Gmail Checker Completed", `Successfully verified ${results.length.toLocaleString()} email(s)!`);
-
-					// Persist unified history for dashboard
-					saveUnifiedHistory();
+					if (attempt < maxRetries - 1 && isRunning) {
+						await new Promise(resolve => setTimeout(resolve, retryDelay));
+					}
 				}
+			}
 
-				next();
+			if (chunkSuccess && chunkResults) {
+				results.push(...chunkResults);
+			} else {
+				// Map remaining chunk emails as failed
+				chunk.forEach(email => {
+					results.push({
+						email: email,
+						status: 'failed',
+						details: 'API Connection Error after all retries'
+					});
+				});
+			}
+
+			completedChunks++;
+			updateCounters();
+
+			// Realtime display of verified emails
+			renderResultsList(true);
+
+			// Update progress percentage
+			const newPercent = (completedChunks / chunks.length) * 100;
+			const verifiedCount = Math.min(completedChunks * chunkSize, cleanedEmails.length);
+			updateProgressOverlay(
+				newPercent,
+				completedChunks,
+				chunks.length,
+				`Verifying... (Processed ${verifiedCount}/${cleanedEmails.length} emails)`
+			);
+		}
+
+		if (completedChunks === chunks.length) {
+			// Entire Verification completed
+			isRunning = false;
+			btnExecute.classList.remove('hide');
+			btnStop.classList.add('hide');
+			btnBack.classList.remove('hide');
+
+			if (typeof window.refreshRealtimeProfile === 'function') {
+				window.refreshRealtimeProfile();
+			}
+
+			// Hide progress overlay and hide input container on completion
+			hideProgressOverlay();
+			inputContainer.classList.add('hide');
+
+			// Auto switch to 'All' tab on completion
+			currentFilter = 'all';
+			filterButtons.forEach(b => {
+				if (b) b.classList.remove('active');
 			});
-		});
+			if (filterAll) filterAll.classList.add('active');
+			renderResultsList(true);
+
+			selectServerContainer.classList.add('hide');
+			btnExecute.classList.add('hide');
+			btnAddDomain.classList.add('hide');
+			btnClear.classList.add('hide');
+			btnCopy.classList.remove('hide');
+			btnDownload.classList.remove('hide');
+			if (results.length > 50) btnDownloadAll.classList.remove('hide');
+			updateDownloadButtonsLabels();
+
+			window.showAppNotification('success', `<strong>Verification Completed:</strong> Successfully processed <strong>${results.length.toLocaleString()} email(s)</strong>!`);
+
+			// Play premium chime sound if enabled
+			if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
+				window.playSuccessChime();
+			}
+
+			// Send finished system notification
+			window.sendBrowserNotification("Gmail Checker Completed", `Successfully verified ${results.length.toLocaleString()} email(s)!`);
+
+			// Persist unified history for dashboard
+			saveUnifiedHistory();
+		}
 	});
 
 	// Save run to local storage history
@@ -836,7 +806,7 @@
 			const timeStr = now.toLocaleDateString() + ', ' + now.toLocaleTimeString();
 			const dateStr = now.toISOString().split('T')[0];
 
-			const selectedServer = selectServer ? selectServer.value : 'fastServer1';
+			const selectedServer = selectServer ? selectServer.value : 'fastFreeServer';
 
 			// Combine output content
 			const contentText = filteredResults.map(x => `${x.email} - ${x.status.toUpperCase()}`).join('\n');
@@ -870,20 +840,25 @@
 			abortController.abort();
 		}
 		isRunning = false;
-		if (activeQueue) {
-			activeQueue.clear();
-		}
+
+
 		btnExecute.classList.remove('hide');
 		btnStop.classList.add('hide');
+		btnBack.classList.remove('hide');
+
+		hideProgressOverlay();
+		inputContainer.classList.add('hide');
+
 		window.showAppNotification('danger', '<strong>Cancelled:</strong> Verification process was stopped by user.');
 	});
 
 	// Back/Reset button
 	btnBack.addEventListener('click', function () {
 		isRunning = false;
-		if (activeQueue) activeQueue.clear();
+
 		if (abortController) abortController.abort();
 
+		hideProgressOverlay();
 		resultsContainer.classList.add('hide');
 		inputContainer.classList.remove('hide');
 
@@ -904,6 +879,8 @@
 		btnExecute.classList.remove('hide');
 		btnAddDomain.classList.remove('hide');
 		btnClear.classList.remove('hide');
+		btnBack.classList.add('hide');
+		updateInvalidList([]);
 
 		window.clearAppNotification();
 		textarea.dispatchEvent(new Event('input'));
@@ -912,14 +889,13 @@
 	// Update real-time statistics boxes
 	function updateCounters() {
 		const all = results.length;
-		const live = results.filter(x => x.status === 'live').length;
+		const live = results.filter(x => x.status === 'live' || x.status === 'good').length;
 		const ver = results.filter(x => x.status === 'verify').length;
 		const disabled = results.filter(x => x.status === 'disabled').length;
 		const unregistered = results.filter(x => x.status === 'unregistered').length;
 		const bad = results.filter(x => x.status === 'bad').length;
 		const failed = results.filter(x => x.status === 'failed').length;
 
-		// Bottom control panel stats
 		statsLive.textContent = live.toLocaleString();
 		statsVer.textContent = ver.toLocaleString();
 		statsDisabled.textContent = disabled.toLocaleString();
@@ -937,6 +913,7 @@
 		if (countFailed) countFailed.textContent = `(${failed})`;
 	}
 
+
 	// Filter button active class toggle
 	const filterButtons = [filterAll, filterLive, filterVer, filterDisabled, filterUnregistered, filterBad, filterFailed];
 	filterButtons.forEach(btn => {
@@ -952,9 +929,10 @@
 
 	function updateDownloadButtonsLabels() {
 		if (!btnCopy || !btnDownload) return;
+		const isFast = selectServer.value.startsWith('fast');
 		const labelMap = {
 			all: 'All',
-			live: 'Live',
+			live: isFast ? 'Good' : 'Live',
 			verify: 'Ver',
 			disabled: 'Disabled',
 			unregistered: 'Unregistered',
@@ -968,25 +946,30 @@
 
 	// Optimized dynamic rendering of checked emails
 	function renderResultsList(scrollToBottom = false) {
-		const container = document.getElementById('tasks-list-app1');
-		if (results.length === 0) return;
-
-		// Clean batch cards if verification completed or filtering changed
-		if (!isRunning) {
-			container.innerHTML = '';
-			if (container._virtualScrollHandler) {
-				container.removeEventListener('scroll', container._virtualScrollHandler);
-				container._virtualScrollHandler = null;
-			}
-		} else {
-			// Do not clear batch progress cards while running to maintain status logs
+		if (results.length === 0) {
+			tasksList.innerHTML = '';
 			return;
 		}
 
-		const filtered = currentFilter === 'all' ? results : results.filter(x => x.status === currentFilter);
+		if (tasksList._virtualScrollHandler) {
+			tasksList.removeEventListener('scroll', tasksList._virtualScrollHandler);
+			tasksList._virtualScrollHandler = null;
+		}
+
+		// Clear list container
+		tasksList.innerHTML = '';
+
+		const filtered = currentFilter === 'all'
+			? results
+			: results.filter(x => {
+				if (currentFilter === 'live') {
+					return x.status === 'live' || x.status === 'good';
+				}
+				return x.status === currentFilter;
+			});
 
 		if (filtered.length === 0) {
-			container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted); ">No emails matched the "${currentFilter.toUpperCase()}" filter.</div>`;
+			tasksList.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted); ">No emails matched the "${currentFilter.toUpperCase()}" filter.</div>`;
 			return;
 		}
 
@@ -1003,13 +986,12 @@
 		}
 
 		// Override container styles for simpler box-model virtual scrolling
-		container.style.display = 'block';
-		container.style.gap = '0px';
-		container.scrollTop = 0;
+		tasksList.style.display = 'block';
+		tasksList.style.gap = '0px';
 
 		function displayResults() {
-			const scrollTop = container.scrollTop;
-			const clientHeight = container.clientHeight || 800; // Fallback
+			const scrollTop = tasksList.scrollTop;
+			const clientHeight = tasksList.clientHeight || 800; // Fallback
 			const totalItems = filtered.length;
 			const itemHeightPx = remToPx(ITEM_HEIGHT_REM);
 
@@ -1019,13 +1001,13 @@
 			const paddingTop = startIndex * ITEM_HEIGHT_REM;
 			const paddingBottom = Math.max(0, (totalItems - 1 - endIndex) * ITEM_HEIGHT_REM);
 
-			container.innerHTML = ''; // Kosongkan daftar
+			tasksList.innerHTML = ''; // Kosongkan daftar
 
 			// Tambahkan padding atas (langsung gunakan rem untuk performa maksimal)
 			if (paddingTop > 0) {
 				const topPaddingDiv = document.createElement('div');
 				topPaddingDiv.style.height = `${paddingTop}rem`;
-				container.appendChild(topPaddingDiv);
+				tasksList.appendChild(topPaddingDiv);
 			}
 
 			// Render hanya item yang terlihat
@@ -1034,18 +1016,21 @@
 				if (!item) continue;
 
 				const itemRow = document.createElement('div');
-				itemRow.className = 'task-card';
 				itemRow.style.height = `2.375rem`; // 38px / 16 (Accounting for 8px gap)
 				itemRow.style.padding = '0 0.875rem'; // 14px / 16
+				itemRow.style.display = 'flex';
 				itemRow.style.flexDirection = 'row';
 				itemRow.style.justifyContent = 'space-between';
 				itemRow.style.alignItems = 'center';
 				itemRow.style.boxSizing = 'border-box';
 				itemRow.style.margin = '0 0 0.5rem 0'; // Bottom margin for gap (8px / 16)
+				itemRow.style.background = 'rgba(255, 255, 255, 0.02)';
+				itemRow.style.border = '1px solid var(--border-color)';
+				itemRow.style.borderRadius = '8px';
 
 				let color = '#ff00bf'; // bad (tomato red)
 				let icon = '<i class="fa-solid fa-circle-xmark app-stats-icon-bad"></i>';
-				if (item.status === 'live') {
+				if (item.status === 'live' || item.status === 'good') {
 					color = '#66ffd9';
 					icon = '<i class="fa-solid fa-circle-check app-stats-icon-live"></i>';
 				} else if (item.status === 'verify') {
@@ -1065,44 +1050,51 @@
 				itemRow.innerHTML = `
 					<div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
 						<span style="color: var(--text-muted);">#${i + 1}</span>
-						<span style="color: var(--text-sharp); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.email}</span>
+						<span style="color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(item.email)}</span>
 					</div>
 					<div style="display: flex; align-items: center; gap: 8px;">
-						<span style="color: var(--text-muted);" title="${item.details}">${item.details}</span>
-						<span style=" color: ${color}; display: flex; align-items: center; gap: 4px; ">${icon} ${item.status.toUpperCase()}</span>
+						${item.details ? `<span style="color: var(--text-muted);" title="${escapeHTML(item.details)}">${escapeHTML(item.details)}</span>` : ''}
+						<span style=" color: ${color}; display: flex; align-items: center; gap: 4px; ">${icon} ${escapeHTML(item.status.toUpperCase())}</span>
 					</div>
 				`;
-				container.appendChild(itemRow);
+				tasksList.appendChild(itemRow);
 			}
 
 			// Tambahkan padding bawah
 			if (paddingBottom > 0) {
 				const bottomPaddingDiv = document.createElement('div');
 				bottomPaddingDiv.style.height = `${paddingBottom}rem`;
-				container.appendChild(bottomPaddingDiv);
+				tasksList.appendChild(bottomPaddingDiv);
 			}
 		}
 
-		container._virtualScrollHandler = function () {
+		tasksList._virtualScrollHandler = function () {
 			if (resultVirtualScrollTimer) clearTimeout(resultVirtualScrollTimer);
 			resultVirtualScrollTimer = setTimeout(displayResults, 30); // Debounce
 		};
 
-		container.addEventListener('scroll', container._virtualScrollHandler, { passive: true });
+		tasksList.addEventListener('scroll', tasksList._virtualScrollHandler, { passive: true });
 
 		// Initial render
 		displayResults();
 
 		if (scrollToBottom) {
 			setTimeout(() => {
-				container.scrollTop = filtered.length * remToPx(ITEM_HEIGHT_REM);
+				tasksList.scrollTop = filtered.length * remToPx(ITEM_HEIGHT_REM);
 			}, 50);
 		}
 	}
 
 	// Copy active filtered results
 	btnCopy.addEventListener('click', function () {
-		const filtered = currentFilter === 'all' ? results : results.filter(x => x.status === currentFilter);
+		const filtered = currentFilter === 'all'
+			? results
+			: results.filter(x => {
+				if (currentFilter === 'live') {
+					return x.status === 'live' || x.status === 'good';
+				}
+				return x.status === currentFilter;
+			});
 		if (filtered.length === 0) return;
 
 		let text = '';
@@ -1125,7 +1117,14 @@
 
 	// Download active filtered results as TXT
 	btnDownload.addEventListener('click', function () {
-		const filtered = currentFilter === 'all' ? results : results.filter(x => x.status === currentFilter);
+		const filtered = currentFilter === 'all'
+			? results
+			: results.filter(x => {
+				if (currentFilter === 'live') {
+					return x.status === 'live' || x.status === 'good';
+				}
+				return x.status === currentFilter;
+			});
 		if (filtered.length === 0) return;
 
 		let text = '';
@@ -1159,12 +1158,13 @@
 			const zip = new JSZip();
 
 			// Group emails by active status
-			const statuses = ['live', 'verify', 'disabled', 'unregistered', 'bad', 'failed'];
+			const statuses = ['live', 'good', 'verify', 'disabled', 'unregistered', 'bad', 'failed'];
 			statuses.forEach(status => {
 				const group = results.filter(x => x.status === status);
 				if (group.length > 0) {
 					const textContent = group.map(x => x.email).join('\n');
-					zip.file(`${status.toUpperCase()}_emails_list.txt`, textContent);
+					const fileName = status === 'good' ? 'GOOD_emails_list.txt' : `${status.toUpperCase()}_emails_list.txt`;
+					zip.file(fileName, textContent);
 				}
 			});
 
@@ -1295,8 +1295,8 @@
 			});
 		}
 
-		// Update modal dynamic values
-		document.getElementById('credits-modal-message').innerHTML = message;
+		// Update modal dynamic values (gunakan textContent agar aman dari XSS)
+		document.getElementById('credits-modal-message').textContent = message;
 		document.getElementById('credits-modal-balance').textContent = `${actualRemaining.toLocaleString()} credit(s)`;
 
 		// Show modal

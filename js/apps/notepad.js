@@ -114,14 +114,14 @@ async function refreshNotesList() {
 
         item.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; width:100%;">
-                <span style=" color: var(--text-sharp);  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+                <span style=" color: var(--text-sharp);  white-space: nowrap;  text-overflow: ellipsis; flex: 1;">
                     ${escapeHTML(note.title) || 'Untitled Note'}
                 </span>
                 <span style="color: var(--text-muted);  white-space: nowrap;">
                     ${formattedTime}
                 </span>
             </div>
-            <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <p style="color: var(--text-secondary); margin: 0; line-height: 1.4; white-space: nowrap;  text-overflow: ellipsis;">
                 ${escapeHTML(snippet)}
             </p>
         `;
@@ -174,7 +174,7 @@ async function selectNote(id) {
     if (contentInput) {
         contentInput.value = note.content;
         // Synchronize custom line numbers
-        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'email-input-container-app4');
+        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'input-container-container-app4');
     }
     if (lastSavedDisplay) {
         lastSavedDisplay.textContent = `Last saved: ${new Date(note.updatedAt).toLocaleTimeString()}`;
@@ -220,7 +220,7 @@ async function clearNotepad() {
     if (titleInput) titleInput.value = '';
     if (contentInput) {
         contentInput.value = '';
-        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'email-input-container-app4');
+        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'input-container-container-app4');
     }
     if (lastSavedDisplay) lastSavedDisplay.textContent = 'Last saved: Never';
     if (status) {
@@ -405,7 +405,7 @@ async function initNotepad() {
         }
 
         // Initialize Line Numbers Synchronizer
-        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'email-input-container-app4');
+        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'input-container-container-app4');
 
         // Load initial note or create one if empty
         const notes = await getAllNotes();

@@ -1,6 +1,6 @@
 (function () {
 	const textarea = document.getElementById('gmail-dot-trick-input');
-	const inputContainer = document.getElementById('email-input-container-app2');
+	const inputContainer = document.getElementById('input-container-container-app2');
 	const resultsContainer = document.getElementById('results-container-app2');
 	const tasksList = document.getElementById('tasks-list-app2');
 	const btnBack = document.getElementById('btn-back-app2');
@@ -15,7 +15,6 @@
 	const selectMode = document.getElementById('select-mode-app2');
 	const statsInput = document.getElementById('stats-input-app2');
 	const statsOutput = document.getElementById('stats-output-app2');
-	const pageApp2 = document.getElementById('page-app2');
 
 	if (!textarea || !btnGenerate) return;
 

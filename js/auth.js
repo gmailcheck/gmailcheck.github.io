@@ -1,6 +1,86 @@
-window.APIKEY = null;
 window.isUserAuthenticated = false;
 window.authInitialCheckDone = false;
+
+window.activeAuthToken = null;
+window.tokenRefreshPromise = null;
+let tokenRefreshInterval = null;
+
+// Background Token Refresh
+window.refreshAuthToken = async function (force = false) {
+	const user = window.firebaseAuth?.currentUser;
+	if (!user) {
+		window.activeAuthToken = null;
+		return null;
+	}
+
+	if (window.tokenRefreshPromise) {
+		return window.tokenRefreshPromise;
+	}
+
+	window.tokenRefreshPromise = (async () => {
+		try {
+			const token = await user.getIdToken(force);
+			window.activeAuthToken = token;
+			if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+				console.log("[DEBUG] Auth Token refreshed/retrieved successfully.");
+			}
+			return token;
+		} catch (err) {
+			console.error("[ERROR] Failed to refresh auth token:", err);
+			return window.activeAuthToken; // fallback
+		} finally {
+			window.tokenRefreshPromise = null;
+		}
+	})();
+
+	return window.tokenRefreshPromise;
+};
+
+function isTokenExpired(token) {
+	if (!token) return true;
+	try {
+		const parts = token.split('.');
+		if (parts.length !== 3) return true;
+		let base64Url = parts[1];
+		let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+		const padLength = (4 - (base64.length % 4)) % 4;
+		base64 += '='.repeat(padLength);
+		const payload = JSON.parse(atob(base64));
+		const now = Math.floor(Date.now() / 1000);
+		return payload.exp < (now + 30);
+	} catch (e) {
+		return true;
+	}
+}
+
+// Global helper to get token instantly
+window.getAuthToken = async function () {
+	if (window.activeAuthToken && !isTokenExpired(window.activeAuthToken)) {
+		return window.activeAuthToken;
+	}
+	return await window.refreshAuthToken(false);
+};
+
+function startPeriodicTokenRefresh() {
+	if (tokenRefreshInterval) return;
+	tokenRefreshInterval = setInterval(() => {
+		if (window.isUserAuthenticated) {
+			if (localStorage.getItem('gmailChecker_debugMode') === 'true') {
+				console.log("[DEBUG] Starting background periodic token refresh...");
+			}
+			window.refreshAuthToken(true);
+		} else {
+			stopPeriodicTokenRefresh();
+		}
+	}, 50 * 60 * 1000); // 50 minutes
+}
+
+function stopPeriodicTokenRefresh() {
+	if (tokenRefreshInterval) {
+		clearInterval(tokenRefreshInterval);
+		tokenRefreshInterval = null;
+	}
+}
 
 // Function to update UI based on Auth State
 window.applyAuthUIState = function (user) {
@@ -65,17 +145,6 @@ window.applyAuthUIState = function (user) {
 			if (popoverAvatarImg) popoverAvatarImg.classList.add('hide');
 		}
 
-		// Restore cached APIKEY from localStorage (set by dashboard after profile loads)
-		const API_STORAGE_KEY = 'gmailChecker_apiData';
-		try {
-			const cached = localStorage.getItem(API_STORAGE_KEY);
-			if (cached) {
-				const data = JSON.parse(cached);
-				if (data && data.apiKey) {
-					window.APIKEY = data.apiKey;
-				}
-			}
-		} catch (e) { /* ignore parse errors */ }
 
 		// Handle routing for authenticated user
 		if (window.loginRedirectTarget) {
@@ -88,16 +157,38 @@ window.applyAuthUIState = function (user) {
 			window.setActiveMenu(currentMenuId, false);
 		}
 
+		// Cache token and start periodic background refresh
+		window.refreshAuthToken(false).then(() => {
+			startPeriodicTokenRefresh();
+		});
+
 		if (window.loadDashboardData) {
 			window.loadDashboardData(false, true);
 		}
 	} else {
 		window.isUserAuthenticated = false;
+		window.activeAuthToken = null;
+		stopPeriodicTokenRefresh();
 		if (container) container.classList.add('anonim');
 		if (topBarAnon) topBarAnon.classList.remove('hide');
 		if (topBarAuth) topBarAuth.classList.add('hide');
-		window.APIKEY = null;
-		localStorage.removeItem('gmailChecker_apiData');
+
+		if (window.presenceWS) {
+			try { window.presenceWS.close(); } catch(e){}
+			window.presenceWS = null;
+		}
+		if (window.adminUsersWS) {
+			try { window.adminUsersWS.close(); } catch(e){}
+			window.adminUsersWS = null;
+		}
+		if (window.adminUsersWSInterval) {
+			clearInterval(window.adminUsersWSInterval);
+			window.adminUsersWSInterval = null;
+		}
+		if (window.presencePingInterval) {
+			clearInterval(window.presencePingInterval);
+			window.presencePingInterval = null;
+		}
 
 		if (window.closeTicketsWS) {
 			window.closeTicketsWS();

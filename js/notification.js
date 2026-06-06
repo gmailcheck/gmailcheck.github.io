@@ -20,8 +20,7 @@ let notificationTimeout = null;
 			border-left: 4px solid transparent;
 			animation: slideInDown 0.3s ease-out forwards;
 			position: relative;
-			overflow: hidden;
-			pointer-events: auto;
+						pointer-events: auto;
 		}
 		.notification-bar.type-warning { border-left-color: #ffcc00; }
 		.notification-bar.type-danger { border-left-color: #ff6666; }
