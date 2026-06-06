@@ -281,6 +281,9 @@
     flex-direction: column;
     gap: 12px;
     margin-top: 10px;
+    min-height: 20px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .dashboard-list-loading {
@@ -302,9 +305,6 @@
 .dashboard-panel-actions {
     display: flex;
     justify-content: center;
-    border-top: 1px solid var(--border-color);
-    margin-top: 15px;
-    padding-top: 20px;
 }
 
 .btn-subscribe {

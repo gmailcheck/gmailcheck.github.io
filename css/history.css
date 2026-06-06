@@ -154,8 +154,7 @@
     padding: 25px;
     width: 100%;
     transition: all 0.3s ease;
-    max-height: 500px;
-    overflow-y: auto;
+    min-height: 400px;
 }
 
 .dashboard-history-panel:hover {
