@@ -526,10 +526,10 @@
 		const isFastServer = selected.startsWith('fast');
 		const cleanedEmails = getEmailsArray();
 		const chunkSize = selected === 'fastServer' ? 100
-			: selected === 'fastFreeServer' ? 1000
+			: selected === 'fastFreeServer' ? 100
 				: selected === 'deepServer' ? 40
 					: selected === 'deepFreeServer' ? 40
-						: 100;
+						: 40;
 
 
 		const chunks = [];
