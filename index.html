@@ -28,10 +28,10 @@
 		RDS.init({
 			debug: 0,
 			remMode: 'responsive',
-			breakpoints: { mobile: 550, tablet: 1023 },
+			breakpoints: { mobile: 450, tablet: 1023 },
 			desktop: { baseWidth: 1920, baseHeight: 1080, minScale: 0.3, maxScale: 1.2 },
 			tablet: { baseWidth: 1023, baseHeight: 1280, minScale: 0.2, maxScale: 1.1 },
-			mobile: { baseWidth: 550, baseHeight: 900, minScale: 0.1, maxScale: 1.0 }
+			mobile: { baseWidth: 450, baseHeight: 900, minScale: 0.1, maxScale: 1.0 }
 		});
 	</script>
 
@@ -1074,6 +1074,12 @@
 									<i class="fa-solid fa-gem dashboard-panel-icon-gold"></i>
 									Subscription History
 								</h3>
+								<div class="dashboard-panel-actions">
+									<button id="btn-dashboard-go-pricing-sub" class="btn btn-primary btn-subscribe"
+										onclick="window.setActiveMenu('pricing', true)">
+										<i class="fa-solid fa-tags m-r-8"></i>Subscribe / Renew Plan
+									</button>
+								</div>
 							</div>
 
 							<!-- Subscriptions Container List -->
@@ -1087,15 +1093,7 @@
 							<div id="db-premium-info-list" class="dashboard-list-empty">
 								No subscription history found.
 							</div>
-
-							<div class="dashboard-panel-actions">
-								<button id="btn-dashboard-go-pricing-sub" class="btn btn-primary btn-subscribe"
-									onclick="window.setActiveMenu('pricing', true)">
-									<i class="fa-solid fa-tags m-r-8"></i>Subscribe / Renew Plan
-								</button>
-							</div>
 						</div>
-
 					</div>
 				</div>
 
