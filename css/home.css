@@ -591,17 +591,23 @@
 
 .demo-result-status.disabled {
     background: rgba(255, 210, 0, 0.1);
-    color: #ffd200;
+    color: #ff0000ff;
 }
 
 .demo-result-status.ver {
     background: rgba(0, 240, 255, 0.1);
-    color: #00f0ff;
+    color: #ffea00ff;
 }
 
 .demo-result-status.bad {
     background: rgba(255, 71, 87, 0.1);
-    color: #ff4757;
+    color: #ff0080
+}
+
+
+.demo-result-status.unreg {
+    background: rgba(255, 71, 87, 0.1);
+    color: #00d9ff;
 }
 
 .demo-result-status.failed {
