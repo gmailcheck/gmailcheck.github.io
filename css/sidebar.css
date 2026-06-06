@@ -581,6 +581,7 @@
     padding: 10px;
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 /* Anonymous & Home Page Mode styling */
@@ -956,33 +957,28 @@
 
 #notif-container {
     position: relative;
+    width: 100%;
     /* Ensure it is a positioning context */
 }
 
 .sidebar-notif-dropdown {
+    width: 100%;
     position: absolute !important;
     bottom: 50px !important;
     left: -12px !important;
-    /* Offset the padding of the menu-item to align perfectly */
-    width: 276px !important;
-    /* Fixed width to fill the sidebar width beautifully */
+    max-height: 400px !important;
+    overflow-y: auto !important;
     background-color: var(--bg-secondary) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 16px !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
     z-index: 1000 !important;
     padding: 16px !important;
-    max-height: 380px !important;
-    overflow-y: auto !important;
     text-align: left !important;
     cursor: default !important;
-    box-sizing: border-box !important;
     display: flex;
-    /* Changed from display: flex !important so that .hide can override it */
     flex-direction: column !important;
     gap: 12px !important;
-
-    /* Elegant glassmorphism backdrop if supported */
     backdrop-filter: blur(10px);
 }
 
