@@ -189,6 +189,8 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
                     body.style.maxHeight = body.scrollHeight + 'px';
                     body.style.opacity = '1';
                     body.style.marginTop = '6px';
+                    body.style.maxHeight = '200px';
+                    body.style.overflowY = 'auto';
                     if (chevron) chevron.style.transform = 'rotate(180deg)';
 
                     // Save read status to LocalStorage & Server immediately upon reading
