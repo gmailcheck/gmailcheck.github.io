@@ -153,7 +153,7 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
             // Create Body
             const body = document.createElement('div');
             body.className = 'notif-body';
-            body.style.cssText = `max-height: 0px;  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin-top 0.2s ease; opacity: 0; margin-top: 0px; white-space: pre-wrap;`;
+            body.style.cssText = `max-height: 0px; overflow: hidden; transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin-top 0.2s ease; opacity: 0; margin-top: 0px; white-space: pre-wrap;`;
             body.innerHTML = `
                 <span style="color: var(--text-primary); display: block; line-height: 1.35; ">${escapeHTML(n.message)}</span>
                 <small style="color: var(--text-muted); margin-top: 4px; display: block;">${new Date(n.createdAt).toLocaleString()}</small>
@@ -179,6 +179,7 @@ window.renderNotifications = function (notifications = [], unreadCount = 0) {
                         siblingBody.style.maxHeight = '0px';
                         siblingBody.style.opacity = '0';
                         siblingBody.style.marginTop = '0px';
+                        siblingBody.style.overflow = 'hidden';
                         siblingChevron.style.transform = 'rotate(0deg)';
                     }
                 }
