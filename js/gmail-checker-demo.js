@@ -265,7 +265,7 @@
                         <span class="demo-stat-lbl">GOOD</span>
                     </div>
                     <div class="demo-stat-box bad">
-                        <span class="demo-stat-num" style="color: #ff4757;">${badCount}</span>
+                        <span class="demo-stat-num" style="color: #ff0080;">${badCount}</span>
                         <span class="demo-stat-lbl">BAD</span>
                     </div>
                     <div class="demo-stat-box" style="border-color: rgba(255, 255, 255, 0.1); background: var(--bg-secondary);">
@@ -302,15 +302,15 @@
                         <span class="demo-stat-lbl">LIVE</span>
                     </div>
                     <div class="demo-stat-box" style="border-color: rgba(0, 240, 255, 0.25);">
-                        <span class="demo-stat-num" style="color: #00f0ff;">${verCount}</span>
+                        <span class="demo-stat-num" style="color: #ffd900ff;">${verCount}</span>
                         <span class="demo-stat-lbl">VER</span>
                     </div>
                     <div class="demo-stat-box disabled">
-                        <span class="demo-stat-num" style="color: #ffd200;">${disabledCount}</span>
+                        <span class="demo-stat-num" style="color: #ff0000ff;">${disabledCount}</span>
                         <span class="demo-stat-lbl">DISABLED</span>
                     </div>
-                    <div class="demo-stat-box bad">
-                        <span class="demo-stat-num" style="color: #ff4757;">${unregisteredCount}</span>
+                    <div class="demo-stat-box unreg">
+                        <span class="demo-stat-num" style="color: #00d9ff;">${unregisteredCount}</span>
                         <span class="demo-stat-lbl">UNREGISTERED</span>
                     </div>
                     <div class="demo-stat-box" style="border-color: rgba(255, 255, 255, 0.1); background: var(--bg-secondary);">
@@ -357,7 +357,7 @@
         let cssClass = status.toLowerCase();
         if (status === "GOOD") cssClass = "live";
         if (status === "VER") cssClass = "ver";
-        if (status === "UNREGISTERED") cssClass = "bad";
+        if (status === "UNREGISTERED") cssClass = "unreg";
         if (status === "BAD") cssClass = "bad";
 
         row.innerHTML = `
