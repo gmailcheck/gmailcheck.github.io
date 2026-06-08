@@ -410,12 +410,18 @@ textarea {
 }
 
 .app-input-container-cyan {
-    background: var(--bg-primary);
-    border: 1px solid rgba(0, 240, 255, 0.2);
-    border-radius: 12px;
-    display: flex;
     flex: 1;
-    position: relative;
+    min-height: 200px;
+    display: flex;
+    min-width: 0;
+    height: 100%;
+    font-size: 12px;
+    background: var(--bg-primary);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-input);
+    border-radius: 3px;
+    overflow: hidden;
 }
 
 .app2-select-trick {

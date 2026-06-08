@@ -4,6 +4,8 @@
 const DB_NAME = 'HistoryDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'history';
+const backBtnWrapper = document.getElementById('back-btn-wrapper-history');
+const appHistorySubtitleHeading = document.getElementById('history-subtitle-heading');
 let historyDbInstance = null;
 let cachedHistoryEntries = null;
 
@@ -202,7 +204,6 @@ let historySearchQuery = '';
 
 // Premium self-contained details modal
 // Global handler cleanups to prevent multiple active listeners/leaks
-let historyDetailsScrollHandler = null;
 let historyDetailsGmailScrollHandler = null;
 
 function showHistoryDetailsModal(entry) {
@@ -211,6 +212,8 @@ function showHistoryDetailsModal(entry) {
 
     if (mainViewport) mainViewport.classList.add('hide');
     if (detailsViewport) detailsViewport.classList.remove('hide');
+    if (backBtnWrapper) backBtnWrapper.classList.remove('hide');
+    if (appHistorySubtitleHeading) appHistorySubtitleHeading.classList.add('hide');
 
     // Show premium loading spinner overlay immediately
     const overlay = document.getElementById('history-details-loading-overlay');
@@ -263,24 +266,29 @@ function showHistoryDetailsModal(entry) {
             titleContainer.innerHTML = `<i class="fa-solid fa-gauge-high style-color-af86fc"></i> Run Details - ${entry.appName} (${entry.title})`;
         }
 
-        const textViewport = document.getElementById('history-details-text-viewport');
+        let textViewport = document.getElementById('history-details-text-viewport');
         const tasksViewport = document.getElementById('history-details-tasks-viewport');
 
-        // Clean up previous event listeners on viewports
-        if (historyDetailsScrollHandler && textViewport) {
-            textViewport.removeEventListener('scroll', historyDetailsScrollHandler);
-            historyDetailsScrollHandler = null;
-        }
+        // Clean up previous event listeners on tasksViewport
         if (historyDetailsGmailScrollHandler && tasksViewport) {
             tasksViewport.removeEventListener('scroll', historyDetailsGmailScrollHandler);
             historyDetailsGmailScrollHandler = null;
         }
 
-        // Reset Viewports state
+        // Clone and replace textarea to discard previous event listeners
         if (textViewport) {
+            const newTextViewport = textViewport.cloneNode(true);
+            textViewport.parentNode.replaceChild(newTextViewport, textViewport);
+            textViewport = newTextViewport;
             textViewport.scrollTop = 0;
-            textViewport.innerHTML = '';
+            textViewport.value = '';
         }
+
+        const lineNumbersElement = document.getElementById('history-details-line-numbers');
+        if (lineNumbersElement) {
+            lineNumbersElement.textContent = '1';
+        }
+
         if (tasksViewport) {
             tasksViewport.scrollTop = 0;
             tasksViewport.innerHTML = '';
@@ -295,12 +303,9 @@ function showHistoryDetailsModal(entry) {
             newBackBtn.addEventListener('click', () => {
                 if (detailsViewport) detailsViewport.classList.add('hide');
                 if (mainViewport) mainViewport.classList.remove('hide');
+                if (backBtnWrapper) backBtnWrapper.classList.add('hide');
+                if (appHistorySubtitleHeading) appHistorySubtitleHeading.classList.remove('hide');
 
-                // Clean scroll handlers when leaving
-                if (historyDetailsScrollHandler && textViewport) {
-                    textViewport.removeEventListener('scroll', historyDetailsScrollHandler);
-                    historyDetailsScrollHandler = null;
-                }
                 if (historyDetailsGmailScrollHandler && tasksViewport) {
                     tasksViewport.removeEventListener('scroll', historyDetailsGmailScrollHandler);
                     historyDetailsGmailScrollHandler = null;
@@ -308,7 +313,7 @@ function showHistoryDetailsModal(entry) {
 
                 // Hancurkan DOM di viewport detail untuk membebaskan memory secara instan!
                 if (textViewport) {
-                    textViewport.innerHTML = '';
+                    textViewport.value = '';
                 }
                 if (tasksViewport) {
                     tasksViewport.innerHTML = '';
@@ -518,33 +523,38 @@ function showHistoryDetailsModal(entry) {
         }
 
         // RENDER LOGIC
+        const textContainer = document.getElementById('history-details-text-container');
+
         if (entry.appId === 'app1') {
             // Gmail Checker: Beautiful Virtual Scroll Cards Viewport
-            if (textViewport) textViewport.classList.add('hide');
+            if (textContainer) textContainer.classList.add('hide');
             if (tasksViewport) {
                 tasksViewport.classList.remove('hide');
                 renderGmailCheckerHistoryVirtualScroll(entry, tasksViewport);
             }
         } else if (entry.appId === 'app2') {
             // Gmail Dot Tricks: Beautiful task-based card viewport
-            if (textViewport) textViewport.classList.add('hide');
+            if (textContainer) textContainer.classList.add('hide');
             if (tasksViewport) {
                 tasksViewport.classList.remove('hide');
                 renderGmailDotTricksHistoryTasks(entry, tasksViewport);
             }
         } else if (entry.appId === 'app3') {
             // Name Combiner: Single task-based card viewport
-            if (textViewport) textViewport.classList.add('hide');
+            if (textContainer) textContainer.classList.add('hide');
             if (tasksViewport) {
                 tasksViewport.classList.remove('hide');
                 renderNameCombinerHistoryTasks(entry, tasksViewport);
             }
         } else {
-            // Other Apps (e.g. Email Extractor): Mono Line Numbers Virtual Scroll Viewport
+            // Other Apps (e.g. Email Extractor): Textarea with Line Numbers
             if (tasksViewport) tasksViewport.classList.add('hide');
+            if (textContainer) textContainer.classList.remove('hide');
             if (textViewport) {
-                textViewport.classList.remove('hide');
-                renderMonospaceHistoryVirtualScroll(entry, textViewport);
+                textViewport.value = entry.content || '';
+                if (window.initTextareaLineNumbers) {
+                    window.initTextareaLineNumbers('history-details-text-viewport', 'history-details-line-numbers', 'history-details-text-container');
+                }
             }
         }
 
@@ -553,95 +563,6 @@ function showHistoryDetailsModal(entry) {
     }, 50);
 }
 
-// Monospace Gutter Line Numbers Virtual Scroller for other apps
-function renderMonospaceHistoryVirtualScroll(entry, viewport) {
-    const lines = entry.content ? entry.content.split('\n') : [];
-    const TOTAL_LINES = lines.length;
-
-    // Line dimensions: 1.2rem
-    const LINE_HEIGHT_REM = 1.2;
-    const LINE_OVERSCAN = 15;
-    let vScrollTimer;
-
-    function getRemPx() {
-        return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    }
-
-    // Force strict dimensions for clean box-model scroller
-    viewport.style.display = 'block';
-    viewport.style.padding = '10px 0';
-    viewport.style.boxSizing = 'border-box';
-
-    function renderLines() {
-        const scrollTop = viewport.scrollTop;
-        const viewH = viewport.clientHeight || 500;
-        const lineH = LINE_HEIGHT_REM * getRemPx();
-
-        const startIdx = Math.max(0, Math.floor(scrollTop / lineH) - LINE_OVERSCAN);
-        const endIdx = Math.min(TOTAL_LINES - 1, Math.ceil((scrollTop + viewH) / lineH) + LINE_OVERSCAN);
-
-        const padTop = startIdx * LINE_HEIGHT_REM;
-        const padBot = Math.max(0, (TOTAL_LINES - 1 - endIdx) * LINE_HEIGHT_REM);
-
-        viewport.innerHTML = '';
-
-        // Top spacer
-        if (padTop > 0) {
-            const t = document.createElement('div');
-            t.style.height = `${padTop}rem`;
-            viewport.appendChild(t);
-        }
-
-        // Visible rows
-        for (let i = startIdx; i <= endIdx; i++) {
-            const row = document.createElement('div');
-            row.style.height = `${LINE_HEIGHT_REM}rem`;
-            row.style.display = 'flex';
-            row.style.alignItems = 'center';
-
-            const gutter = document.createElement('span');
-            gutter.textContent = i + 1;
-            gutter.style.display = 'inline-block';
-            gutter.style.minWidth = '3.5rem';
-            gutter.style.paddingRight = '0.75rem';
-            gutter.style.textAlign = 'right';
-            gutter.style.color = 'rgba(0, 240, 255, 0.4)';
-            gutter.style.userSelect = 'none';
-            gutter.style.flexShrink = '0';
-            gutter.style.borderRight = '1px solid rgba(0, 240, 255, 0.15)';
-            gutter.style.marginRight = '0.75rem';
-
-            const text = document.createElement('span');
-            text.textContent = lines[i] || '';
-            text.style.color = '#00f0ff';
-            text.style.whiteSpace = 'nowrap';
-            text.style.overflow = 'hidden';
-            text.style.textOverflow = 'ellipsis';
-            text.style.flex = '1';
-
-            row.appendChild(gutter);
-            row.appendChild(text);
-            viewport.appendChild(row);
-        }
-
-        // Bottom spacer
-        if (padBot > 0) {
-            const b = document.createElement('div');
-            b.style.height = `${padBot}rem`;
-            viewport.appendChild(b);
-        }
-    }
-
-    historyDetailsScrollHandler = function () {
-        if (vScrollTimer) clearTimeout(vScrollTimer);
-        vScrollTimer = setTimeout(renderLines, 16);
-    };
-
-    viewport.addEventListener('scroll', historyDetailsScrollHandler, { passive: true });
-
-    // Trigger initial render
-    renderLines();
-}
 
 // Gmail Checker Card/Row Virtual Scroller
 function renderGmailCheckerHistoryVirtualScroll(entry, viewport) {
@@ -1234,11 +1155,6 @@ function initHistoryPage() {
             if (detailsViewport) detailsViewport.classList.add('hide');
 
             // Clean active scroll handlers if any
-            if (historyDetailsScrollHandler) {
-                const textViewport = document.getElementById('history-details-text-viewport');
-                if (textViewport) textViewport.removeEventListener('scroll', historyDetailsScrollHandler);
-                historyDetailsScrollHandler = null;
-            }
             if (historyDetailsGmailScrollHandler) {
                 const tasksViewport = document.getElementById('history-details-tasks-viewport');
                 if (tasksViewport) tasksViewport.removeEventListener('scroll', historyDetailsGmailScrollHandler);

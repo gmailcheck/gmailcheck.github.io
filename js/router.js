@@ -517,7 +517,129 @@ window.setActiveMenu = function (menuId, pushState = true) {
 	} else if (menuId === 'admin' && window.loadActiveAdminTab) {
 		window.loadActiveAdminTab();
 	}
+
+	updateMetaHeader(menuId);
 }
+
+function updateMetaHeader(menuId) {
+	const metaMap = {
+		'home': {
+			title: 'Gmail Checker - Premium Email Verifier',
+			description: 'Verify your Gmail addresses in real-time. Fast, secure, and reliable email validation tool.'
+		},
+		'dashboard': {
+			title: 'Dashboard - Gmail Checker',
+			description: 'View your account balance, daily check stats, and quick links.'
+		},
+		'app1': {
+			title: 'Gmail Checker - App',
+			description: 'Clean and verify your Gmail lists in real-time. Detect live, verified, disabled, and unregistered emails.'
+		},
+		'app2': {
+			title: 'Gmail Dot Tricks Generator - App',
+			description: 'Generate all possible dot combinations for a Gmail address to test registration variants.'
+		},
+		'app3': {
+			title: 'Name Combiner - App',
+			description: 'Combine names, words, and domains into email combinations for marketing or test scenarios.'
+		},
+		'app4': {
+			title: 'Email Extractor & Duplicate Remover - App',
+			description: 'Extract valid email addresses from any raw text, clean duplicates, and format your lists instantly.'
+		},
+		'app5': {
+			title: 'Notepad - App',
+			description: 'Quick notes utility to paste, edit, and keep track of your email lists or task details.'
+		},
+		'admin': {
+			title: 'Admin Panel - Gmail Checker',
+			description: 'Manage users, track payment logs, send push notifications, and handle support tickets.'
+		},
+		'history': {
+			title: 'Result History - Gmail Checker',
+			description: 'Review your past email verification runs, view text outputs, and download result logs.'
+		},
+		'support': {
+			title: 'Customer Support - Gmail Checker',
+			description: 'Have questions? Open a support ticket, and our team will assist you shortly.'
+		},
+		'pricing': {
+			title: 'Pricing & Plans - Gmail Checker',
+			description: 'Choose the best plan for you. Upgrade to PRO or ULTRA for larger batch sizes and advanced checks.'
+		},
+		'login': {
+			title: 'Sign In - Gmail Checker',
+			description: 'Log in to your account with Google to access your dashboard, purchased credits, and tools.'
+		},
+		'dev-keys': {
+			title: 'Manage API Keys - Developer Center',
+			description: 'Generate, delete, and configure whitelist restrictions (IP/Domain) for your developer API keys.'
+		},
+		'dev-create': {
+			title: 'Create API Key - Developer Center',
+			description: 'Create a new developer API key to integrate Gmail Checker into your own applications.'
+		},
+		'dev-stats': {
+			title: 'API Usage Stats - Developer Center',
+			description: 'Monitor your API usage graphs, request counts, and success rates.'
+		},
+		'dev-credits': {
+			title: 'API Credits - Developer Center',
+			description: 'Manage your API credit balances and monitor consumption rates.'
+		},
+		'dev-add': {
+			title: 'Buy Credits - Developer Center',
+			description: 'Purchase additional credits securely using major cryptocurrencies.'
+		},
+		'dev-purchases': {
+			title: 'Purchase History - Developer Center',
+			description: 'Track and review all your credit purchases and invoices.'
+		}
+	};
+
+	const isDocMenu = [
+		'doc-payments', 'doc-api-key', 'doc-gmail-checker', 
+		'doc-dot-tricks', 'doc-name-combiner', 'doc-email-extractor', 
+		'doc-notepad', 'doc-history'
+	].includes(menuId);
+
+	let meta = metaMap[menuId];
+
+	if (!meta && isDocMenu) {
+		const label = document.getElementById('current-page-label')?.textContent || 'Documentation';
+		meta = {
+			title: `${label} - Gmail Checker Docs`,
+			description: `Learn how to use, configure, and integrate ${label} in our documentation.`
+		};
+	}
+
+	if (!meta) {
+		meta = {
+			title: 'Gmail Checker - Premium Email Verifier',
+			description: 'Verify your Gmail lists in real-time. Fast, secure, and reliable email validation tool.'
+		};
+	}
+
+	// Update Document Title
+	document.title = meta.title;
+
+	// Update Meta Description
+	let metaDesc = document.querySelector('meta[name="description"]');
+	if (!metaDesc) {
+		metaDesc = document.createElement('meta');
+		metaDesc.setAttribute('name', 'description');
+		document.head.appendChild(metaDesc);
+	}
+	metaDesc.setAttribute('content', meta.description);
+
+	// Update Open Graph (og:title, og:description)
+	let ogTitle = document.querySelector('meta[property="og:title"]');
+	if (ogTitle) ogTitle.setAttribute('content', meta.title);
+
+	let ogDesc = document.querySelector('meta[property="og:description"]');
+	if (ogDesc) ogDesc.setAttribute('content', meta.description);
+}
+
 
 function findMenuItem(id) {
 	const allItems = [...window.menuItems, ...window.developerMenuItems, ...window.documentationMenuItems];
@@ -612,3 +734,35 @@ window.addEventListener('popstate', (e) => {
 	const targetMenuId = window.getMenuByPath(path);
 	window.setActiveMenu(targetMenuId, false);
 });
+
+// Intercept link-link yang masih pakai <a href> biasa agar menjadi SPA navigation (tanpa reload)
+document.addEventListener('DOMContentLoaded', () => {
+	// Mapping: href path → menuId
+	const linkRouteMap = {
+		'/privacy': 'privacy',
+		'/terms': 'terms',
+		'/docs': 'documentation',
+		'/pricing': 'pricing',
+	};
+
+	// Semua selector yang perlu di-intercept
+	const interceptSelectors = [
+		'.profile-popover-footer-link',
+		'#anon-link-doc',
+		'#anon-link-pricing',
+	];
+
+	interceptSelectors.forEach(selector => {
+		document.querySelectorAll(selector).forEach(el => {
+			el.addEventListener('click', (e) => {
+				e.preventDefault(); // Cegah reload
+				const href = el.getAttribute('href');
+				const menuId = linkRouteMap[href];
+				if (menuId && window.setActiveMenu) {
+					window.setActiveMenu(menuId, true);
+				}
+			});
+		});
+	});
+});
+

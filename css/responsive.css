@@ -306,19 +306,9 @@ body[data-rds-mode="mobile"] .app-content-container {
     gap: 15px;
 }
 
-body[data-rds-mode="mobile"] .filter-button-group {
-    justify-content: flex-start;
-    width: 100%;
-    margin-top: 5px;
-}
-
-
 /* ==========================================================================
    FROM HOME.CSS
    ========================================================================== */
-body[data-rds-mode="mobile"] .home-container {
-    padding: 40px 10px;
-}
 
 body[data-rds-mode="mobile"] .home-container h1 {
     margin-bottom: 15px;
@@ -346,6 +336,11 @@ body[data-rds-mode="tablet"] .page-content:has(.app-container) {
     overflow-y: auto !important;
 }
 
+body[data-rds-mode="mobile"] .page-content,
+body[data-rds-mode="tablet"] .page-content {
+    padding: 5px !important;
+}
+
 
 /* ==========================================================================
    FROM HISTORY.CSS
@@ -355,4 +350,21 @@ body[data-rds-mode="tablet"] .page-content:has(.app-container) {
 body[data-rds-mode="mobile"] #history-list-container,
 body[data-rds-mode="tablet"] #history-list-container {
     max-height: 300px !important;
+}
+
+/* Admin Tab Header Mobile Scrollability */
+body[data-rds-mode="mobile"] .admin-tab-header {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    padding-bottom: 8px;
+    gap: 15px !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+body[data-rds-mode="mobile"] .admin-tab-header h3,
+body[data-rds-mode="mobile"] .admin-tab-header .top-tab-users,
+body[data-rds-mode="mobile"] .admin-tab-header>div {
+    flex-shrink: 0 !important;
 }

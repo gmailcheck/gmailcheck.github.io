@@ -3,7 +3,9 @@
 	const inputContainer = document.getElementById('input-container-container-app2');
 	const resultsContainer = document.getElementById('results-container-app2');
 	const tasksList = document.getElementById('tasks-list-app2');
+	const backBtnWrapper = document.getElementById('back-btn-wrapper-app2');
 	const btnBack = document.getElementById('btn-back-app2');
+	const app2Instruction = document.getElementById('app2-instruction');
 	const btnDownloadAll = document.getElementById('btn-download-all-app2');
 	const btnGenerate = document.getElementById('btn-generate-app2');
 	const btnAddDomain = document.getElementById('btn-add-domain-app2');
@@ -282,6 +284,8 @@
 			btnCopy.classList.add('hide');
 			btnDownload.classList.add('hide');
 			btnDownloadAll.classList.add('hide');
+			backBtnWrapper.classList.remove('hide');
+			app2Instruction.classList.add('hide');
 
 			taskResults.clear();
 			isRunning = true;
@@ -517,6 +521,8 @@
 		btnGenerate.classList.remove('hide');
 		btnClear.classList.remove('hide');
 		btnAddDomain.classList.remove('hide');
+		backBtnWrapper.classList.add('hide');
+		app2Instruction.classList.remove('hide');
 
 		window.clearAppNotification();
 		textarea.dispatchEvent(new Event('input'));

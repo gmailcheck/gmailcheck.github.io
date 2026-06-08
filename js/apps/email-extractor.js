@@ -9,6 +9,11 @@ function runExtractor() {
         return;
     }
 
+    const backBtnWrapper = document.getElementById('back-btn-wrapper-app4');
+    const app4Instruction = document.getElementById('app4-instruction');
+    if (backBtnWrapper) backBtnWrapper.classList.remove('hide');
+    if (app4Instruction) app4Instruction.classList.add('hide');
+
     // Regex for matching emails
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
     const matches = rawInput.match(emailRegex) || [];
@@ -68,8 +73,8 @@ function runExtractor() {
     }
 
     // Populate Results
-    const inputContainer = document.getElementById('input-container-container-app5');
-    const resultsContainer = document.getElementById('results-container-app5');
+    const inputContainer = document.getElementById('input-container-container-app4');
+    const resultsContainer = document.getElementById('results-container-app4');
     const outputTextarea = document.getElementById('email-extractor-output');
 
     if (outputTextarea) {
@@ -102,7 +107,7 @@ function runExtractor() {
     document.getElementById('stats-extractor-other').textContent = otherCount;
 
     // Initialize/sync line numbers for the output viewport
-    window.initTextareaLineNumbers('email-extractor-output', 'line-numbers-app5-results', 'results-container-app5');
+    window.initTextareaLineNumbers('email-extractor-output', 'line-numbers-app4-results', 'results-container-app4');
 
     if (window.showAppNotification) {
         window.showAppNotification('success', `Success! Extracted <strong>${totalExtractedCount}</strong> emails. <strong>${uniqueCount}</strong> clean unique emails saved.`);
@@ -117,8 +122,8 @@ function runExtractor() {
 function clearExtractor() {
     const input = document.getElementById('email-extractor-input');
     const output = document.getElementById('email-extractor-output');
-    const inputContainer = document.getElementById('input-container-container-app5');
-    const resultsContainer = document.getElementById('results-container-app5');
+    const inputContainer = document.getElementById('input-container-container-app4');
+    const resultsContainer = document.getElementById('results-container-app4');
 
     if (input) input.value = '';
     if (output) output.value = '';
@@ -148,14 +153,16 @@ function clearExtractor() {
     if (window.clearAppNotification) window.clearAppNotification();
 
     // Synchronize custom line numbers
-    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'input-container-container-app5');
+    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app4', 'input-container-container-app4');
 }
 
 // Back/Reset Extractor (returns to input view without clearing input)
 function backExtractor() {
     const output = document.getElementById('email-extractor-output');
-    const inputContainer = document.getElementById('input-container-container-app5');
-    const resultsContainer = document.getElementById('results-container-app5');
+    const inputContainer = document.getElementById('input-container-container-app4');
+    const resultsContainer = document.getElementById('results-container-app4');
+    const backBtnWrapper = document.getElementById('back-btn-wrapper-app4');
+    const app4Instruction = document.getElementById('app4-instruction');
 
     if (output) output.value = '';
 
@@ -180,11 +187,13 @@ function backExtractor() {
     document.getElementById('stats-extractor-unique').textContent = '0';
     document.getElementById('stats-extractor-gmail').textContent = '0';
     document.getElementById('stats-extractor-other').textContent = '0';
+    backBtnWrapper.classList.add('hide');
+    app4Instruction.classList.remove('hide');
 
     if (window.clearAppNotification) window.clearAppNotification();
 
     // Synchronize custom line numbers
-    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'input-container-container-app5');
+    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app4', 'input-container-container-app4');
 }
 
 // Copy to clipboard
@@ -221,7 +230,7 @@ function initEmailExtractor() {
     const btnClear = document.getElementById('btn-extractor-clear');
     if (btnClear) btnClear.addEventListener('click', clearExtractor);
 
-    const btnBack = document.getElementById('btn-back-app5');
+    const btnBack = document.getElementById('btn-back-app4');
     if (btnBack) btnBack.addEventListener('click', backExtractor);
 
     const btnCopy = document.getElementById('btn-extractor-copy');
@@ -244,7 +253,7 @@ function initEmailExtractor() {
     }
 
     // Initialize line numbers synchronization
-    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app5', 'input-container-container-app5');
+    window.initTextareaLineNumbers('email-extractor-input', 'line-numbers-app4', 'input-container-container-app4');
 }
 
 // Bootstrapping

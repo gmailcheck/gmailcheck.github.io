@@ -174,7 +174,7 @@ async function selectNote(id) {
     if (contentInput) {
         contentInput.value = note.content;
         // Synchronize custom line numbers
-        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'input-container-container-app4');
+        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app5', 'input-container-container-app5');
     }
     if (lastSavedDisplay) {
         lastSavedDisplay.textContent = `Last saved: ${new Date(note.updatedAt).toLocaleTimeString()}`;
@@ -220,7 +220,7 @@ async function clearNotepad() {
     if (titleInput) titleInput.value = '';
     if (contentInput) {
         contentInput.value = '';
-        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'input-container-container-app4');
+        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app5', 'input-container-container-app5');
     }
     if (lastSavedDisplay) lastSavedDisplay.textContent = 'Last saved: Never';
     if (status) {
@@ -405,7 +405,7 @@ async function initNotepad() {
         }
 
         // Initialize Line Numbers Synchronizer
-        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app4', 'input-container-container-app4');
+        window.initTextareaLineNumbers('notepad-active-content', 'line-numbers-app5', 'input-container-container-app5');
 
         // Load initial note or create one if empty
         const notes = await getAllNotes();

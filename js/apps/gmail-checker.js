@@ -4,7 +4,9 @@
 	const inputContainer = document.getElementById('input-container-container-app1');
 	const resultsContainer = document.getElementById('results-container-app1');
 	const tasksList = document.getElementById('tasks-list-app1');
+	const backBtnWrapper = document.getElementById('back-btn-wrapper-app1');
 	const btnBack = document.getElementById('btn-back-app1');
+	const app1Instruction = document.getElementById('app1-instruction');
 	const btnExecute = document.getElementById('btn-execute-app1');
 	const btnStop = document.getElementById('btn-stop-app1');
 	const btnClear = document.getElementById('btn-clear-app1');
@@ -585,7 +587,7 @@
 		inputContainer.classList.add('hide');
 		resultsContainer.classList.remove('hide');
 
-		btnBack.classList.add('hide');
+		backBtnWrapper.classList.add('hide');
 		btnExecute.classList.add('hide');
 		btnClear.classList.add('hide');
 		btnAddDomain.classList.add('hide');
@@ -593,6 +595,7 @@
 		btnCopy.classList.add('hide');
 		btnDownload.classList.add('hide');
 		btnDownloadAll.classList.add('hide');
+		app1Instruction.classList.add('hide');
 
 		isRunning = true;
 		abortController = new AbortController();
@@ -676,7 +679,7 @@
 							isRunning = false;
 							btnExecute.classList.remove('hide');
 							btnStop.classList.add('hide');
-							btnBack.classList.remove('hide');
+							backBtnWrapper.classList.remove('hide');
 
 							hideProgressOverlay();
 							inputContainer.classList.add('hide');
@@ -790,7 +793,7 @@
 			isRunning = false;
 			btnExecute.classList.remove('hide');
 			btnStop.classList.add('hide');
-			btnBack.classList.remove('hide');
+			backBtnWrapper.classList.remove('hide');
 
 			if (typeof window.refreshRealtimeProfile === 'function') {
 				window.refreshRealtimeProfile();
@@ -888,7 +891,8 @@
 
 		btnExecute.classList.remove('hide');
 		btnStop.classList.add('hide');
-		btnBack.classList.remove('hide');
+		backBtnWrapper.classList.remove('hide');
+		app1Instruction.classList.remove('hide');
 
 		hideProgressOverlay();
 		inputContainer.classList.add('hide');
@@ -924,7 +928,9 @@
 		btnExecute.classList.remove('hide');
 		btnAddDomain.classList.remove('hide');
 		btnClear.classList.remove('hide');
-		btnBack.classList.add('hide');
+		backBtnWrapper.classList.add('hide');
+		app1Instruction.classList.remove('hide');
+
 		updateInvalidList([]);
 
 		window.clearAppNotification();

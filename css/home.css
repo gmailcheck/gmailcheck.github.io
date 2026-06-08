@@ -420,12 +420,6 @@
     border-color: #af86fc;
 }
 
-.demo-turnstile-container {
-    min-height: 65px;
-    display: flex;
-    align-items: center;
-}
-
 .btn-demo-check {
     width: 100%;
     border-radius: 8px;

@@ -3,7 +3,9 @@
 	const inputContainer = document.getElementById('input-container-container-app3');
 	const resultsContainer = document.getElementById('results-container-app3');
 	const tasksList = document.getElementById('tasks-list-app3');
+	const backBtnWrapper = document.getElementById('back-btn-wrapper-app3');
 	const btnBack = document.getElementById('btn-back-app3');
+	const app3Instruction = document.getElementById('app3-instruction');
 	const btnGenerate = document.getElementById('btn-generate-app3');
 	const btnClear = document.getElementById('btn-clear-app3');
 	const btnFix = document.getElementById('btn-fix-app3');
@@ -264,6 +266,8 @@
 		btnCopy.classList.add('hide');
 		btnDownload.classList.add('hide');
 		btnDownloadAll.classList.add('hide');
+		backBtnWrapper.classList.remove('hide');
+		app3Instruction.classList.add('hide');
 
 		combinationsBuffer = [];
 		isRunning = true;
@@ -458,6 +462,8 @@
 		btnDownloadAll.classList.add('hide');
 		btnGenerate.classList.remove('hide');
 		btnClear.classList.remove('hide');
+		backBtnWrapper.classList.add('hide');
+		app3Instruction.classList.remove('hide');
 
 		window.clearAppNotification();
 		textarea.dispatchEvent(new Event('input'));

@@ -240,7 +240,7 @@ body {
 .page-name {
     height: 25px;
     width: 100%;
-    padding: 20px;
+    padding: 15px;
     display: flex;
     align-items: center;
     font-size: 18px;
@@ -470,6 +470,14 @@ button i.fa-check,
     /* Active Support - Green */
 }
 
+.app-header {
+    position: sticky;
+    top: -5px;
+    z-index: 1;
+    background-color: var(--bg-primary);
+    padding-bottom: 15px;
+}
+
 /* Results Dashboard & Task Card styling */
 .results-container {
     flex: 1;
@@ -482,16 +490,14 @@ button i.fa-check,
     border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 15px;
-    box-sizing: border-box;
+    position: relative;
 }
 
 .results-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--border-color);
-    gap: 15px;
 }
 
 .tasks-list {
@@ -1070,14 +1076,8 @@ button i.fa-check,
     color: #00cc44;
 }
 
-.results-header-flex {
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
 .btn-back-app {
     padding: 8px 14px;
-    width: auto;
 }
 
 .color-teal {
@@ -1338,7 +1338,7 @@ button i.fa-check,
     border: 1px solid var(--border-color);
     border-radius: 14px;
     margin-bottom: 24px;
-    width: fit-content;
+    flex-wrap: wrap;
 }
 
 .db-tab-btn {

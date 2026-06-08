@@ -15,6 +15,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    position: relative;
 }
 
 .app-content-container {
@@ -59,12 +60,6 @@
 }
 
 /* App 1 (Gmail Checker) active results filter buttons layout */
-
-
-.filter-buttons-wrapper {
-    display: flex;
-    gap: 8px;
-}
 
 .btn-filter-pill-app {
     border-radius: 100px;
@@ -421,6 +416,16 @@
 
 .support-tab-content.active {
     display: block;
+}
+
+
+.filter-button-group {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 @keyframes fadeInTab {

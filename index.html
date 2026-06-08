@@ -80,8 +80,7 @@
 			}
 		})();
 	</script>
-	<!-- Cloudflare Turnstile -->
-	<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 </head>
 
 <body>
@@ -351,8 +350,7 @@
 											</select>
 										</div>
 
-										<!-- Turnstile Widget Container -->
-										<div id="demo-turnstile-container" class="demo-turnstile-container"></div>
+
 									</div>
 
 									<button id="btn-run-demo-check" class="btn btn-primary btn-demo-check">
@@ -1624,10 +1622,17 @@
 				<!-- Page App 1 -->
 				<div id="page-app1" class="page-content hide">
 					<div class="app-container">
-						<!-- Input Area -->
-						<p class="app-instruction">
-							Enter valid Gmail addresses to verify their live status.
-						</p>
+						<div class="app-header">
+							<div class="back-btn-wrapper hide" id="back-btn-wrapper-app1">
+								<button class="btn btn-back-app" id="btn-back-app1">
+									<i class="fa-solid fa-arrow-left"></i> Back
+								</button>
+							</div>
+							<!-- Input Area -->
+							<p class="app-instruction" id="app1-instruction">
+								Enter valid Gmail addresses to verify their live status.
+							</p>
+						</div>
 						<div class="app-content-container">
 							<div class="input-container" id="input-container-container-app1">
 								<div id="line-numbers-app1" class="line-numbers">1</div>
@@ -1639,11 +1644,8 @@
 
 							<!-- Bulk Results Dashboard (Hidden initially) -->
 							<div class="results-container hide" id="results-container-app1">
-								<div class="results-header results-header-flex">
-									<button class="btn btn-back-app" id="btn-back-app1">
-										<i class="fa-solid fa-arrow-left"></i> Back
-									</button>
-									<div class="filter-button-group filter-buttons-wrapper">
+								<div class="results-header">
+									<div class="filter-button-group">
 										<button class="btn filter-btn active btn-filter-pill-app" id="filter-all-app1"
 											data-filter="all">All <span id="count-all-app1"
 												class="app-stats-value-primary">(0)</span></button>
@@ -1774,9 +1776,16 @@
 				<!-- Page App 2 -->
 				<div id="page-app2" class="page-content hide">
 					<div class="app-container">
-						<p class="app-instruction">
-							Enter valid Gmail addresses to generate all possible dot variations.
-						</p>
+						<div class="app-header">
+							<div class="back-btn-wrapper hide" id="back-btn-wrapper-app2">
+								<button class="btn btn-back-app" id="btn-back-app2">
+									<i class="fa-solid fa-arrow-left"></i> Back
+								</button>
+							</div>
+							<p class="app-instruction" id="app2-instruction">
+								Enter valid Gmail addresses to generate all possible dot variations.
+							</p>
+						</div>
 						<div class="app-content-container">
 							<!-- Input Area -->
 							<div class="input-container" id="input-container-container-app2">
@@ -1790,9 +1799,6 @@
 							<!-- Bulk Results Dashboard (Hidden initially) -->
 							<div class="results-container hide" id="results-container-app2">
 								<div class="results-header">
-									<button class="btn btn-back-app" id="btn-back-app2">
-										<i class="fa-solid fa-arrow-left"></i> Back
-									</button>
 									<div class="app-stats-total-header">
 										<i class="fa-solid fa-gauge-high "></i> Bulk Dashboard
 									</div>
@@ -1869,10 +1875,16 @@
 				<!-- Page App 3 -->
 				<div id="page-app3" class="page-content hide">
 					<div class="app-container">
-						<!-- Input Area -->
-						<p class="app-instruction">
-							Enter at least 3 unique names to generate random permutations.
-						</p>
+						<div class="app-header">
+							<div class="back-btn-wrapper hide" id="back-btn-wrapper-app3">
+								<button class="btn btn-back-app" id="btn-back-app3">
+									<i class="fa-solid fa-arrow-left"></i> Back
+								</button>
+							</div>
+							<p class="app-instruction" id="app3-instruction">
+								Enter at least 3 unique names to generate random permutations.
+							</p>
+						</div>
 						<div class="app-content-container">
 							<div class="input-container" id="input-container-container-app3">
 								<div id="line-numbers-app3" class="line-numbers">1</div>
@@ -1884,9 +1896,6 @@
 							<!-- Bulk Results Dashboard (Hidden initially) -->
 							<div class="results-container hide" id="results-container-app3">
 								<div class="results-header">
-									<button class="btn btn-back-app" id="btn-back-app3">
-										<i class="fa-solid fa-arrow-left"></i> Back
-									</button>
 									<div class="app-stats-total-header">
 										<i class="fa-solid fa-gauge-high "></i> Permutation
 										Dashboard
@@ -1957,33 +1966,37 @@
 				<!-- Page App 4 (Email Extractor) -->
 				<div id="page-app4" class="page-content hide">
 					<div class="app-container">
-						<p class="app-instruction">
-							Paste any raw text, HTML logs, or CSV data. The tool will instantly extract valid
-							emails,
-							deduplicate, and clean them.
-						</p>
+						<div class="app-header">
+							<div class="back-btn-wrapper hide" id="back-btn-wrapper-app4">
+								<button class="btn btn-back-app" id="btn-back-app4">
+									<i class="fa-solid fa-arrow-left"></i> Back
+								</button>
+							</div>
+							<p class="app-instruction" id="app4-instruction">
+								Paste any raw text, HTML logs, or CSV data. The tool will instantly extract valid
+								emails,
+								deduplicate, and clean them.
+							</p>
+						</div>
 						<div class="app-content-container">
 
 							<!-- Left Side: Raw Input Viewport -->
-							<div class="input-container" id="input-container-container-app5">
-								<div id="line-numbers-app5" class="line-numbers">1</div>
+							<div class="input-container" id="input-container-container-app4">
+								<div id="line-numbers-app4" class="line-numbers">1</div>
 								<textarea id="email-extractor-input"
 									placeholder="Paste raw text, source code, or mixed lists here..."
 									spellcheck="false"></textarea>
 							</div>
 
 							<!-- Middle/Right Side: Extracted Results Viewport (Initially hidden, revealed on run) -->
-							<div class="results-container hide app2-layout-main" id="results-container-app5">
+							<div class="results-container hide app2-layout-main" id="results-container-app4">
 								<div class="results-header">
-									<button class="btn btn-back-app" id="btn-back-app5">
-										<i class="fa-solid fa-arrow-left"></i> Back
-									</button>
 									<div class="app-stats-total-header">
 										<i class="fa-solid fa-circle-check "></i> Clean Extracted List
 									</div>
 								</div>
 								<div class="app-input-container-cyan">
-									<div id="line-numbers-app5-results" class="line-numbers">1</div>
+									<div id="line-numbers-app4-results" class="line-numbers">1</div>
 									<textarea id="email-extractor-output" readonly
 										placeholder="Extracted emails will appear here..." spellcheck="false"
 										class="app-textarea-cyan"></textarea>
@@ -2094,11 +2107,15 @@
 				<!-- Page App 5 (Notepad) -->
 				<div id="page-app5" class="page-content hide">
 					<div class="app-container">
-						<p class="app-instruction">
-							Welcome to the <b>Notepad</b> tool. Use this space for quick note-taking, writing drafts,
-							or storing text snippets. All your notes are saved locally in your browser, ensuring your
-							data stays private and secure.
-						</p>
+						<div class="app-header">
+							<p class="app-instruction" id="app5-instruction">
+								Welcome to the <b>Notepad</b> tool. Use this space for quick note-taking, writing
+								drafts,
+								or storing text snippets. All your notes are saved locally in your browser, ensuring
+								your
+								data stays private and secure.
+							</p>
+						</div>
 						<div class="app-content-container">
 
 							<!-- Notepad Editor Viewport -->
@@ -2135,8 +2152,8 @@
 								</div>
 
 								<!-- Editor Textarea Area -->
-								<div class="input-container" id="input-container-container-app4">
-									<div id="line-numbers-app4" class="line-numbers">1</div>
+								<div class="input-container" id="input-container-container-app5">
+									<div id="line-numbers-app5" class="line-numbers">1</div>
 									<textarea id="notepad-active-content" placeholder="Start typing your notes here..."
 										spellcheck="false"></textarea>
 								</div>
@@ -2182,14 +2199,6 @@
 
 				<!-- Page Setting 1 -->
 				<div id="page-setting1" class="page-content hide">
-					<div class="settings-container">
-						<h2>âš™ï¸ Setting 1</h2>
-						<p>Halaman pengaturan Kategori 1.</p>
-						<div class="dashboard-card">
-							<strong>ðŸ› ï¸ Manajemen Data</strong>
-							<p>Ini adalah dummy view untuk Kategori Pengaturan 2.</p>
-						</div>
-					</div>
 				</div>
 
 				<!-- Page Setting 2 -->
@@ -3042,18 +3051,18 @@ try {
 
 				<!-- Page History -->
 				<div id="page-history" class="page-content hide">
-					<div class="dashboard-content-wrapper" id="history-main-viewport">
+					<div class="app-container" id="history-main-viewport">
 						<!-- Header -->
-						<div class="login-content-group">
-							<p class="history-subtitle-heading">
+						<div class="app-header">
+							<p class="history-subtitle-heading" id="history-subtitle-heading">
 								View, search, copy, or download previous check and generation results across all your
 								apps. Stored securely offline in your browser.
 							</p>
 						</div>
 
-						<div class="history-layout-columns">
+						<div class="app-content-container">
 							<!-- Left: History List Viewer -->
-							<div class="history-results-list-panel inline-style-gen-21">
+							<div class="history-results-list-panel">
 								<div class="flex-row-between">
 									<div class="font-keren history-sidebar-title">
 										<i class="fa-solid fa-list-ul "></i> History Entries
@@ -3125,9 +3134,13 @@ try {
 
 					<!-- New: History Details App Viewport (Initially hidden, shown on "View Details") -->
 					<div class="app-container hide" id="history-details-viewport" class="inline-style-gen-106">
-						<p class="app-instruction">
-							Viewing historical run details and extracted outputs from local browser database.
-						</p>
+						<div class="app-header">
+							<div class="back-btn-wrapper hide" id="back-btn-wrapper-history">
+								<button class="btn btn-back-app" id="btn-back-history-details">
+									<i class="fa-solid fa-arrow-left"></i> Back
+								</button>
+							</div>
+						</div>
 						<div class="app-content-container">
 							<!-- Left/Middle: Results Viewport -->
 							<div class="results-container" id="history-details-results-container">
@@ -3140,19 +3153,17 @@ try {
 								</div>
 
 								<div class="results-header">
-									<button class="btn btn-back-app" id="btn-back-history-details"
-										class="inline-style-gen-32">
-										<i class="fa-solid fa-arrow-left"></i> Back
-									</button>
 									<div class="app-stats-total-header" id="history-details-title-container">
 										<i class="fa-solid fa-gauge-high "></i> Run Details Dashboard
 									</div>
 								</div>
 
 								<!-- Monospace viewport for non-Gmail-Checker entries -->
-								<div class="app-input-container-cyan" id="history-details-text-viewport"
-									class="inline-style-gen-76">
-									<!-- Dynamically populated rows with line numbers gutter -->
+								<div class="app-input-container-cyan" id="history-details-text-container">
+									<div id="history-details-line-numbers" class="line-numbers">1</div>
+									<textarea id="history-details-text-viewport" readonly
+										placeholder="Run details will appear here..." spellcheck="false"
+										class="app-textarea-cyan"></textarea>
 								</div>
 
 								<!-- Custom styled Virtual Scroll cards viewport for Gmail Checker & Task-based entries -->
@@ -3391,9 +3402,9 @@ try {
 						<!-- Users Tab -->
 						<div id="admin-users" class="db-tab-content hide">
 							<div class="card">
-								<div class="inline-style-gen-80">
+								<div class="admin-tab-header">
 									<h3 class="font-keren inline-style-gen-49">User Directory</h3>
-									<div class="inline-style-gen-113">
+									<div class="top-tab-users">
 										<input type="text" id="admin-users-search" placeholder="Search user email..."
 											class="db-input"
 											style="width: 220px; font-size: 0.85rem; padding: 6px 12px; margin-right: 15px; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02); color: var(--text-sharp);">
@@ -3548,8 +3559,7 @@ try {
 						<!-- Support Tickets Tab -->
 						<div id="admin-support" class="db-tab-content hide">
 							<div class="card">
-								<div class="inline-style-gen-80"
-									style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+								<div class="admin-tab-header">
 									<h3 class="font-keren inline-style-gen-49" style="margin: 0;">Support Tickets
 										Management</h3>
 									<div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -3852,7 +3862,7 @@ try {
 
 						<div id="ticket-modal-reply-container" class="history-detail-modal-footer">
 							<!-- Reply image attachments preview -->
-							<div id="ticket-modal-reply-images-preview" class="filter-buttons-wrapper"></div>
+							<div id="ticket-modal-reply-images-preview"></div>
 
 							<div class="history-detail-modal-actions">
 								<input type="file" id="ticket-modal-reply-images-input" accept="image/*" multiple
@@ -3905,7 +3915,7 @@ try {
 
 						<div id="admin-ticket-modal-reply-container" class="history-detail-modal-footer">
 							<!-- Reply attachments preview -->
-							<div id="admin-ticket-modal-reply-images-preview" class="filter-buttons-wrapper"></div>
+							<div id="admin-ticket-modal-reply-images-preview"></div>
 
 							<div class="history-detail-modal-actions">
 								<input type="file" id="admin-ticket-modal-reply-images-input" multiple class="hide">

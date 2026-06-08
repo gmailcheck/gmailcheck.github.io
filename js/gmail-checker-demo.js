@@ -1,16 +1,14 @@
 /**
  * Gmail Checker - Anonymous Demo Client Side Logic
- * Provides real-time email check preview with Turnstile validation & IP rate limits.
+ * Provides real-time email check preview with IP-based rate limits.
  */
 
 (function () {
-    let turnstileWidgetId = null;
     let isChecking = false;
 
     // Wait for DOM to load
     document.addEventListener("DOMContentLoaded", () => {
         initDemoElements();
-        initTurnstileWidget();
     });
 
     function initDemoElements() {
@@ -22,39 +20,6 @@
         // Initialize line numbers for the demo textarea if the utility exists
         if (window.initTextareaLineNumbers) {
             window.initTextareaLineNumbers('demo-emails-input', 'demo-line-numbers', 'demo-input-container');
-        }
-    }
-
-    function initTurnstileWidget() {
-        // Attempt to render Turnstile after api.js is loaded
-        const container = document.getElementById("demo-turnstile-container");
-        if (!container) return;
-
-        // If turnstile is not loaded yet, retry shortly
-        if (typeof turnstile === "undefined") {
-            setTimeout(initTurnstileWidget, 500);
-            return;
-        }
-
-        try {
-            // Use window.API_TURNSTILE_SITE_KEY if configured, otherwise fallback to standard testing sitekey (Always Pass)
-            const siteKey = "0x4AAAAAADf1ZYuJw2OV4dUZ";
-
-            turnstileWidgetId = turnstile.render("#demo-turnstile-container", {
-                sitekey: siteKey,
-                theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
-                callback: function (token) {
-                    window.demoTurnstileToken = token;
-                },
-                "expired-callback": function () {
-                    window.demoTurnstileToken = null;
-                },
-                "error-callback": function () {
-                    window.demoTurnstileToken = null;
-                }
-            });
-        } catch (e) {
-            console.error("Failed to render Cloudflare Turnstile:", e);
         }
     }
 
@@ -102,13 +67,6 @@
             return;
         }
 
-        const turnstileToken = window.demoTurnstileToken;
-        if (!turnstileToken) {
-            // Optional bypass Turnstile captcha if bypass configured or commented out on server
-            showDemoAlert("warning", "Captcha Required", "Please complete the Turnstile challenge to verify you are human.");
-            return;
-        }
-
         // Lock UI
         isChecking = true;
         btnCheck.disabled = true;
@@ -153,7 +111,6 @@
                 },
                 body: JSON.stringify({
                     mail: emails,
-                    turnstileToken: turnstileToken || "",
                     clientId: getOrCreateClientId()
                 })
             });
@@ -195,7 +152,6 @@
             clearInterval(progressInterval);
             progressContainer.classList.add("hide");
             showDemoAlert("danger", "Check Failed", error.message || "An unexpected error occurred.");
-            resetTurnstile();
         } finally {
             isChecking = false;
             btnCheck.disabled = false;
@@ -328,8 +284,6 @@
         setTimeout(() => {
             resultsContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }, 100);
-
-        resetTurnstile();
     }
 
     function getNormalizedStatus(rawStatus, mode) {
@@ -365,17 +319,6 @@
             <span class="demo-result-status ${cssClass}">${status}</span>
         `;
         container.appendChild(row);
-    }
-
-    function resetTurnstile() {
-        window.demoTurnstileToken = null;
-        if (typeof turnstile !== "undefined" && turnstileWidgetId !== null) {
-            try {
-                turnstile.reset(turnstileWidgetId);
-            } catch (e) {
-                console.error("Failed to reset Turnstile widget:", e);
-            }
-        }
     }
 
     function getOrCreateClientId() {

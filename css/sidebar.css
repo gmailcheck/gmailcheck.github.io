@@ -965,7 +965,7 @@
     width: 100%;
     position: absolute !important;
     bottom: 50px !important;
-    left: -12px !important;
+    left: 10px;
     max-height: 400px !important;
     overflow-y: auto !important;
     background-color: var(--bg-secondary) !important;
@@ -981,6 +981,9 @@
     gap: 12px !important;
     backdrop-filter: blur(10px);
 }
+
+
+
 
 .sidebar-notif-dropdown.hide {
     display: none !important;
