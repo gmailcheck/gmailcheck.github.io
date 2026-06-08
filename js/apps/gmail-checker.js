@@ -52,7 +52,23 @@
 	let abortController = null;
 	let sanitizerWorker = null;
 
+	function clearTasksList() {
+		// Hapus event listener scroll
+		if (tasksList._virtualScrollHandler) {
+			tasksList.removeEventListener('scroll', tasksList._virtualScrollHandler);
+			tasksList._virtualScrollHandler = null;
+		}
+		// Hapus timer yang sedang berjalan
+		if (tasksList._scrollTimer) {
+			clearTimeout(tasksList._scrollTimer);
+			tasksList._scrollTimer = null;
+		}
+		// Kosongkan HTML
+		tasksList.innerHTML = '';
+	}
+
 	function showProgressOverlay() {
+		// Pindahkan semua style ke CSS agar lebih rapi dan bisa pakai animasi kompleks
 		if (!document.getElementById('progress-overlay-styles')) {
 			const style = document.createElement('style');
 			style.id = 'progress-overlay-styles';
@@ -60,6 +76,66 @@
 				@keyframes progressFadeIn {
 					from { opacity: 0; }
 					to { opacity: 1; }
+				}
+				@keyframes progressPulseGlow {
+					0% { box-shadow: 0 10px 40px -10px rgba(175, 134, 252, 0.2); }
+					50% { box-shadow: 0 10px 50px 0px rgba(0, 255, 255, 0.3); }
+					100% { box-shadow: 0 10px 40px -10px rgba(175, 134, 252, 0.2); }
+				}
+				@keyframes progressSpin {
+					from { transform: rotate(0deg); }
+					to { transform: rotate(360deg); }
+				}
+				@keyframes progressDotPulse {
+					0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 8px #00ffff; }
+					50% { opacity: 0.4; transform: scale(0.8); box-shadow: 0 0 2px #00ffff; }
+				}
+				.gc-overlay-glass {
+					position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+					display: flex; flex-direction: column; align-items: center; justify-content: center;
+					z-index: 999; animation: progressFadeIn 0.4s ease forwards;
+					background: rgba(10, 10, 15, 0.1); pointer-events: none;
+				}
+				.gc-modal-card {
+					position: relative; min-width: 280px; display: flex; flex-direction: column;
+					align-items: center; justify-content: center; padding: 40px 30px;
+					background: linear-gradient(145deg, rgba(30, 30, 45, 0.95), rgba(15, 15, 20, 0.98));
+					border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px;
+					animation: progressPulseGlow 3s infinite ease-in-out;
+				}
+				.gc-ring-wrapper {
+					position: relative; width: 150px; height: 150px; display: flex;
+					align-items: center; justify-content: center; margin-bottom: 28px;
+				}
+				.gc-spin-dashed {
+					position: absolute; width: 166px; height: 166px; border-radius: 50%;
+					border: 2px dashed rgba(175, 134, 252, 0.3);
+					animation: progressSpin 15s linear infinite; pointer-events: none;
+				}
+				.gc-text-center {
+					position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+					display: flex; flex-direction: column; align-items: center; justify-content: center;
+				}
+				.gc-percent {
+					font-size: 2.2rem; font-weight: 800; line-height: 1;
+					background: linear-gradient(90deg, #af86fc, #00ffff);
+					-webkit-background-clip: text; -webkit-text-fill-color: transparent;
+					filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+				}
+				.gc-fraction {
+					font-size: 0.85rem; color: #a0a0b0; margin-top: 6px; font-weight: 500;
+					letter-spacing: 1px;
+				}
+				.gc-status-pill {
+					font-size: 0.9rem; color: #e0e0e0; font-weight: 500; text-align: center;
+					background: rgba(255, 255, 255, 0.03); padding: 8px 20px;
+					border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.06);
+					display: flex; align-items: center; gap: 10px;
+					box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+				}
+				.gc-status-dot {
+					width: 8px; height: 8px; border-radius: 50%; background: #00ffff;
+					animation: progressDotPulse 1.5s infinite ease-in-out;
 				}
 			`;
 			document.head.appendChild(style);
@@ -69,82 +145,49 @@
 		if (!overlay) {
 			overlay = document.createElement('div');
 			overlay.id = 'gmail-checker-progress-overlay';
+			overlay.className = 'gc-overlay-glass';
 
-			overlay.style.cssText = `
-				position: absolute;
-				width: 100%;
-				height: 100%;
-				top: 0;
-				left: 0;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				z-index: 10;
-				animation: progressFadeIn 0.3s ease;
-				background: rgba(0, 0, 0, 0.1);
-				pointer-events: none;
-			`;
 			overlay.innerHTML = `
-				<div style="position: relative; min-width: 200px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.5); box-shadow: 0 2px 8px rgba(3, 141, 206, 0.6); border-radius: 15px; padding: 36px; border-radius: 15%;">
-					<div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;">
-						<svg data-rds-skip="true" viewBox="0 0 120 120" style="width: 120px; height: 120px; transform: rotate(-90deg); overflow: visible; ">
-							<circle cx="60" cy="60" r="50" 
-									fill="rgba(0, 0, 0, 0.5)" 
-									stroke="rgba(0, 136, 170, 0.05)" 
-									stroke-width="10" />
-							<circle id="progress-circle-bar" cx="60" cy="60" r="50" 
-									fill="transparent" 
+				<div class="gc-modal-card">
+					<div class="gc-ring-wrapper">
+						<div class="gc-spin-dashed"></div>
+						<svg data-rds-skip="true" viewBox="0 0 140 140" style="width: 150px; height: 150px; transform: rotate(-90deg); overflow: visible;">
+							<circle cx="70" cy="70" r="60" 
+									fill="none" 
+									stroke="rgba(255, 255, 255, 0.03)" 
+									stroke-width="8" />
+							<!-- Circumference: 2 * PI * 60 = 376.991 -->
+							<circle id="progress-circle-bar" cx="70" cy="70" r="60" 
+									fill="none" 
 									stroke="url(#progress-grad)" 
 									stroke-width="8" 
-									stroke-dasharray="314.159" 
-									stroke-dashoffset="314.159" 
+									stroke-dasharray="376.991" 
+									stroke-dashoffset="376.991" 
 									stroke-linecap="round"
 									filter="url(#progress-shadow)"
-									style="transition: stroke-dashoffset 0.3s ease;" />
+									style="transition: stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1);" />
 							<defs>
 								<linearGradient id="progress-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-									<stop offset="0%" stop-color="#af86fc" stop-opacity="1" />
-									<stop offset="100%" stop-color="#00ffff" stop-opacity="1" />
+									<stop offset="0%" stop-color="#af86fc" />
+									<stop offset="100%" stop-color="#00ffff" />
 								</linearGradient>
-								<filter id="progress-shadow" x="-30%" y="-30%" width="160%" height="160%">
-									<feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#af86fc" flood-opacity="0.6"/>
+								<filter id="progress-shadow" x="-20%" y="-20%" width="140%" height="140%">
+									<feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#00ffff" flood-opacity="0.5"/>
 								</filter>
 							</defs>
 						</svg>
-						<div style="
-							position: absolute;
-							top: 0;
-							left: 0;
-							width: 100%;
-							height: 100%;
-							display: flex;
-							flex-direction: column;
-							align-items: center;
-							justify-content: center;
-						">
-							<span id="progress-percentage" style="font-size: 1.6rem; font-weight: 700; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">0%</span>
-							<span id="progress-fraction" style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); margin-top: 2px; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">0/0</span>
+						<div class="gc-text-center">
+							<span id="progress-percentage" class="gc-percent">0%</span>
+							<span id="progress-fraction" class="gc-fraction">0 / 0</span>
 						</div>
 					</div>
-					<div id="progress-status-text" style="
-						margin-top: 24px;
-						font-size: 0.95rem;
-						color: #ffffff;
-						font-weight: 500;
-						text-align: center;
-						max-width: 85%;
-						text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-						background: rgba(1, 46, 83, 0.5);
-						padding: 6px 16px;
-						border-radius: 20px;
-						border: 1px solid rgba(255,255,255,0.06);
-					">
-					Preparing...
-				</div>
+					<div class="gc-status-pill">
+						<div class="gc-status-dot"></div>
+						<span id="progress-status-text">Preparing...</span>
+					</div>
 				</div>
 			`;
-			body.appendChild(overlay);
+			document.body.appendChild(overlay);
 		}
 	}
 
@@ -155,7 +198,8 @@
 		const statusTextDiv = document.getElementById('progress-status-text');
 
 		if (circleBar) {
-			const circumference = 314.159;
+			// Update ke ukuran keliling (circumference) baru untuk radius 60px
+			const circumference = 376.991;
 			const offset = circumference - (percentage / 100) * circumference;
 			circleBar.setAttribute('stroke-dashoffset', offset);
 			circleBar.style.strokeDashoffset = String(offset);
@@ -164,7 +208,7 @@
 			pctSpan.textContent = `${Math.round(percentage)}%`;
 		}
 		if (fractionSpan) {
-			fractionSpan.textContent = `${completed}/${total}`;
+			fractionSpan.textContent = `${completed} / ${total}`;
 		}
 		if (statusTextDiv && statusText) {
 			statusTextDiv.innerHTML = statusText;
@@ -540,7 +584,6 @@
 		// UI transitions
 		inputContainer.classList.add('hide');
 		resultsContainer.classList.remove('hide');
-		tasksList.innerHTML = '';
 
 		btnBack.classList.add('hide');
 		btnExecute.classList.add('hide');
@@ -551,9 +594,10 @@
 		btnDownload.classList.add('hide');
 		btnDownloadAll.classList.add('hide');
 
-		results = [];
 		isRunning = true;
 		abortController = new AbortController();
+		results = [];
+		clearTasksList();
 		window.clearAppNotification();
 		showProgressOverlay();
 		updateProgressOverlay(0, 0, chunks.length, `Preparing verification of ${cleanedEmails.length} email(s)...`);
@@ -863,6 +907,7 @@
 		inputContainer.classList.remove('hide');
 
 		results = [];
+		clearTasksList();
 
 		statsInput.textContent = '0 email(s)';
 		statsLive.textContent = '0';
@@ -947,13 +992,18 @@
 	// Optimized dynamic rendering of checked emails
 	function renderResultsList(scrollToBottom = false) {
 		if (results.length === 0) {
-			tasksList.innerHTML = '';
+			clearTasksList();
 			return;
 		}
 
+		// Bersihkan listener dan timer sebelum render ulang
 		if (tasksList._virtualScrollHandler) {
 			tasksList.removeEventListener('scroll', tasksList._virtualScrollHandler);
 			tasksList._virtualScrollHandler = null;
+		}
+		if (tasksList._scrollTimer) {
+			clearTimeout(tasksList._scrollTimer);
+			tasksList._scrollTimer = null;
 		}
 
 		// Clear list container
@@ -975,7 +1025,6 @@
 
 		const ITEM_HEIGHT_REM = 2.875; // 46px / 16 = 2.875rem
 		const OVERSCAN = 15;
-		let resultVirtualScrollTimer;
 
 		function getCurrentRemValue() {
 			return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -1069,8 +1118,9 @@
 		}
 
 		tasksList._virtualScrollHandler = function () {
-			if (resultVirtualScrollTimer) clearTimeout(resultVirtualScrollTimer);
-			resultVirtualScrollTimer = setTimeout(displayResults, 30); // Debounce
+			// Gunakan timer global yang diletakkan di object tasksList
+			if (tasksList._scrollTimer) clearTimeout(tasksList._scrollTimer);
+			tasksList._scrollTimer = setTimeout(displayResults, 30); // Debounce
 		};
 
 		tasksList.addEventListener('scroll', tasksList._virtualScrollHandler, { passive: true });
