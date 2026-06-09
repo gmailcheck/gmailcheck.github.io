@@ -984,6 +984,7 @@ window.loadHistoryList = async function (forceRefresh = false) {
             card.style.display = `flex`;
             card.style.flexDirection = `column`;
             card.style.gap = `12px`; // 0.75rem
+            card.style.cursor = `pointer`;
 
             // Humanize display count
             const displayLabel = entry.count.toLocaleString() + ' ' + (entry.typeLabel || 'emails');
@@ -1024,6 +1025,7 @@ window.loadHistoryList = async function (forceRefresh = false) {
             const dlBtn = card.querySelector('.download-btn');
             const delBtn = card.querySelector('.delete-btn');
             const detailsToggle = card.querySelector('.toggle-details-btn');
+            detailsToggle.classList.add('hide')
 
             copyBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1062,6 +1064,11 @@ window.loadHistoryList = async function (forceRefresh = false) {
                         window.loadHistoryList();
                     }
                 );
+            });
+
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showHistoryDetailsModal(entry);
             });
 
             detailsToggle.addEventListener('click', (e) => {

@@ -17,7 +17,7 @@ window.developerMenuItems = [
 window.documentationMenuItems = [
 	{ id: 'doc-payments', name: 'Billing & Payments', icon: 'fas fa-credit-card', pageLabel: 'Docs: Billing & Payments' },
 	{ id: 'doc-api-key', name: 'Developer API Key', icon: 'fas fa-key', pageLabel: 'Docs: Developer API Key' },
-	{ id: 'doc-gmail-checker', name: 'Gmail Checker', icon: 'fas fa-shield-halved', pageLabel: 'Docs: Gmail Checker' },
+	{ id: 'doc-gmail-checker', name: 'Gmail Checker', icon: 'fas fa-envelope', pageLabel: 'Docs: Gmail Checker' },
 	{ id: 'doc-dot-tricks', name: 'Gmail Dot Tricks', icon: 'fas fa-wand-magic-sparkles', pageLabel: 'Docs: Gmail Dot Tricks' },
 	{ id: 'doc-name-combiner', name: 'Name Combiner', icon: 'fas fa-shuffle', pageLabel: 'Docs: Name Combiner' },
 	{ id: 'doc-email-extractor', name: 'Email Extractor', icon: 'fas fa-filter', pageLabel: 'Docs: Email Extractor' },
@@ -51,7 +51,7 @@ window.menuItems = [
 		hasSubmenu: true,
 		isOpen: false,
 		submenu: [
-			{ id: 'app1', name: 'Gmail Checker', icon: 'fas fa-shield-halved', pageLabel: 'Gmail Checker', path: '/gmail-checker' },
+			{ id: 'app1', name: 'Gmail Checker', icon: 'fas fa-envelope', pageLabel: 'Gmail Checker', path: '/gmail-checker' },
 			{ id: 'app2', name: 'Gmail Dot Tricks', icon: 'fas fa-wand-magic-sparkles', pageLabel: 'Gmail Dot Tricks', path: '/gmail-dot-tricks' },
 			{ id: 'app3', name: 'Name Combiner', icon: 'fas fa-shuffle', pageLabel: 'Name Combiner', path: '/name-combiner' },
 			{ id: 'app4', name: 'Email Extractor', icon: 'fas fa-filter', pageLabel: 'Email Extractor & Remove Duplicates', path: '/email-extractor' },
@@ -598,8 +598,8 @@ function updateMetaHeader(menuId) {
 	};
 
 	const isDocMenu = [
-		'doc-payments', 'doc-api-key', 'doc-gmail-checker', 
-		'doc-dot-tricks', 'doc-name-combiner', 'doc-email-extractor', 
+		'doc-payments', 'doc-api-key', 'doc-gmail-checker',
+		'doc-dot-tricks', 'doc-name-combiner', 'doc-email-extractor',
 		'doc-notepad', 'doc-history'
 	].includes(menuId);
 

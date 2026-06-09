@@ -433,7 +433,7 @@
 								<!-- App 1 Card -->
 								<div class="dashboard-header-card home-feature-card">
 									<div class="home-feature-icon-wrapper-purple">
-										<i class="fa-solid fa-shield-halved"></i>
+										<i class="fa-solid fa-envelope"></i>
 									</div>
 									<h3 class="font-keren home-feature-title">
 										Bulk Gmail Checker</h3>
@@ -1646,27 +1646,25 @@
 							<div class="results-container hide" id="results-container-app1">
 								<div class="results-header">
 									<div class="filter-button-group">
-										<button class="btn filter-btn active btn-filter-pill-app" id="filter-all-app1"
-											data-filter="all">All <span id="count-all-app1"
+										<button class="btn filter-btn active" id="filter-all-app1" data-filter="all">All
+											<span id="count-all-app1"
 												class="app-stats-value-primary">(0)</span></button>
-										<button class="btn filter-btn btn-filter-pill-app" id="filter-live-app1"
-											data-filter="live">Live <span id="count-live-app1"
-												class="app-stats-value-live">(0)</span></button>
-										<button class="btn filter-btn hide btn-filter-pill-app" id="filter-ver-app1"
+										<button class="btn filter-btn" id="filter-live-app1" data-filter="live">Live
+											<span id="count-live-app1" class="app-stats-value-live">(0)</span></button>
+										<button class="btn filter-btn hide" id="filter-ver-app1"
 											data-filter="verify">Ver <span id="count-ver-app1"
 												class="app-stats-value-verify">(0)</span></button>
-										<button class="btn filter-btn hide btn-filter-pill-app"
+										<button class="btn filter-btn hide" id="filter-disabled-app1"
 											id="filter-disabled-app1" data-filter="disabled">Disabled <span
 												id="count-disabled-app1"
 												class="app-stats-value-disabled">(0)</span></button>
-										<button class="btn filter-btn hide btn-filter-pill-app"
+										<button class="btn filter-btn hide" id="filter-unregistered-app1"
 											id="filter-unregistered-app1" data-filter="unregistered">Unregistered <span
 												id="count-unregistered-app1"
 												class="app-stats-value-unregistered">(0)</span></button>
-										<button class="btn filter-btn btn-filter-pill-app" id="filter-bad-app1"
-											data-filter="bad">Bad <span id="count-bad-app1"
-												class="app-stats-value-bad">(0)</span></button>
-										<button class="btn filter-btn btn-filter-pill-app" id="filter-failed-app1"
+										<button class="btn filter-btn" id="filter-bad-app1" data-filter="bad">Bad <span
+												id="count-bad-app1" class="app-stats-value-bad">(0)</span></button>
+										<button class="btn filter-btn" id="filter-failed-app1"
 											data-filter="failed">Failed <span id="count-failed-app1"
 												class="app-stats-value-failed">(0)</span></button>
 									</div>
@@ -1680,7 +1678,7 @@
 							<!-- Controls Sidebar -->
 							<div class="controls">
 								<div class="control-title">
-									<i class="fa-solid fa-shield-halved "></i> Gmail Checker
+									<i class="fa-solid fa-envelope"></i> Gmail Checker
 								</div>
 								<p class="app-sidebar-desc">
 									Verify active Gmail status, live, disabled, unregistered, and bad status.
@@ -1704,26 +1702,26 @@
 									Issues
 								</button>
 								<button class="btn style-mtb-10" id="btn-execute-app1" title="Start Verification">
-									<i class="fa-solid fa-magnifying-glass inline-style-gen-77"></i> Check
+									Check
 								</button>
 								<button class="btn style-mtb-10 btn-app-stop hide" id="btn-stop-app1"
 									title="Stop Verification">
 									<i class="fa fa-solid fa-stop inline-style-gen-4"></i> Stop
 								</button>
 								<button class="btn style-mtb-10" id="btn-add-domain-app1" title="Insert @gmail.com">
-									<i class="fa-solid fa-plus inline-style-gen-29"></i> @gmail.com
+									+ @gmail.com
 								</button>
 								<button class="btn style-mtb-10" id="btn-clear-app1" title="Clear Input">
-									<i class="fa-solid fa-trash-can inline-style-gen-4"></i> Clear
+									Clear
 								</button>
 								<button class="btn hide style-mtb-10" id="btn-copy-app1">
-									<i class="fa-solid fa-copy inline-style-gen-60"></i> Copy Active Results
+									Copy Active Results
 								</button>
 								<button class="btn hide style-mtb-10" id="btn-download-app1">
-									<i class="fa-solid fa-download"></i> Download All (TXT)
+									Download All (TXT)
 								</button>
 								<button class="btn hide style-mtb-10" id="btn-download-all-app1">
-									<i class="fa-solid fa-file-zipper inline-style-gen-84"></i>Download All (ZIP)
+									<i class="fa-solid fa-file-zipper"></i>Download All (ZIP)
 								</button>
 
 								<div class="app-sidebar-stats-card">
@@ -1800,7 +1798,7 @@
 							<div class="results-container hide" id="results-container-app2">
 								<div class="results-header">
 									<div class="app-stats-total-header">
-										<i class="fa-solid fa-gauge-high "></i> Bulk Dashboard
+										Results
 									</div>
 								</div>
 
@@ -1835,13 +1833,13 @@
 									<i class="fa-solid fa-screwdriver-wrench inline-style-gen-4"></i> Quick Fix Issues
 								</button>
 								<button class="btn style-mtb-10" id="btn-generate-app2">
-									<i class="fa-solid fa-dna"></i> Generate
+									Generate
 								</button>
 								<button class="btn style-mtb-10" id="btn-add-domain-app2">
-									<i class="fa-solid fa-plus"></i> @gmail.com
+									+ @gmail.com
 								</button>
 								<button class="btn style-mtb-10" id="btn-clear-app2">
-									<i class="fa-solid fa-trash-can"></i> Clear
+									Clear
 								</button>
 								<button class="btn hide style-mtb-10" id="btn-copy-app2">
 									<i class="fa-solid fa-copy"></i> Copy All Results
@@ -1897,8 +1895,7 @@
 							<div class="results-container hide" id="results-container-app3">
 								<div class="results-header">
 									<div class="app-stats-total-header">
-										<i class="fa-solid fa-gauge-high "></i> Permutation
-										Dashboard
+										Results
 									</div>
 								</div>
 
@@ -1929,10 +1926,10 @@
 									<i class="fa-solid fa-screwdriver-wrench"></i> Quick Fix Issues
 								</button>
 								<button class="btn style-mtb-10" id="btn-generate-app3">
-									<i class="fa-solid fa-dna"></i> Generate
+									Generate
 								</button>
 								<button class="btn style-mtb-10" id="btn-clear-app3">
-									<i class="fa-solid fa-trash-can"></i> Clear
+									Clear
 								</button>
 								<button class="btn hide style-mtb-10" id="btn-copy-app3">
 									<i class="fa-solid fa-copy"></i> Copy All Results
@@ -2066,7 +2063,7 @@
 								<!-- Action CTA Buttons -->
 								<div class="app2-controls-wrapper">
 									<button class="btn style-mtb-10" id="btn-extractor-run">
-										<i class="fa-solid fa-wand-magic-sparkles"></i> Extract & Clean
+										Extract & Clean
 									</button>
 									<button class="btn hide style-mtb-10" id="btn-extractor-copy">
 										<i class="fa-solid fa-copy"></i> Copy Extracted
@@ -2075,7 +2072,7 @@
 										<i class="fa-solid fa-download"></i> Download (TXT)
 									</button>
 									<button class="btn style-mtb-10" id="btn-extractor-clear">
-										<i class="fa-solid fa-trash-can"></i> Clear
+										Clear
 									</button>
 								</div>
 
@@ -2327,7 +2324,7 @@
 							<div class="dashboard-header-card documentation-card">
 								<div class="dashboard-tier-wrapper">
 									<div class="legal-header-icon-wrapper">
-										<i class="fa-solid fa-shield-halved"></i>
+										<i class="fa-solid fa-envelope"></i>
 									</div>
 									<div>
 										<h2 class="font-keren documentation-title">

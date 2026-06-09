@@ -180,10 +180,6 @@
     box-shadow: var(--shadow-sm);
 }
 
-.inline-style-gen-29 {
-    color: #f3a006;
-}
-
 .inline-style-gen-30 {
     color: var(--text-secondary);
     line-height: 1.5;
@@ -533,8 +529,8 @@
     align-items: center;
 }
 
-.inline-style-gen-84 {
-    color: #044400ff;
+.fa-file-zipper {
+    color: rgb(255, 136, 0);
 }
 
 .inline-style-gen-85 {

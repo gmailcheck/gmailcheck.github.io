@@ -286,6 +286,10 @@
 			btnDownloadAll.classList.add('hide');
 			backBtnWrapper.classList.remove('hide');
 			app2Instruction.classList.add('hide');
+			selectModeContainer.classList.add('hide');
+			btnGenerate.classList.add('hide');
+			btnClear.classList.add('hide');
+			btnAddDomain.classList.add('hide');
 
 			taskResults.clear();
 			isRunning = true;
@@ -467,10 +471,6 @@
 
 							// If all tasks completed, display all action buttons
 							if (completedTasks === totalInputEmails) {
-								selectModeContainer.classList.add('hide');
-								btnGenerate.classList.add('hide');
-								btnClear.classList.add('hide');
-								btnAddDomain.classList.add('hide');
 								btnCopy.classList.remove('hide');
 								btnDownload.classList.remove('hide');
 								btnDownloadAll.classList.remove('hide');

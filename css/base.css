@@ -340,19 +340,6 @@ body {
 }
 
 /* Premium Curated Icon Colors Inside Buttons (Excluding Sidebar Navigation) */
-button i.fa-magnifying-glass,
-button i.fa-search,
-.btn i.fa-magnifying-glass,
-.btn i.fa-search {
-    color: #00d2ff !important;
-    /* Cyan / Search */
-}
-
-button i.fa-plus,
-.btn i.fa-plus {
-    color: #ff9f43 !important;
-    /* Amber / Add */
-}
 
 button i.fa-trash,
 button i.fa-trash-can,
@@ -400,12 +387,10 @@ button i.fa-hourglass,
 button i.fa-hourglass-half,
 button i.fa-hourglass-start,
 button i.fa-hourglass-empty,
-button i.fa-dna,
 .btn i.fa-hourglass,
 .btn i.fa-hourglass-half,
 .btn i.fa-hourglass-start,
-.btn i.fa-hourglass-empty,
-.btn i.fa-dna {
+.btn i.fa-hourglass-empty {
     color: #1e90ff !important;
     /* Dodger Blue / Hourglass & DNA (Generate) */
 }

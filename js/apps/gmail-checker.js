@@ -8,7 +8,7 @@
 	const btnBack = document.getElementById('btn-back-app1');
 	const app1Instruction = document.getElementById('app1-instruction');
 	const btnExecute = document.getElementById('btn-execute-app1');
-	const btnStop = document.getElementById('btn-stop-app1');
+	const stopBtn = document.getElementById('btn-stop-app1');
 	const btnClear = document.getElementById('btn-clear-app1');
 	const btnAddDomain = document.getElementById('btn-add-domain-app1');
 	const btnFix = document.getElementById('btn-fix-app1');
@@ -70,7 +70,6 @@
 	}
 
 	function showProgressOverlay() {
-		// Pindahkan semua style ke CSS agar lebih rapi dan bisa pakai animasi kompleks
 		if (!document.getElementById('progress-overlay-styles')) {
 			const style = document.createElement('style');
 			style.id = 'progress-overlay-styles';
@@ -84,6 +83,11 @@
 					50% { box-shadow: 0 10px 50px 0px rgba(0, 255, 255, 0.3); }
 					100% { box-shadow: 0 10px 40px -10px rgba(175, 134, 252, 0.2); }
 				}
+				@keyframes progressMiniPulseGlow {
+					0% { box-shadow: 0 0 10px rgba(255, 208, 0, 0.5); }
+					50% { box-shadow: 0 0 20px rgba(255, 208, 0, 0.8); }
+					100% { box-shadow: 0 0 10px rgba(255, 208, 0, 0.5); }
+				}
 				@keyframes progressSpin {
 					from { transform: rotate(0deg); }
 					to { transform: rotate(360deg); }
@@ -92,12 +96,149 @@
 					0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 8px #00ffff; }
 					50% { opacity: 0.4; transform: scale(0.8); box-shadow: 0 0 2px #00ffff; }
 				}
+				@keyframes gcMiniFadeIn {
+					from { opacity: 0; transform: translateY(20px); }
+					to { opacity: 1; transform: translateY(0); }
+				}
+
+				/* ===== FULL OVERLAY MODE ===== */
 				.gc-overlay-glass {
 					position: absolute; width: 100%; height: 100%; top: 0; left: 0;
 					display: flex; flex-direction: column; align-items: center; justify-content: center;
 					z-index: 999; animation: progressFadeIn 0.4s ease forwards;
-					background: rgba(10, 10, 15, 0.1); pointer-events: none;
+					background: rgba(10, 10, 15, 0.65);
+					backdrop-filter: blur(10px);
+					-webkit-backdrop-filter: blur(10px);
+					pointer-events: auto;
 				}
+				.gc-overlay-glass.gc-minimized {
+					position: fixed;
+					width: auto; height: auto;
+					top: auto; left: auto;
+					bottom: 24px; right: 24px;
+					background: none;
+					backdrop-filter: none;
+					-webkit-backdrop-filter: none;
+					align-items: flex-end;
+					justify-content: flex-end;
+					animation: gcMiniFadeIn 0.3s ease forwards;
+					z-index: 9999;
+				}
+				.gc-overlay-glass.gc-minimized .gc-modal-card {
+					display: none;
+				}
+				.gc-mini-bar {
+					display: none;
+				}
+				.gc-overlay-glass.gc-minimized .gc-mini-bar {
+					display: flex;
+					flex-direction: column;
+					gap: 8px;
+					background: linear-gradient(145deg, rgba(20, 20, 35, 0.97), rgba(10, 10, 20, 0.99));
+					border: 1px solid rgba(255, 255, 255, 0.1);
+					border-radius: 16px;
+					padding: 12px 16px;
+					min-width: 280px;
+					max-width: 340px;
+					pointer-events: auto;
+					animation: progressMiniPulseGlow 3s infinite ease-in-out;
+				}
+
+				/* Mini bar header */
+				.gc-mini-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					gap: 10px;
+				}
+				.gc-mini-title {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					font-size: 0.78rem;
+					font-weight: 600;
+					color: #c0c0d0;
+					letter-spacing: 0.5px;
+				}
+				.gc-mini-dot {
+					width: 7px; height: 7px; border-radius: 50%; background: #00ffff;
+					animation: progressDotPulse 1.5s infinite ease-in-out;
+					flex-shrink: 0;
+				}
+				.gc-mini-actions {
+					display: flex;
+					align-items: center;
+					gap: 6px;
+				}
+				.gc-btn-mini-maximize, .gc-btn-mini-stop {
+					background: transparent;
+					border: 1px solid rgba(255,255,255,0.12);
+					border-radius: 8px;
+					color: #a0a0b8;
+					cursor: pointer;
+					width: 28px; height: 28px;
+					display: flex; align-items: center; justify-content: center;
+					font-size: 0.75rem;
+					transition: all 0.15s ease;
+					flex-shrink: 0;
+				}
+				.gc-btn-mini-maximize:hover {
+					background: rgba(175, 134, 252, 0.15);
+					border-color: rgba(175, 134, 252, 0.4);
+					color: #af86fc;
+				}
+				.gc-btn-mini-stop {
+					border-color: rgba(255, 77, 77, 0.25);
+					color: #ff7777;
+				}
+				.gc-btn-mini-stop:hover {
+					background: rgba(255, 77, 77, 0.15);
+					border-color: rgba(255, 77, 77, 0.5);
+					color: #ff4444;
+				}
+
+				/* Mini progress track */
+				.gc-mini-progress-track {
+					width: 100%;
+					height: 5px;
+					background: rgba(255, 255, 255, 0.06);
+					border-radius: 100px;
+					overflow: hidden;
+				}
+				.gc-mini-progress-fill {
+					height: 100%;
+					width: 0%;
+					border-radius: 100px;
+					background: linear-gradient(90deg, #af86fc, #00ffff);
+					transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+					box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+				}
+
+				/* Mini info row */
+				.gc-mini-info {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					gap: 8px;
+				}
+				.gc-mini-status-text {
+					font-size: 0.72rem;
+					color: #707090;
+					flex: 1;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+				.gc-mini-pct {
+					font-size: 0.82rem;
+					font-weight: 700;
+					background: linear-gradient(90deg, #af86fc, #00ffff);
+					-webkit-background-clip: text;
+					-webkit-text-fill-color: transparent;
+					flex-shrink: 0;
+				}
+
+				/* ===== FULL MODAL CARD ===== */
 				.gc-modal-card {
 					position: relative; min-width: 280px; display: flex; flex-direction: column;
 					align-items: center; justify-content: center; padding: 40px 30px;
@@ -105,10 +246,54 @@
 					border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px;
 					animation: progressPulseGlow 3s infinite ease-in-out;
 				}
+				.gc-btn-minimize {
+					position: absolute;
+					top: 14px; right: 14px;
+					background: rgba(255,255,255,0.05);
+					border: 1px solid rgba(255,255,255,0.1);
+					border-radius: 8px;
+					color: #707090;
+					cursor: pointer;
+					width: 30px; height: 30px;
+					display: flex; align-items: center; justify-content: center;
+					font-size: 0.8rem;
+					transition: all 0.15s ease;
+				}
+				.gc-btn-minimize:hover {
+					background: rgba(175, 134, 252, 0.15);
+					border-color: rgba(175, 134, 252, 0.4);
+					color: #af86fc;
+				}
 				.gc-ring-wrapper {
 					position: relative; width: 150px; height: 150px; display: flex;
 					align-items: center; justify-content: center; margin-bottom: 28px;
 				}
+				.gc-modal-card #btn-stop-app1 {
+					position: relative;
+					margin-top: 24px;
+					background: linear-gradient(135deg, #ff4d4d 0%, #cc0000 100%);
+					border: 1px solid rgba(255, 255, 255, 0.15);
+					box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+					color: #ffffff;
+					padding: 10px 24px;
+					font-size: 0.9rem;
+					font-weight: 600;
+					border-radius: 20px;
+					cursor: pointer;
+					display: flex !important;
+					align-items: center;
+					gap: 8px;
+					transition: all 0.2s ease-in-out;
+					pointer-events: auto;
+				}
+				.gc-modal-card #btn-stop-app1 .inline-style-gen-4 { color: #ffffff; }
+				.gc-modal-card #btn-stop-app1:hover {
+					background: linear-gradient(135deg, #ff6666 0%, #e60000 100%);
+					box-shadow: 0 6px 20px rgba(255, 77, 77, 0.6);
+					transform: scale(1.05);
+				}
+				.gc-modal-card #btn-stop-app1:active { transform: scale(0.95); }
+				.gc-modal-card #btn-stop-app1.hide { display: none !important; }
 				.gc-spin-dashed {
 					position: absolute; width: 166px; height: 166px; border-radius: 50%;
 					border: 2px dashed rgba(175, 134, 252, 0.3);
@@ -151,23 +336,18 @@
 
 			overlay.innerHTML = `
 				<div class="gc-modal-card">
+					<button class="gc-btn-minimize" id="gc-btn-minimize" title="Minimize">
+						<i class="fa-solid fa-minus"></i>
+					</button>
 					<div class="gc-ring-wrapper">
 						<div class="gc-spin-dashed"></div>
 						<svg data-rds-skip="true" viewBox="0 0 140 140" style="width: 150px; height: 150px; transform: rotate(-90deg); overflow: visible;">
-							<circle cx="70" cy="70" r="60" 
-									fill="none" 
-									stroke="rgba(255, 255, 255, 0.03)" 
-									stroke-width="8" />
-							<!-- Circumference: 2 * PI * 60 = 376.991 -->
-							<circle id="progress-circle-bar" cx="70" cy="70" r="60" 
-									fill="none" 
-									stroke="url(#progress-grad)" 
-									stroke-width="8" 
-									stroke-dasharray="376.991" 
-									stroke-dashoffset="376.991" 
-									stroke-linecap="round"
-									filter="url(#progress-shadow)"
-									style="transition: stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1);" />
+							<circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="8" />
+							<circle id="progress-circle-bar" cx="70" cy="70" r="60"
+								fill="none" stroke="url(#progress-grad)" stroke-width="8"
+								stroke-dasharray="376.991" stroke-dashoffset="376.991"
+								stroke-linecap="round" filter="url(#progress-shadow)"
+								style="transition: stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1);" />
 							<defs>
 								<linearGradient id="progress-grad" x1="0%" y1="0%" x2="100%" y2="100%">
 									<stop offset="0%" stop-color="#af86fc" />
@@ -188,8 +368,66 @@
 						<span id="progress-status-text">Preparing...</span>
 					</div>
 				</div>
+				<div class="gc-mini-bar">
+					<div class="gc-mini-header">
+						<div class="gc-mini-title">
+							<div class="gc-mini-dot"></div>
+							Gmail Checker
+						</div>
+						<div class="gc-mini-actions">
+							<button class="gc-btn-mini-maximize" id="gc-btn-maximize" title="Maximize">
+								<i class="fa-solid fa-expand"></i>
+							</button>
+							<button class="gc-btn-mini-stop" id="gc-btn-mini-stop" title="Stop">
+								<i class="fa-solid fa-stop"></i>
+							</button>
+						</div>
+					</div>
+					<div class="gc-mini-progress-track">
+						<div class="gc-mini-progress-fill" id="gc-mini-fill"></div>
+					</div>
+					<div class="gc-mini-info">
+						<span class="gc-mini-status-text" id="gc-mini-status">Preparing...</span>
+						<span class="gc-mini-pct" id="gc-mini-pct">0%</span>
+					</div>
+				</div>
 			`;
 			document.body.appendChild(overlay);
+
+			// Tombol minimize
+			overlay.querySelector('#gc-btn-minimize').addEventListener('click', () => {
+				overlay.classList.add('gc-minimized');
+				// Pindahkan stopBtn kembali ke .controls
+				const btnAddDomain = document.getElementById('btn-add-domain-app1');
+				if (btnAddDomain && btnAddDomain.parentNode && stopBtn) {
+					btnAddDomain.parentNode.insertBefore(stopBtn, btnAddDomain);
+				}
+			});
+
+			// Tombol maximize (kembali ke full)
+			overlay.querySelector('#gc-btn-maximize').addEventListener('click', () => {
+				overlay.classList.remove('gc-minimized');
+				// Pindahkan stopBtn kembali ke .gc-modal-card
+				const modalCard = overlay.querySelector('.gc-modal-card');
+				if (modalCard && stopBtn) {
+					modalCard.appendChild(stopBtn);
+				}
+			});
+
+			// Tombol stop di mini bar — trigger klik ke stop button asli
+			overlay.querySelector('#gc-btn-mini-stop').addEventListener('click', () => {
+				const realStop = document.getElementById('btn-stop-app1');
+				if (realStop) realStop.click();
+			});
+		}
+
+		// Pastikan kembali ke mode full saat overlay ditampilkan ulang
+		overlay.classList.remove('gc-minimized');
+
+		// Pindahkan #btn-stop-app1 ke paling bawah di dalam .gc-modal-card
+		const modalCard = overlay.querySelector('.gc-modal-card');
+		if (modalCard && stopBtn) {
+			modalCard.appendChild(stopBtn);
 		}
 	}
 
@@ -200,29 +438,44 @@
 		const statusTextDiv = document.getElementById('progress-status-text');
 
 		if (circleBar) {
-			// Update ke ukuran keliling (circumference) baru untuk radius 60px
 			const circumference = 376.991;
 			const offset = circumference - (percentage / 100) * circumference;
 			circleBar.setAttribute('stroke-dashoffset', offset);
 			circleBar.style.strokeDashoffset = String(offset);
 		}
-		if (pctSpan) {
-			pctSpan.textContent = `${Math.round(percentage)}%`;
-		}
-		if (fractionSpan) {
-			fractionSpan.textContent = `${completed} / ${total}`;
-		}
-		if (statusTextDiv && statusText) {
-			statusTextDiv.innerHTML = statusText;
-		}
+		if (pctSpan) pctSpan.textContent = `${Math.round(percentage)}%`;
+		if (fractionSpan) fractionSpan.textContent = `${completed} / ${total}`;
+		if (statusTextDiv && statusText) statusTextDiv.innerHTML = statusText;
+
+		// Sync mini bar
+		const miniFill = document.getElementById('gc-mini-fill');
+		const miniPct = document.getElementById('gc-mini-pct');
+		const miniStatus = document.getElementById('gc-mini-status');
+		if (miniFill) miniFill.style.width = `${Math.min(100, Math.round(percentage))}%`;
+		if (miniPct) miniPct.textContent = `${Math.round(percentage)}%`;
+		if (miniStatus && statusText) miniStatus.textContent = statusText.replace(/<[^>]*>/g, '');
 	}
+
 
 	function hideProgressOverlay() {
 		const overlay = document.getElementById('gmail-checker-progress-overlay');
 		if (overlay) {
+			// Kembalikan #btn-stop-app1 ke posisi semula
+			if (stopBtn) {
+				const btnAddDomain = document.getElementById('btn-add-domain-app1');
+				if (btnAddDomain && btnAddDomain.parentNode) {
+					btnAddDomain.parentNode.insertBefore(stopBtn, btnAddDomain);
+				} else {
+					document.body.appendChild(stopBtn);
+				}
+				stopBtn.classList.add('hide');
+			}
 			overlay.remove();
 		}
 	}
+
+
+
 
 	// Dynamic script loading for JSZip
 	function loadJSZip(callback) {
@@ -586,12 +839,12 @@
 		// UI transitions
 		inputContainer.classList.add('hide');
 		resultsContainer.classList.remove('hide');
-
+		selectServerContainer.classList.add('hide');
 		backBtnWrapper.classList.add('hide');
 		btnExecute.classList.add('hide');
 		btnClear.classList.add('hide');
 		btnAddDomain.classList.add('hide');
-		btnStop.classList.remove('hide');
+		stopBtn.classList.remove('hide');
 		btnCopy.classList.add('hide');
 		btnDownload.classList.add('hide');
 		btnDownloadAll.classList.add('hide');
@@ -678,7 +931,7 @@
 							if (abortController) abortController.abort();
 							isRunning = false;
 							btnExecute.classList.remove('hide');
-							btnStop.classList.add('hide');
+							stopBtn.classList.add('hide');
 							backBtnWrapper.classList.remove('hide');
 
 							hideProgressOverlay();
@@ -791,8 +1044,7 @@
 		if (completedChunks === chunks.length) {
 			// Entire Verification completed
 			isRunning = false;
-			btnExecute.classList.remove('hide');
-			btnStop.classList.add('hide');
+			stopBtn.classList.add('hide');
 			backBtnWrapper.classList.remove('hide');
 
 			if (typeof window.refreshRealtimeProfile === 'function') {
@@ -801,8 +1053,6 @@
 
 			// Hide progress overlay and hide input container on completion
 			hideProgressOverlay();
-			inputContainer.classList.add('hide');
-
 			// Auto switch to 'All' tab on completion
 			currentFilter = 'all';
 			filterButtons.forEach(b => {
@@ -810,8 +1060,6 @@
 			});
 			if (filterAll) filterAll.classList.add('active');
 			renderResultsList(true);
-
-			selectServerContainer.classList.add('hide');
 			btnExecute.classList.add('hide');
 			btnAddDomain.classList.add('hide');
 			btnClear.classList.add('hide');
@@ -882,23 +1130,48 @@
 	}
 
 	// Stop/Cancel Verification handler
-	btnStop.addEventListener('click', function () {
-		if (abortController) {
-			abortController.abort();
-		}
+	stopBtn.addEventListener('click', function () {
+		// Entire Verification completed
 		isRunning = false;
-
-
-		btnExecute.classList.remove('hide');
-		btnStop.classList.add('hide');
+		stopBtn.classList.add('hide');
 		backBtnWrapper.classList.remove('hide');
-		app1Instruction.classList.remove('hide');
 
+		if (typeof window.refreshRealtimeProfile === 'function') {
+			window.refreshRealtimeProfile();
+		}
+
+		// Hide progress overlay and hide input container on completion
 		hideProgressOverlay();
-		inputContainer.classList.add('hide');
+		// Auto switch to 'All' tab on completion
+		currentFilter = 'all';
+		filterButtons.forEach(b => {
+			if (b) b.classList.remove('active');
+		});
+		if (filterAll) filterAll.classList.add('active');
+		renderResultsList(true);
+		btnExecute.classList.add('hide');
+		btnAddDomain.classList.add('hide');
+		btnClear.classList.add('hide');
+		btnCopy.classList.remove('hide');
+		btnDownload.classList.remove('hide');
+		if (results.length > 50) btnDownloadAll.classList.remove('hide');
+		updateDownloadButtonsLabels();
 
+		window.showAppNotification('success', `<strong>Verification Completed:</strong> Successfully processed <strong>${results.length.toLocaleString()} email(s)</strong>!`);
+
+		// Play premium chime sound if enabled
+		if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
+			window.playSuccessChime();
+		}
+
+		// Send finished system notification
 		window.showAppNotification('danger', '<strong>Cancelled:</strong> Verification process was stopped by user.');
+
+		// Persist unified history for dashboard
+		saveUnifiedHistory();
 	});
+
+
 
 	// Back/Reset button
 	btnBack.addEventListener('click', function () {

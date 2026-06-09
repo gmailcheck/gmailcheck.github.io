@@ -59,13 +59,6 @@
     color: var(--text-muted);
 }
 
-/* App 1 (Gmail Checker) active results filter buttons layout */
-
-.btn-filter-pill-app {
-    border-radius: 100px;
-    padding: 6px 12px;
-}
-
 .btn-app-quick-fix {
     background: linear-gradient(135deg, #ffcc00 0%, #d4a000 100%);
     border: none;
@@ -79,17 +72,6 @@
     display: none;
 }
 
-.btn-app-clear {
-    border-color: rgba(255, 77, 77, 0.2);
-    color: #ff6666;
-    margin-bottom: 5px;
-}
-
-.btn-app-copy {
-    border-color: #af86fc;
-    color: #af86fc;
-    margin-bottom: 15px;
-}
 
 .app-stats-value-primary {
     color: var(--text-sharp);
@@ -186,7 +168,6 @@
     background: transparent;
     border: none;
     color: #00f0ff;
-
     height: 100%;
     min-height: 250px;
     outline: none;
@@ -427,6 +408,19 @@
     gap: 10px;
     flex-wrap: wrap;
 }
+
+.filter-btn {
+    border-radius: 100px;
+    padding: 6px 12px;
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, rgba(0, 238, 255, 0.35) 0%, rgba(0, 238, 255, 0.35) 100%) !important;
+    border-color: #00f0ff !important;
+    color: #00f0ff !important;
+    box-shadow: 0 4px 15px rgba(0, 238, 255, 0.1) !important;
+}
+
 
 @keyframes fadeInTab {
     from {
