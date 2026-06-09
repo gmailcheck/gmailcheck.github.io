@@ -417,7 +417,6 @@
 .filter-btn.active {
     background: linear-gradient(135deg, rgba(0, 238, 255, 0.35) 0%, rgba(0, 238, 255, 0.35) 100%) !important;
     border-color: #00f0ff !important;
-    color: #00f0ff !important;
     box-shadow: 0 4px 15px rgba(0, 238, 255, 0.1) !important;
 }
 
