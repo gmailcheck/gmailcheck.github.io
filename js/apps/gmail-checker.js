@@ -65,6 +65,11 @@
 			clearTimeout(tasksList._scrollTimer);
 			tasksList._scrollTimer = null;
 		}
+		// Hapus ResizeObserver jika ada
+		if (tasksList._resizeObserver) {
+			tasksList._resizeObserver.disconnect();
+			tasksList._resizeObserver = null;
+		}
 		// Kosongkan HTML
 		tasksList.innerHTML = '';
 	}
