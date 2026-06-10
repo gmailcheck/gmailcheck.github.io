@@ -1097,14 +1097,17 @@
 						if (!Array.isArray(data) || data.length === 0) {
 							throw new Error(data?.error || 'Server overloaded');
 						}
-
 						// Parse API Status
 						chunkResults = [];
 						let batchFailedCount = 0;
 						data.forEach(item => {
 							let status = (item.status).toLowerCase();
 							if (isFastServer) {
-								status = (status === 'live' || status === 'good') ? 'good' : 'bad';
+								if (status === 'failed') {
+									status = 'failed';
+								} else {
+									status = (status === 'live' || status === 'good') ? 'good' : 'bad';
+								}
 							} else {
 								const allowed = ['live', 'verify', 'disabled', 'unregistered', 'failed'];
 								if (!allowed.includes(status)) status = 'failed';
