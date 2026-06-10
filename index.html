@@ -2345,10 +2345,12 @@
 									<ul class="documentation-code-list" style="margin-left: 20px; margin-bottom: 20px;">
 										<li><strong>Fast Check:</strong> High-speed syntax analysis and lightning-fast
 											response checks. Best for rapid sorting and filtering of massive bulk lists.
+											Processes <strong>1,000 emails per chunk</strong> for maximum throughput.
 										</li>
 										<li><strong>Deep Check:</strong> Performs an exhaustive, real-time mailbox
 											availability check, and anti-greylisting checks. Slower but achieves
-											absolute 100% verification accuracy.</li>
+											absolute 100% verification accuracy. Processes <strong>100 emails per
+												chunk</strong> for unparalleled stability and precision.</li>
 									</ul>
 
 									<h4 class="font-keren documentation-section-heading">Pay-on-Success Credit Refund
@@ -2518,11 +2520,13 @@
 												back to your API Key balance automatically!
 											</li>
 											<li><strong>Maximum Payload Ceiling:</strong> A single API request/batch can
-												contain a maximum of <strong>100,000 emails</strong>. Any request
+												contain a maximum of <strong>2,000 emails</strong>. Any request
 												exceeding this limit will be instantly rejected with a
-												<code>400 Bad Request</code> to guarantee server memory stability and
-												ultra-low latency. If you have larger lists, please divide them into
-												multiple chunks or use streaming.
+												<code>400 Bad Request</code> to prevent HTTP timeouts and guarantee
+												server memory stability. If you have larger lists (e.g., 100,000
+												emails), you MUST apply <strong>chunking</strong> on your end (divide
+												your list into 50 separate API requests of 2,000 emails each) and send
+												them sequentially.
 											</li>
 											<li><strong>Interchangeable Terms:</strong> Under the hood,
 												<strong>Credits</strong> and <strong>Daily Limit</strong> refer to the
