@@ -202,8 +202,6 @@ function initDashboard() {
 		});
 	}
 
-
-
 	// 5. UPGRADE TO PRICING BUTTON (from Dashboard Premium info panel)
 	const btnGoToPricing = document.getElementById('btn-dashboard-go-pricing');
 	if (btnGoToPricing) {
@@ -1131,12 +1129,12 @@ window.connectPresenceWS = function (idToken) {
 				clearInterval(window.presencePingInterval);
 			}
 
-			// Send ping heartbeats every 45 seconds to keep connection alive
+			// Send ping heartbeats every 25 seconds to keep connection alive (handles background throttling better)
 			window.presencePingInterval = setInterval(() => {
 				if (ws.readyState === WebSocket.OPEN) {
 					ws.send(JSON.stringify({ type: "ping" }));
 				}
-			}, 45000);
+			}, 25000);
 		};
 
 		ws.onmessage = (event) => {
@@ -1155,7 +1153,7 @@ window.connectPresenceWS = function (idToken) {
 		ws.onclose = (event) => {
 			// Print warning only on abnormal close (e.g. server crash or internet drop)
 			if (event.code !== 1000 && event.code !== 1001 && event.code !== 1005) {
-				console.warn(`⚠️ Presence WS closed (Code: ${event.code}). Reconnecting in 5s...`);
+				console.warn(`⚠️ Presence WS closed (Code: ${event.code}). Reconnecting fast...`);
 			}
 
 			cleanupActivityListeners();
@@ -1166,6 +1164,7 @@ window.connectPresenceWS = function (idToken) {
 
 			// Reconnect automatically if user is still logged in
 			if (window.isUserAuthenticated) {
+				// Fast reconnect (1.5s instead of 5s) for snappy user experience
 				setTimeout(async () => {
 					try {
 						const freshToken = await window.getAuthToken();
@@ -1175,7 +1174,7 @@ window.connectPresenceWS = function (idToken) {
 					} catch (e) {
 						console.error("Failed to get fresh token for WS reconnect:", e);
 					}
-				}, 5000);
+				}, 1500);
 			}
 		};
 
@@ -1226,6 +1225,12 @@ window.healWebSockets = async function () {
 			}
 		} catch (err) {
 			console.error("Failed to heal WebSockets:", err);
+		}
+	} else {
+		// Connection is still alive, but tab was just focused.
+		// Immediately ask server for latest profile to sync any background updates!
+		if (window.refreshRealtimeProfile) {
+			window.refreshRealtimeProfile();
 		}
 	}
 };

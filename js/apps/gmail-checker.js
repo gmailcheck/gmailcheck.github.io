@@ -474,9 +474,6 @@
 		}
 	}
 
-
-
-
 	// Dynamic script loading for JSZip
 	function loadJSZip(callback) {
 		if (window.JSZip) {
@@ -786,6 +783,109 @@
 		});
 	}
 
+	// --- HELPER: MENUNGGU WEBSOCKET SYNC ---
+	function waitForProfileSync(timeoutMs = 60000) {
+		return new Promise((resolve) => {
+			const interval = 100; // Cek setiap 100ms
+			let elapsed = 0;
+
+			const check = setInterval(() => {
+				// Tanda data WS sudah asli masuk: Ada property 'email' di dalam object
+				if (typeof window.refreshRealtimeProfile === 'function') {
+					window.refreshRealtimeProfile();
+				}
+				if (window.dashboardProfile && window.dashboardProfile.email) {
+					clearInterval(check);
+					resolve(true);
+				}
+				elapsed += interval;
+				if (elapsed >= timeoutMs) {
+					clearInterval(check);
+					resolve(false); // Timeout (Internet lemot/WS gagal)
+				}
+			}, interval);
+		});
+	}
+
+	// --- HELPER: MENDAPATKAN TOTAL KREDIT YANG AKURAT (STRICT MODE) ---
+	function getAccurateAvailableCredits() {
+		// Pastikan objectnya bukan cuma {} kosong, harus ada .email (bukti dari WS)
+		if (window.dashboardProfile && window.dashboardProfile.email) {
+			const profile = window.dashboardProfile;
+			let plan = profile.subscription_plan || 'none';
+			const expiry = profile.subscription_expiry || 0;
+			if (plan !== 'none' && expiry < Date.now()) plan = 'none';
+
+			let dailyCredits = 0;
+			const isSubActive = plan !== 'none' && plan !== 'free';
+			if (plan === 'pro_subs') dailyCredits = profile.pro_subs_credits || 0;
+			else if (plan === 'ultra_subs') dailyCredits = profile.ultra_subs_credits || 0;
+			else if (plan === 'special_subs') dailyCredits = profile.special_credits || 0;
+
+			// Strict ambil angkanya, jangan fallback ke 0 kalau undef supaya ketahuan errornya
+			const freeCredits = profile.free_credits !== undefined ? profile.free_credits : 0;
+			const apiCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
+
+			return freeCredits + dailyCredits + apiCredits;
+		}
+
+		return null; // Data belum siap
+	}
+
+	// --- FUNGSI SENTRAL UNTUK MENGAKHIRI PROSES (CLEANUP & SAVE) ---
+	function finalizeExecution(endReason, customMsg = '', remainingCredits = 0) {
+		isRunning = false;
+
+		// Sembunyikan progress dan kembalikan tombol
+		hideProgressOverlay();
+		stopBtn.classList.add('hide');
+		backBtnWrapper.classList.remove('hide');
+		btnExecute.classList.add('hide');
+		btnAddDomain.classList.add('hide');
+		btnClear.classList.add('hide');
+
+		// Tampilkan tombol download jika ada hasil
+		if (results.length > 0) {
+			btnCopy.classList.remove('hide');
+			btnDownload.classList.remove('hide');
+			if (results.length > 50) btnDownloadAll.classList.remove('hide');
+			updateDownloadButtonsLabels();
+		}
+
+		// Auto switch ke 'All' filter
+		currentFilter = 'all';
+		filterButtons.forEach(b => { if (b) b.classList.remove('active'); });
+		if (filterAll) filterAll.classList.add('active');
+		renderResultsList(true);
+
+		// Tampilkan Notifikasi sesuai alasan berhentinya proses
+		if (endReason === 'success') {
+			window.showAppNotification('success', `<strong>Verification Completed:</strong> Successfully processed <strong>${results.length.toLocaleString()} email(s)</strong>!`);
+			if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
+				window.playSuccessChime();
+			}
+			window.sendBrowserNotification("Gmail Checker Completed", `Successfully verified ${results.length.toLocaleString()} email(s)!`);
+		}
+		else if (endReason === 'aborted') {
+			window.showAppNotification('danger', '<strong>Cancelled:</strong> Verification process was stopped by user.');
+		}
+		else if (endReason === 'credits_empty') {
+			inputContainer.classList.add('hide'); // Pastikan UI input tertutup jika error mid-way
+			showInsufficientCreditsModal(customMsg || 'You do not have enough credits to perform this request.', remainingCredits);
+			window.showAppNotification('warning', '<strong>Paused:</strong> Process stopped due to insufficient credits.');
+		}
+		else if (endReason === 'error') {
+			window.showAppNotification('danger', `<strong>Error:</strong> ${customMsg || 'An unexpected error occurred.'}`);
+		}
+
+		if (typeof window.refreshRealtimeProfile === 'function') {
+			window.refreshRealtimeProfile();
+		}
+
+		// Simpan History APAPUN hasilnya (selama ada results yang diproses)
+		saveUnifiedHistory();
+	}
+
 	// Execute Verification Flow
 	btnExecute.addEventListener('click', async function () {
 		const selected = selectServer.value;
@@ -824,12 +924,51 @@
 
 		const isFastServer = selected.startsWith('fast');
 		const cleanedEmails = getEmailsArray();
-		const chunkSize = selected === 'fastServer' ? 250
-			: selected === 'fastFreeServer' ? 250
-				: selected === 'deepServer' ? 40
-					: selected === 'deepFreeServer' ? 40
-						: 40;
+		const chunkSize = selected === 'fastServer' ? 1000
+			: selected === 'fastFreeServer' ? 1000
+				: selected === 'deepServer' ? 100
+					: selected === 'deepFreeServer' ? 100
+						: 100;
 
+		// ------------------------------------------------------------------
+		// [PRE-FLIGHT CHECK] TUNGGU DATA & CEK KREDIT (PRO UX)
+		// ------------------------------------------------------------------
+		// Beri efek loading di tombol Execute jika data belum siap
+		const originalBtnHtml = btnExecute.innerHTML;
+		if (!window.dashboardProfile || !window.dashboardProfile.email) {
+			btnExecute.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Syncing...';
+			btnExecute.disabled = true;
+		}
+
+		// Tunggu sampai WebSocket ngirim data profile (Max 5 detik)
+		const isSynced = await waitForProfileSync();
+
+		// Kembalikan tombol ke keadaan semula
+		btnExecute.innerHTML = originalBtnHtml;
+		btnExecute.disabled = false;
+
+		if (!isSynced) {
+			window.showAppNotification('danger', '<strong>Connection Error:</strong> Failed to sync profile data with server. Please refresh the page.');
+			return; // STOP Eksekusi
+		}
+
+		// Ambil angka kredit yang dijamin sudah 100% akurat
+		const totalAvailableCredits = getAccurateAvailableCredits();
+
+		// Jika total email LEBIH BESAR dari total kredit
+		if (totalAvailableCredits !== null && cleanedEmails.length > totalAvailableCredits) {
+			const errorMsg = `Insufficient Credits: You are trying to verify ${cleanedEmails.length.toLocaleString()} emails, but you only have ${totalAvailableCredits.toLocaleString()} credits available. Please upgrade your plan or buy more credits.`;
+
+			// Langsung tampilkan modal tanpa memulai proses checking!
+			showInsufficientCreditsModal(errorMsg, totalAvailableCredits);
+
+			// Kembalikan tombol fix/warning jika ada
+			const hasWarning = document.querySelector('.notification-bar.type-warning');
+			if (hasWarning && btnFix) btnFix.classList.remove('hide');
+
+			return; // STOP EKSEKUSI DI SINI
+		}
+		// ------------------------------------------------------------------
 
 		const chunks = [];
 		for (let i = 0; i < cleanedEmails.length; i += chunkSize) {
@@ -856,21 +995,15 @@
 		clearTasksList();
 		window.clearAppNotification();
 		showProgressOverlay();
-		updateProgressOverlay(0, 0, chunks.length, `Preparing verification of ${cleanedEmails.length} email(s)...`);
+		updateProgressOverlay(0, 0, cleanedEmails.length, `Preparing verification of ${cleanedEmails.length} email(s)...`);
 
 		statsInput.textContent = `${cleanedEmails.length} email(s)`;
 		updateCounters();
 		renderResultsList();
 
 		let completedChunks = 0;
-
-		// Resolve Firebase Auth ID Token for Cloudflare Worker Authorization
 		let idToken = '';
-		try {
-			idToken = await window.getAuthToken();
-		} catch (e) {
-			console.error("Auth Token generation failed:", e);
-		}
+		try { idToken = await window.getAuthToken(); } catch (e) { console.error("Auth Token failed:", e); }
 
 		// API endpoint resolution
 		let endpoint = 'free-fastcheck';
@@ -880,206 +1013,178 @@
 		else if (selected === 'deepServer') endpoint = idToken ? 'auth-deepcheck' : 'deepcheck';
 		const requestUrl = `${SERVER_URL}/${endpoint}`;
 
-		const maxRetries = isProUltra ? 3 : 2;
-		const retryDelay = isProUltra ? 1000 : 500;
+		const maxRetries = isProUltra ? 5 : 3;
+		const retryDelay = 1000;
 
-		for (let index = 0; index < chunks.length; index++) {
-			if (!isRunning) break;
+		// Setup Variable untuk melacak hasil akhir proses
+		let endReason = 'success';
+		let customErrorMsg = '';
+		let remainingForModal = 0;
 
-			const chunk = chunks[index];
-			let chunkSuccess = false;
-			let chunkResults = null;
+		try {
+			for (let index = 0; index < chunks.length; index++) {
+				if (!isRunning) {
+					endReason = 'aborted';
+					break;
+				}
 
-			for (let attempt = 0; attempt < maxRetries; attempt++) {
-				if (!isRunning) break;
+				const chunk = chunks[index];
+				let chunkSuccess = false;
+				let chunkResults = null;
 
-				const currentPercent = (completedChunks / chunks.length) * 100;
-				updateProgressOverlay(
-					currentPercent,
-					completedChunks,
-					chunks.length,
-					`Verifying batch #${completedChunks + 1} of ${chunks.length}... (Attempt ${attempt + 1}/${maxRetries})`
-				);
-
-				try {
-					const headers = {
-						'Content-Type': 'application/json'
-					};
-					if (idToken) {
-						headers['Authorization'] = `Bearer ${idToken}`;
-					}
-
-					const response = await fetchWithTimeout(requestUrl, {
-						method: 'POST',
-						headers: headers,
-						body: JSON.stringify({ mail: chunk }),
-						signal: abortController.signal
-					}, 180000);
-
+				for (let attempt = 0; attempt < maxRetries; attempt++) {
 					if (!isRunning) break;
 
-					if (!response.ok) {
-						if (response.status === 402) {
-							let errData = {};
-							try {
-								errData = await response.json();
-							} catch (e) { }
-							const errorMsg = errData.message || 'You do not have enough credits to perform this request.';
-							const remaining = errData.message ? parseInt(errData.message.match(/have (\d+) remaining/)?.[1] || 0) : 0;
+					const currentPercent = (completedChunks / chunks.length) * 100;
+					const completedEmails = completedChunks * chunkSize;
+					updateProgressOverlay(
+						currentPercent, completedEmails, cleanedEmails.length,
+						`Verifying email ${completedEmails + 1} - ${Math.min(completedEmails + chunk.length, cleanedEmails.length)} of ${cleanedEmails.length}... (Attempt ${attempt + 1}/${maxRetries})`
+					);
 
-							// Abort other tasks and stop checker running state
-							if (abortController) abortController.abort();
-							isRunning = false;
-							btnExecute.classList.remove('hide');
-							stopBtn.classList.add('hide');
-							backBtnWrapper.classList.remove('hide');
+					try {
+						const headers = { 'Content-Type': 'application/json' };
+						if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
 
-							hideProgressOverlay();
-							inputContainer.classList.add('hide');
+						const response = await fetchWithTimeout(requestUrl, {
+							method: 'POST',
+							headers: headers,
+							body: JSON.stringify({ mail: chunk }),
+							signal: abortController.signal
+						}, 180000);
 
-							showInsufficientCreditsModal(errorMsg, remaining);
-							throw new Error('Insufficient Credits');
-						}
+						if (!isRunning) break;
 
-						let errorMsg = `Server returned ${response.status}`;
-						try {
-							const errData = await response.json();
-							if (errData && errData.error) {
-								errorMsg = `Server error: ${errData.error}`;
+						if (!response.ok) {
+							if (response.status === 402) {
+								let errData = {};
+								try { errData = await response.json(); } catch (e) { }
+								const msg = errData.message || 'You do not have enough credits.';
+								const remain = msg ? parseInt(msg.match(/have (\d+) remaining/)?.[1] || 0) : 0;
+
+								// LEMPAR ERROR KHUSUS agar loop berhenti langsung masuk catch utama
+								throw new Error(`CREDIT_EXHAUSTED|${msg}|${remain}`);
 							}
-						} catch (e) { }
-						throw new Error(errorMsg);
-					}
 
-					const data = await response.json();
-					if (!Array.isArray(data) || data.length === 0) {
-						throw new Error(data?.error || 'Server overloaded');
-					}
-
-					// Parse API Status
-					chunkResults = [];
-					let batchFailedCount = 0;
-					data.forEach(item => {
-						let status = (item.status || 'bad').toLowerCase();
-						if (isFastServer) {
-							status = (status === 'live' || status === 'good') ? 'good' : 'bad';
-						} else {
-							const allowed = ['live', 'verify', 'disabled', 'unregistered', 'bad'];
-							if (!allowed.includes(status)) status = 'bad';
+							// Error selain 402
+							let errorMsg = `Server returned ${response.status}`;
+							try {
+								const errData = await response.json();
+								if (errData && errData.error) errorMsg = `Server error: ${errData.error}`;
+							} catch (e) { }
+							throw new Error(errorMsg);
 						}
 
-						if (status === 'failed') {
-							batchFailedCount++;
+						const data = await response.json();
+						if (!Array.isArray(data) || data.length === 0) {
+							throw new Error(data?.error || 'Server overloaded');
 						}
 
-						chunkResults.push({
-							email: item.email,
-							status: status,
-							details: item.details || ''
-						});
-					});
+						// Parse API Status
+						chunkResults = [];
+						let batchFailedCount = 0;
+						data.forEach(item => {
+							let status = (item.status || 'bad').toLowerCase();
+							if (isFastServer) {
+								status = (status === 'live' || status === 'good') ? 'good' : 'bad';
+							} else {
+								const allowed = ['live', 'verify', 'disabled', 'unregistered'];
+								if (!allowed.includes(status)) status = 'failed';
+							}
 
-					// Jika ada email dalam chunk yang tidak dikembalikan oleh API, klasifikasikan sebagai failed
-					const returnedEmails = new Set(data.map(item => item.email ? item.email.toLowerCase().trim() : ''));
-					chunk.forEach(email => {
-						const lowerEmail = email.toLowerCase().trim();
-						if (!returnedEmails.has(lowerEmail)) {
+							if (status === 'failed') {
+								batchFailedCount++;
+							}
+
 							chunkResults.push({
-								email: email,
-								status: 'failed',
-								details: 'No response from verification server'
+								email: item.email,
+								status: status,
+								details: item.details || ''
 							});
-							batchFailedCount++;
+						});
+
+						// Jika ada email dalam chunk yang tidak dikembalikan oleh API, klasifikasikan sebagai failed
+						const returnedEmails = new Set(data.map(item => item.email ? item.email.toLowerCase().trim() : ''));
+						chunk.forEach(email => {
+							const lowerEmail = email.toLowerCase().trim();
+							if (!returnedEmails.has(lowerEmail)) {
+								chunkResults.push({
+									email: email,
+									status: 'failed',
+									details: 'No response from verification server'
+								});
+								batchFailedCount++;
+							}
+						});
+
+						// [TAMBAHAN] Beri notifikasi ringan jika 1 batch gagal total (agar user tidak bingung)
+						if (batchFailedCount === chunk.length && chunk.length > 0) {
+							window.showAppNotification('warning', `<strong>Notice:</strong> Provider gagal memvalidasi batch #${index + 1}. Kredit Anda otomatis dikembalikan.`);
 						}
-					});
 
-					// [TAMBAHAN] Beri notifikasi ringan jika 1 batch gagal total (agar user tidak bingung)
-					if (batchFailedCount === chunk.length && chunk.length > 0) {
-						window.showAppNotification('warning', `<strong>Notice:</strong> Provider gagal memvalidasi batch #${index + 1}. Kredit Anda otomatis dikembalikan.`);
-					}
+						chunkSuccess = true;
+						break; // Success! Exit retry loop for this chunk
+					} catch (err) {
+						// Deteksi jika Abort/Kredit Habis, langsung BREAK tanpa retry
+						if (err.name === 'AbortError' || err.message === 'Aborted') {
+							throw err; // Lempar ke catch utama
+						}
+						if (err.message.startsWith('CREDIT_EXHAUSTED')) {
+							throw err; // Lempar ke catch utama
+						}
 
-					chunkSuccess = true;
-					break; // Success! Exit retry loop for this chunk
-				} catch (err) {
-					console.warn(`[RETRY] Batch #${index + 1} Attempt ${attempt + 1}/${maxRetries} failed:`, err.message);
-					if (err.message === 'Insufficient Credits' || err.message === 'Aborted') {
-						break;
-					}
-					if (attempt < maxRetries - 1 && isRunning) {
-						await new Promise(resolve => setTimeout(resolve, retryDelay));
+						console.warn(`[RETRY] Batch #${index + 1} Attempt ${attempt + 1}/${maxRetries} failed:`, err.message);
+						if (attempt < maxRetries - 1 && isRunning) {
+							await new Promise(resolve => setTimeout(resolve, retryDelay));
+						}
 					}
 				}
-			}
 
-			if (chunkSuccess && chunkResults) {
-				results.push(...chunkResults);
-			} else {
-				// Map remaining chunk emails as failed
-				chunk.forEach(email => {
-					results.push({
-						email: email,
-						status: 'failed',
-						details: 'API Connection Error after all retries'
+				// Memasukkan hasil chunk ke global results
+				if (chunkSuccess && chunkResults) {
+					results.push(...chunkResults);
+				} else if (isRunning) {
+					chunk.forEach(email => {
+						results.push({ email: email, status: 'failed', details: 'API Connection Error' });
 					});
-				});
+				}
+
+				completedChunks++;
+				updateCounters();
+				renderResultsList(true);
+
+				// ------------------------------------------------------------------
+				// PAKSA REFRESH PROFIL PER CHUNK
+				// ------------------------------------------------------------------
+				if (typeof window.refreshRealtimeProfile === 'function') {
+					window.refreshRealtimeProfile();
+				}
+
+				const newPercent = (completedChunks / chunks.length) * 100;
+				const verifiedCount = Math.min(completedChunks * chunkSize, cleanedEmails.length);
+				updateProgressOverlay(
+					newPercent, verifiedCount, cleanedEmails.length,
+					`Verifying... (Processed ${verifiedCount}/${cleanedEmails.length} emails)`
+				);
 			}
 
-			completedChunks++;
-			updateCounters();
-
-			// Realtime display of verified emails
-			renderResultsList(true);
-
-			// Update progress percentage
-			const newPercent = (completedChunks / chunks.length) * 100;
-			const verifiedCount = Math.min(completedChunks * chunkSize, cleanedEmails.length);
-			updateProgressOverlay(
-				newPercent,
-				completedChunks,
-				chunks.length,
-				`Verifying... (Processed ${verifiedCount}/${cleanedEmails.length} emails)`
-			);
-		}
-
-		if (completedChunks === chunks.length) {
-			// Entire Verification completed
-			isRunning = false;
-			stopBtn.classList.add('hide');
-			backBtnWrapper.classList.remove('hide');
-
-			if (typeof window.refreshRealtimeProfile === 'function') {
-				window.refreshRealtimeProfile();
+		} catch (err) {
+			// --- PENANGANAN ERROR GLOBAL PROSES ---
+			if (err.name === 'AbortError' || err.message === 'Aborted') {
+				endReason = 'aborted';
+			} else if (err.message.startsWith('CREDIT_EXHAUSTED')) {
+				endReason = 'credits_empty';
+				const parts = err.message.split('|');
+				customErrorMsg = parts[1];
+				remainingForModal = parseInt(parts[2], 10);
+			} else {
+				endReason = 'error';
+				customErrorMsg = err.message;
+				console.error("Execute Check Error:", err);
 			}
-
-			// Hide progress overlay and hide input container on completion
-			hideProgressOverlay();
-			// Auto switch to 'All' tab on completion
-			currentFilter = 'all';
-			filterButtons.forEach(b => {
-				if (b) b.classList.remove('active');
-			});
-			if (filterAll) filterAll.classList.add('active');
-			renderResultsList(true);
-			btnExecute.classList.add('hide');
-			btnAddDomain.classList.add('hide');
-			btnClear.classList.add('hide');
-			btnCopy.classList.remove('hide');
-			btnDownload.classList.remove('hide');
-			if (results.length > 50) btnDownloadAll.classList.remove('hide');
-			updateDownloadButtonsLabels();
-
-			window.showAppNotification('success', `<strong>Verification Completed:</strong> Successfully processed <strong>${results.length.toLocaleString()} email(s)</strong>!`);
-
-			// Play premium chime sound if enabled
-			if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
-				window.playSuccessChime();
-			}
-
-			// Send finished system notification
-			window.sendBrowserNotification("Gmail Checker Completed", `Successfully verified ${results.length.toLocaleString()} email(s)!`);
-
-			// Persist unified history for dashboard
-			saveUnifiedHistory();
+		} finally {
+			// proses selesai semua, user klik stop, error jaringan, atau credit habis.
+			finalizeExecution(endReason, customErrorMsg, remainingForModal);
 		}
 	});
 
@@ -1131,46 +1236,14 @@
 
 	// Stop/Cancel Verification handler
 	stopBtn.addEventListener('click', function () {
-		// Entire Verification completed
+		if (!isRunning) return;
 		isRunning = false;
-		stopBtn.classList.add('hide');
-		backBtnWrapper.classList.remove('hide');
 
-		if (typeof window.refreshRealtimeProfile === 'function') {
-			window.refreshRealtimeProfile();
+		// Abort controller akan otomatis men-trigger catch "AbortError" di loop btnExecute
+		if (abortController) {
+			abortController.abort();
 		}
-
-		// Hide progress overlay and hide input container on completion
-		hideProgressOverlay();
-		// Auto switch to 'All' tab on completion
-		currentFilter = 'all';
-		filterButtons.forEach(b => {
-			if (b) b.classList.remove('active');
-		});
-		if (filterAll) filterAll.classList.add('active');
-		renderResultsList(true);
-		btnExecute.classList.add('hide');
-		btnAddDomain.classList.add('hide');
-		btnClear.classList.add('hide');
-		btnCopy.classList.remove('hide');
-		btnDownload.classList.remove('hide');
-		if (results.length > 50) btnDownloadAll.classList.remove('hide');
-		updateDownloadButtonsLabels();
-
-		window.showAppNotification('success', `<strong>Verification Completed:</strong> Successfully processed <strong>${results.length.toLocaleString()} email(s)</strong>!`);
-
-		// Play premium chime sound if enabled
-		if (localStorage.getItem('gmailChecker_soundEffects') !== 'false' && typeof window.playSuccessChime === 'function') {
-			window.playSuccessChime();
-		}
-
-		// Send finished system notification
-		window.showAppNotification('danger', '<strong>Cancelled:</strong> Verification process was stopped by user.');
-
-		// Persist unified history for dashboard
-		saveUnifiedHistory();
 	});
-
 
 
 	// Back/Reset button
@@ -1522,37 +1595,13 @@
 	});
 
 	function showInsufficientCreditsModal(message, remainingCredits) {
-		// Calculate the actual sum of daily + api_credits dynamically
-		let actualRemaining = remainingCredits;
-		if (window.dashboardProfile) {
-			const profile = window.dashboardProfile;
-			let plan = profile.subscription_plan || 'none';
-			const expiry = profile.subscription_expiry || 0;
-			if (plan !== 'none' && expiry < Date.now()) plan = 'none';
+		// Gunakan angka dari backend jika ada, tapi selalu validasi dengan perhitungan Frontend
+		let actualRemaining = remainingCredits || 0;
+		const calcCredits = getAccurateAvailableCredits();
 
-			let dailyCredits = 0;
-			const isSubActive = plan !== 'none' && plan !== 'free';
-			if (plan === 'pro_subs') {
-				dailyCredits = profile.pro_subs_credits !== undefined ? profile.pro_subs_credits : 0;
-			} else if (plan === 'ultra_subs') {
-				dailyCredits = profile.ultra_subs_credits !== undefined ? profile.ultra_subs_credits : 0;
-			} else if (plan === 'special_subs') {
-				dailyCredits = profile.special_credits !== undefined ? profile.special_credits : 0;
-			}
-			// Selalu tambahkan free_credits (harian) ke total — konsisten dengan dashboard
-			const freeCreditsBalance = profile.free_credits !== undefined ? profile.free_credits : 0;
-			dailyCredits = isSubActive ? (dailyCredits + freeCreditsBalance) : freeCreditsBalance;
-
-			const apiCredits = profile.api_credits !== undefined ? profile.api_credits : (profile.api_quota || 0);
-			actualRemaining = dailyCredits + apiCredits;
-		} else {
-			const appRemaining = document.getElementById('db-remaining-requests');
-			if (appRemaining && appRemaining.textContent) {
-				const val = parseInt(appRemaining.textContent.replace(/,/g, ''));
-				if (!isNaN(val)) {
-					actualRemaining = val;
-				}
-			}
+		// Jika frontend berhasil menghitung kredit, timpa angka backend (Karena Frontend menjumlahkan API + Harian)
+		if (calcCredits !== null) {
+			actualRemaining = calcCredits;
 		}
 
 		let modal = document.getElementById('insufficient-credits-modal');
@@ -1582,7 +1631,7 @@
 					<!-- Quota Info Box -->
 					<div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 16px; margin: 5px 0; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; width: 100%;">
 						<span style="color: var(--text-muted); ">Remaining Credits</span>
-						<span id="credits-modal-balance" style="color: #ff6666; background: rgba(255, 102, 102, 0.1); padding: 4px 10px; border-radius: 8px;">0 credits</span>
+						<span id="credits-modal-balance" style="color: #ff6666; background: rgba(255, 102, 102, 0.1); padding: 4px 10px; border-radius: 8px;"></span>
 					</div>
 
 					<!-- Buttons -->
