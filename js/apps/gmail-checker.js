@@ -1044,7 +1044,15 @@
 
 					try {
 						const headers = { 'Content-Type': 'application/json' };
-						if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+						if (idToken) {
+							// Proactively refresh token if expired/near expiry
+							try {
+								idToken = await window.getAuthToken();
+							} catch (e) {
+								console.error("Auth Token refresh failed before request:", e);
+							}
+							headers['Authorization'] = `Bearer ${idToken}`;
+						}
 
 						const response = await fetchWithTimeout(requestUrl, {
 							method: 'POST',
@@ -1056,6 +1064,16 @@
 						if (!isRunning) break;
 
 						if (!response.ok) {
+							if (response.status === 401) {
+								console.warn("[WARN] Auth token expired (401). Attempting to force refresh token...");
+								try {
+									idToken = await window.refreshAuthToken(true);
+								} catch (tokenErr) {
+									console.error("[ERROR] Failed to force refresh token:", tokenErr);
+								}
+								throw new Error("Auth failed: Token expired. Token has been refreshed, retrying chunk...");
+							}
+
 							if (response.status === 402) {
 								let errData = {};
 								try { errData = await response.json(); } catch (e) { }
@@ -1066,7 +1084,7 @@
 								throw new Error(`CREDIT_EXHAUSTED|${msg}|${remain}`);
 							}
 
-							// Error selain 402
+							// Error selain 401 & 402
 							let errorMsg = `Server returned ${response.status}`;
 							try {
 								const errData = await response.json();
@@ -1084,11 +1102,11 @@
 						chunkResults = [];
 						let batchFailedCount = 0;
 						data.forEach(item => {
-							let status = (item.status || 'bad').toLowerCase();
+							let status = (item.status).toLowerCase();
 							if (isFastServer) {
 								status = (status === 'live' || status === 'good') ? 'good' : 'bad';
 							} else {
-								const allowed = ['live', 'verify', 'disabled', 'unregistered'];
+								const allowed = ['live', 'verify', 'disabled', 'unregistered', 'failed'];
 								if (!allowed.includes(status)) status = 'failed';
 							}
 
@@ -1357,6 +1375,10 @@
 			clearTimeout(tasksList._scrollTimer);
 			tasksList._scrollTimer = null;
 		}
+		if (tasksList._resizeObserver) {
+			tasksList._resizeObserver.disconnect();
+			tasksList._resizeObserver = null;
+		}
 
 		// Clear list container
 		tasksList.innerHTML = '';
@@ -1476,6 +1498,14 @@
 		};
 
 		tasksList.addEventListener('scroll', tasksList._virtualScrollHandler, { passive: true });
+
+		if (window.ResizeObserver) {
+			tasksList._resizeObserver = new ResizeObserver(() => {
+				if (tasksList._scrollTimer) clearTimeout(tasksList._scrollTimer);
+				tasksList._scrollTimer = setTimeout(displayResults, 30);
+			});
+			tasksList._resizeObserver.observe(tasksList);
+		}
 
 		// Initial render
 		displayResults();
