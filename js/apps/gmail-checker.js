@@ -53,6 +53,31 @@
 	let isRunning = false;
 	let abortController = null;
 	let sanitizerWorker = null;
+	let verificationStartTime = null;
+	let timerInterval = null;
+
+	function startTimer() {
+		verificationStartTime = Date.now();
+		const elapsedSpan = document.getElementById('progress-elapsed');
+		if (timerInterval) clearInterval(timerInterval);
+		timerInterval = setInterval(() => {
+			const elapsedMs = Date.now() - verificationStartTime;
+			const totalSecs = Math.floor(elapsedMs / 1000);
+			const mins = Math.floor(totalSecs / 60);
+			const secs = totalSecs % 60;
+			const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+			if (elapsedSpan) {
+				elapsedSpan.textContent = timeStr;
+			}
+		}, 1000);
+	}
+
+	function stopTimer() {
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
+	}
 
 	function clearTasksList() {
 		// Hapus event listener scroll
@@ -366,6 +391,7 @@
 						<div class="gc-text-center">
 							<span id="progress-percentage" class="gc-percent">0%</span>
 							<span id="progress-fraction" class="gc-fraction">0 / 0</span>
+							<span id="progress-elapsed" style="font-size: 0.875rem; color: var(--text-muted); display: block; margin-top: 4px; font-family: monospace;">00:00</span>
 						</div>
 					</div>
 					<div class="gc-status-pill">
@@ -553,6 +579,26 @@
 					filterLiveBtn.appendChild(countSpan);
 				}
 			}
+		}
+
+		// Update description text dynamically
+		const descEl = document.getElementById('select-server-desc-app1');
+		if (descEl) {
+			let descText = '';
+			if (server === 'fastFreeServer') {
+				descText = '250 emails / batch';
+			} else if (server === 'deepFreeServer') {
+				descText = '100 emails / batch';
+			} else if (server === 'fastServer') {
+				descText = '500 emails / batch';
+			} else if (server === 'deepServer') {
+				descText = '250 emails / batch';
+			} else if (server === 'fastTurboServer') {
+				descText = '1000 emails / batch<br>free 5x/day for free user.';
+			} else if (server === 'deepTurboServer') {
+				descText = '500 emails / batch<br>free 5x/day for free user.';
+			}
+			descEl.innerHTML = descText;
 		}
 	}
 	selectServer.addEventListener('change', handleServerChange);
@@ -839,6 +885,7 @@
 
 	// --- FUNGSI SENTRAL UNTUK MENGAKHIRI PROSES (CLEANUP & SAVE) ---
 	function finalizeExecution(endReason, customMsg = '', remainingCredits = 0) {
+		stopTimer();
 		isRunning = false;
 
 		// Sembunyikan progress dan kembalikan tombol
@@ -929,11 +976,13 @@
 
 		const isFastServer = selected.startsWith('fast');
 		const cleanedEmails = getEmailsArray();
-		const chunkSize = selected === 'fastServer' ? 1000
-			: selected === 'fastFreeServer' ? 1000
-				: selected === 'deepServer' ? 100
-					: selected === 'deepFreeServer' ? 100
-						: 100;
+		const chunkSize = selected === 'fastFreeServer' ? 250
+			: selected === 'deepFreeServer' ? 100
+				: selected === 'fastServer' ? 500
+					: selected === 'deepServer' ? 250
+						: selected === 'fastTurboServer' ? 1000
+							: selected === 'deepTurboServer' ? 500
+								: 250;
 
 		// ------------------------------------------------------------------
 		// [PRE-FLIGHT CHECK] TUNGGU DATA & CEK KREDIT (PRO UX)
@@ -955,6 +1004,21 @@
 		if (!isSynced) {
 			window.showAppNotification('danger', '<strong>Connection Error:</strong> Failed to sync profile data with server. Please refresh the page.');
 			return; // STOP Eksekusi
+		}
+
+		// Cek batas Turbo Check harian (khusus free user)
+		const isTurbo = selected === 'fastTurboServer' || selected === 'deepTurboServer';
+		if (isTurbo) {
+			const profile = window.dashboardProfile || {};
+			const isPaid = (profile.subscription_plan && profile.subscription_plan !== 'free' && profile.subscription_plan !== 'none' && profile.subscription_expiry > Date.now()) || profile.role === 'admin';
+			if (!isPaid) {
+				const turboLimit = profile.turbo_limit !== undefined ? profile.turbo_limit : 5;
+				const turboUsage = profile.turbo_usage !== undefined ? profile.turbo_usage : 0;
+				if (turboLimit !== null && turboUsage >= turboLimit) {
+					window.showAppNotification('danger', 'Daily Turbo has been used 5 times. Upgrade plan for unlimited Turbo checks.');
+					return; // STOP Eksekusi
+				}
+			}
 		}
 
 		// Ambil angka kredit yang dijamin sudah 100% akurat
@@ -1000,6 +1064,7 @@
 		clearTasksList();
 		window.clearAppNotification();
 		showProgressOverlay();
+		startTimer();
 		updateProgressOverlay(0, 0, cleanedEmails.length, `Preparing verification of ${cleanedEmails.length} email(s)...`);
 
 		statsInput.textContent = `${cleanedEmails.length} email(s)`;
@@ -1010,12 +1075,20 @@
 		let idToken = '';
 		try { idToken = await window.getAuthToken(); } catch (e) { console.error("Auth Token failed:", e); }
 
+		if (isTurbo && !idToken) {
+			window.showAppNotification('danger', '<strong>Login Required:</strong> Silakan login terlebih dahulu untuk menggunakan fitur Turbo Check.');
+			finalizeExecution('error', 'Login required for Turbo Check');
+			return;
+		}
+
 		// API endpoint resolution
 		let endpoint = 'free-fastcheck';
 		if (selected === 'fastFreeServer') endpoint = idToken ? 'auth-free-fastcheck' : 'free-fastcheck';
 		else if (selected === 'fastServer') endpoint = idToken ? 'auth-fastcheck' : 'fastcheck';
 		else if (selected === 'deepFreeServer') endpoint = idToken ? 'auth-free-deepcheck' : 'free-deepcheck';
 		else if (selected === 'deepServer') endpoint = idToken ? 'auth-deepcheck' : 'deepcheck';
+		else if (selected === 'fastTurboServer') endpoint = idToken ? 'auth-turbo-fastcheck' : 'turbo-fastcheck';
+		else if (selected === 'deepTurboServer') endpoint = idToken ? 'auth-turbo-deepcheck' : 'turbo-deepcheck';
 		const requestUrl = `${SERVER_URL}/${endpoint}`;
 
 		const maxRetries = isProUltra ? 5 : 3;
@@ -1025,8 +1098,25 @@
 		let endReason = 'success';
 		let customErrorMsg = '';
 		let remainingForModal = 0;
+		let didIncrementTurbo = false;
 
 		try {
+			if (isTurbo) {
+				const turboRes = await fetch(window.API.TURBO_INCREMENT, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${idToken}`
+					},
+					body: JSON.stringify({ count: 1 })
+				});
+				if (!turboRes.ok) {
+					const errBody = await turboRes.json().catch(() => ({}));
+					throw new Error(errBody.message || errBody.error || `Failed to increment Turbo Check usage (status ${turboRes.status})`);
+				}
+				didIncrementTurbo = true;
+			}
+
 			for (let index = 0; index < chunks.length; index++) {
 				if (!isRunning) {
 					endReason = 'aborted';
@@ -1209,6 +1299,20 @@
 				console.error("Execute Check Error:", err);
 			}
 		} finally {
+			if (isTurbo && didIncrementTurbo && (endReason === 'aborted' || results.length === 0)) {
+				try {
+					await fetch(window.API.TURBO_REFUND, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': `Bearer ${idToken}`
+						},
+						body: JSON.stringify({ count: 1 })
+					});
+				} catch (refundErr) {
+					console.error("Failed to refund Turbo Check usage:", refundErr);
+				}
+			}
 			// proses selesai semua, user klik stop, error jaringan, atau credit habis.
 			finalizeExecution(endReason, customErrorMsg, remainingForModal);
 		}
@@ -1234,6 +1338,18 @@
 
 			const selectedServer = selectServer ? selectServer.value : 'fastFreeServer';
 
+			// Calculate duration
+			const elapsedMs = verificationStartTime ? (Date.now() - verificationStartTime) : 0;
+			const totalSecs = Math.floor(elapsedMs / 1000);
+			let durationText = '';
+			if (totalSecs < 60) {
+				durationText = `${totalSecs}s`;
+			} else {
+				const mins = Math.floor(totalSecs / 60);
+				const secs = totalSecs % 60;
+				durationText = `${mins}m ${secs}s`;
+			}
+
 			// Combine output content
 			const contentText = filteredResults.map(x => `${x.email} - ${x.status.toUpperCase()}`).join('\n');
 
@@ -1245,7 +1361,9 @@
 				time: timeStr,
 				count: filteredResults.length,
 				content: contentText,
-				server: selectedServer
+				server: selectedServer,
+				duration: durationText,
+				creditsUsed: filteredResults.length
 			});
 
 			if (history.length > 50) history.pop();
@@ -1253,7 +1371,11 @@
 
 			// Save to premium offline IndexedDB History
 			if (window.saveHistoryEntry) {
-				window.saveHistoryEntry('app1', 'Gmail Checker', filteredResults.length, contentText, 'emails', { server: selectedServer });
+				window.saveHistoryEntry('app1', 'Gmail Checker', filteredResults.length, contentText, 'emails', {
+					server: selectedServer,
+					duration: durationText,
+					creditsUsed: filteredResults.length
+				});
 			}
 		} catch (e) {
 			console.error("Unified history persist error:", e);
@@ -1275,6 +1397,7 @@
 	// Back/Reset button
 	btnBack.addEventListener('click', function () {
 		isRunning = false;
+		stopTimer();
 
 		if (abortController) abortController.abort();
 

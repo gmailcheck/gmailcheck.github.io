@@ -252,12 +252,42 @@ function showHistoryDetailsModal(entry) {
                     fastFreeServer: 'Fast (Free)',
                     deepFreeServer: 'Deep (Free)',
                     fastServer: 'Fast (VIP)',
-                    deepServer: 'Deep (VIP)'
+                    deepServer: 'Deep (VIP)',
+                    fastTurboServer: 'Fast (Turbo)',
+                    deepTurboServer: 'Deep (Turbo)'
                 };
                 serverVal.textContent = serverMap[serverCode] || serverCode;
                 serverRow.style.display = 'flex';
             } else {
                 serverRow.style.display = 'none';
+            }
+        }
+
+        // Populate Duration metadata row
+        const durationRow = document.getElementById('history-details-meta-duration-row');
+        const durationVal = document.getElementById('history-details-meta-duration');
+        if (durationRow && durationVal) {
+            const duration = (entry.metadata && entry.metadata.duration) || entry.duration || null;
+            if (duration) {
+                durationVal.textContent = duration;
+                durationRow.style.display = 'flex';
+            } else {
+                durationRow.style.display = 'none';
+            }
+        }
+
+        // Populate Credits Used metadata row
+        const creditsRow = document.getElementById('history-details-meta-credits-row');
+        const creditsVal = document.getElementById('history-details-meta-credits');
+        if (creditsRow && creditsVal) {
+            const creditsUsed = (entry.metadata && entry.metadata.creditsUsed) !== undefined 
+                ? (entry.metadata.creditsUsed) 
+                : (entry.creditsUsed !== undefined ? entry.creditsUsed : null);
+            if (creditsUsed !== null) {
+                creditsVal.textContent = Number(creditsUsed).toLocaleString() + ' credits';
+                creditsRow.style.display = 'flex';
+            } else {
+                creditsRow.style.display = 'none';
             }
         }
 

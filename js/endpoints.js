@@ -18,6 +18,8 @@ const _ENDPOINTS_PROD = {
     CREATE_INVOICE: 'https://gc-server.blacksoftchild.workers.dev/create-invoice',
     CANCEL_INVOICE: 'https://gc-server.blacksoftchild.workers.dev/cancel-invoice',
     CLAIM_DAILY: 'https://gc-server.blacksoftchild.workers.dev/claim-daily-credits',
+    TURBO_INCREMENT: 'https://gc-server.blacksoftchild.workers.dev/user/turbo-check/increment',
+    TURBO_REFUND: 'https://gc-server.blacksoftchild.workers.dev/user/turbo-check/refund',
 
     // ── Gmail Checker Service (gmail-checker) ────────────────────────────────
     GC_CHECKER_BASE: 'https://gmail-checker.blacksoftchild.workers.dev',

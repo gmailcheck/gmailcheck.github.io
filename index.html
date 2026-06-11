@@ -918,6 +918,87 @@
 
 
 				<!-- PREMIUM CHECKOUT MODAL -->
+				<!-- PROMO POPUP MODAL (1000x FASTER GMAIL CHECKER) -->
+				<div id="promo-popup-modal" class="modal-overlay hide modal-overlay-custom">
+					<div class="promo-modal-card modal-card-custom" style="max-width: 450px;">
+						<button id="promo-popup-close-btn" class="modal-btn-close-custom"><i
+								class="fa-solid fa-xmark"></i></button>
+
+						<div class="promo-modal-image-wrapper"
+							style="position: relative; border-radius: 12px; overflow: hidden; margin-top: 15px; border: 1px solid rgba(0, 255, 255, 0.2);">
+							<img src="img/gmail_checker_banner_1781182334421.png" alt="Gmail Checker Speed promo"
+								style="width: 100%; display: block; height: auto;">
+							<div class="promo-modal-image-overlay"
+								style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+								<span class="promo-modal-badge"
+									style="color: #00ffff; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 5px;"><i
+										class="fa-solid fa-rocket"></i> 1,000x FASTER</span>
+							</div>
+						</div>
+
+						<div class="modal-header-text-group" style="margin-top: 20px; text-align: center;">
+							<h3 class="font-keren modal-title-custom"
+								style="font-size: 1.8rem; background: linear-gradient(90deg, #af86fc, #00ffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">
+								TURBO CHECK IS LIVE!</h3>
+							<p class="modal-desc-custom"
+								style="margin-top: 8px; font-size: 0.9rem; color: var(--text-muted);">Experience extreme
+								speed and maximum stability for your lists</p>
+						</div>
+
+						<div class="promo-modal-body"
+							style="margin: 20px 0; display: flex; flex-direction: column; gap: 12px;">
+							<div class="promo-feature-row" style="display: flex; align-items: flex-start; gap: 12px;">
+								<div class="promo-feature-icon"
+									style="color: #00ffff; font-size: 1.15rem; width: 24px; text-align: center; margin-top: 2px;">
+									<i class="fa-solid fa-bolt"></i>
+								</div>
+								<div class="promo-feature-text">
+									<strong style="color: var(--text-sharp); display: block; font-size: 0.95rem;">1,000
+										Emails / Batch</strong>
+									<span style="color: var(--text-muted); font-size: 0.825rem;">Verify massive lists
+										instantly in seconds.</span>
+								</div>
+							</div>
+							<div class="promo-feature-row" style="display: flex; align-items: flex-start; gap: 12px;">
+								<div class="promo-feature-icon"
+									style="color: #af86fc; font-size: 1.15rem; width: 24px; text-align: center; margin-top: 2px;">
+									<i class="fa-solid fa-gift"></i>
+								</div>
+								<div class="promo-feature-text">
+									<strong style="color: var(--text-sharp); display: block; font-size: 0.95rem;">Free
+										5x Daily Opportunities</strong>
+									<span style="color: var(--text-muted); font-size: 0.825rem;">Every free user gets 5
+										Turbo Check batches per day.</span>
+								</div>
+							</div>
+							<div class="promo-feature-row" style="display: flex; align-items: flex-start; gap: 12px;">
+								<div class="promo-feature-icon"
+									style="color: #66ffd9; font-size: 1.15rem; width: 24px; text-align: center; margin-top: 2px;">
+									<i class="fa-solid fa-infinity"></i>
+								</div>
+								<div class="promo-feature-text">
+									<strong
+										style="color: var(--text-sharp); display: block; font-size: 0.95rem;">Unlimited
+										for Premium Members</strong>
+									<span style="color: var(--text-muted); font-size: 0.825rem;">Zero limits, zero
+										throttling. Direct Cloudflare scaling.</span>
+								</div>
+							</div>
+						</div>
+
+						<div style="display: flex; gap: 10px; margin-top: 25px;">
+							<button id="promo-popup-action-btn" class="font-keren"
+								style="flex: 1; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg, #af86fc 0%, #6f3bdf 100%); color: white; cursor: pointer; font-weight: 600; box-shadow: 0 4px 15px rgba(175, 134, 252, 0.4); display: flex; justify-content: center; align-items: center; gap: 8px;">
+								Try it Now <i class="fa-solid fa-arrow-right-long"></i>
+							</button>
+							<button id="promo-popup-cancel-btn" class="font-keren"
+								style="padding: 12px 20px; border: 1px solid var(--border-color); border-radius: 10px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;">
+								Maybe Later
+							</button>
+						</div>
+					</div>
+				</div>
+
 				<div id="checkout-modal" class="modal-overlay hide modal-overlay-custom">
 					<div class="checkout-card modal-card-custom">
 
@@ -1694,7 +1775,12 @@
 										<option value="deepFreeServer">👻 Deep (Free)</option>
 										<option value="fastServer">💎 Fast (VIP)</option>
 										<option value="deepServer">💎 Deep (VIP)</option>
+										<option value="fastTurboServer">⚡ Fast (Turbo)</option>
+										<option value="deepTurboServer">⚡ Deep (Turbo)</option>
 									</select>
+									<p id="select-server-desc-app1"
+										style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
+									</p>
 								</div>
 
 								<button class="btn hide style-mtb-10 red-btn" id="btn-fix-app1">
@@ -2341,16 +2427,22 @@
 										unregistered.</p>
 
 									<h4 class="font-keren documentation-section-heading">Core Verification Engines
-										(Modes):</h4>
-									<ul class="documentation-code-list" style="margin-left: 20px; margin-bottom: 20px;">
-										<li><strong>Fast Check:</strong> High-speed syntax analysis and lightning-fast
-											response checks. Best for rapid sorting and filtering of massive bulk lists.
-											Processes <strong>1,000 emails per chunk</strong> for maximum throughput.
+										(Modes) & Chunk Sizes:</h4>
+									<ul class="documentation-code-list" style="margin-left: 20px; margin-bottom: 20px; list-style-type: disc;">
+										<li><strong>Fast Check (Syntax & Availability):</strong> High-speed syntax analysis and lightning-fast response checks. Best for rapid sorting and filtering of massive bulk lists.
+											<ul style="margin-left: 20px; margin-top: 5px; list-style-type: circle;">
+												<li><strong>Free Plan:</strong> 250 emails per batch.</li>
+												<li><strong>VIP Plan:</strong> 500 emails per batch.</li>
+												<li><strong>Turbo Mode:</strong> 1,000 emails per batch (Free 5x/day for free users, unlimited for VIP).</li>
+											</ul>
 										</li>
-										<li><strong>Deep Check:</strong> Performs an exhaustive, real-time mailbox
-											availability check, and anti-greylisting checks. Slower but achieves
-											absolute 100% verification accuracy. Processes <strong>100 emails per
-												chunk</strong> for unparalleled stability and precision.</li>
+										<li style="margin-top: 10px;"><strong>Deep Check (Greylisting & Inbox Verification):</strong> Performs an exhaustive, real-time mailbox availability check and anti-greylisting checks. Slower but achieves absolute 100% verification accuracy.
+											<ul style="margin-left: 20px; margin-top: 5px; list-style-type: circle;">
+												<li><strong>Free Plan:</strong> 100 emails per batch.</li>
+												<li><strong>VIP Plan:</strong> 250 emails per batch.</li>
+												<li><strong>Turbo Mode:</strong> 500 emails per batch (Free 5x/day for free users, unlimited for VIP).</li>
+											</ul>
+										</li>
 									</ul>
 
 									<h4 class="font-keren documentation-section-heading">Pay-on-Success Credit Refund
@@ -2519,14 +2611,12 @@
 												temporary connectivity errors, that credit is **instantly refunded**
 												back to your API Key balance automatically!
 											</li>
-											<li><strong>Maximum Payload Ceiling:</strong> A single API request/batch can
-												contain a maximum of <strong>2,000 emails</strong>. Any request
-												exceeding this limit will be instantly rejected with a
-												<code>400 Bad Request</code> to prevent HTTP timeouts and guarantee
-												server memory stability. If you have larger lists (e.g., 100,000
-												emails), you MUST apply <strong>chunking</strong> on your end (divide
-												your list into 50 separate API requests of 2,000 emails each) and send
-												them sequentially.
+											<li><strong>Maximum Payload Ceiling:</strong> To guarantee server memory stability and prevent HTTP timeouts, each endpoint has a specific batch limit per API request:
+												<ul style="margin-left: 20px; margin-top: 5px; list-style-type: circle;">
+													<li><strong>Fast Check (<code>/fastcheck</code>):</strong> Maximum <strong>1,000 emails</strong> per request.</li>
+													<li><strong>Deep Check (<code>/deepcheck</code>):</strong> Maximum <strong>500 emails</strong> per request.</li>
+												</ul>
+												Any API request exceeding these limits will be instantly rejected with a <code>400 Bad Request</code>. If you have larger lists (e.g., 100,000 emails), you MUST apply chunking on your end and send requests sequentially.
 											</li>
 											<li><strong>Interchangeable Terms:</strong> Under the hood,
 												<strong>Credits</strong> and <strong>Daily Limit</strong> refer to the
@@ -3209,6 +3299,17 @@ try {
 										<div id="history-details-meta-server-row" class="inline-style-gen-8">
 											<span class="inline-style-gen-100">Server:</span>
 											<span id="history-details-meta-server" class="inline-style-gen-12">-</span>
+										</div>
+										<div id="history-details-meta-duration-row" class="inline-style-gen-8"
+											style="display: none;">
+											<span class="inline-style-gen-100">Duration:</span>
+											<span id="history-details-meta-duration"
+												class="inline-style-gen-12">-</span>
+										</div>
+										<div id="history-details-meta-credits-row" class="inline-style-gen-8"
+											style="display: none;">
+											<span class="inline-style-gen-100">Credits Used:</span>
+											<span id="history-details-meta-credits" class="inline-style-gen-12">-</span>
 										</div>
 										<div class="inline-style-gen-10">
 											<span class="inline-style-gen-100">Output Count:</span>

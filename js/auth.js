@@ -165,6 +165,17 @@ window.applyAuthUIState = function (user) {
 		if (window.loadDashboardData) {
 			window.loadDashboardData(false, true);
 		}
+
+		// Show 1000x Faster Gmail Checker Promo Modal (Once per session)
+		if (!sessionStorage.getItem('gmailChecker_promo_shown')) {
+			sessionStorage.setItem('gmailChecker_promo_shown', 'true');
+			setTimeout(() => {
+				const promoModal = document.getElementById('promo-popup-modal');
+				if (promoModal) {
+					promoModal.classList.remove('hide');
+				}
+			}, 2000); // delay showing slightly for a smooth feeling
+		}
 	} else {
 		window.isUserAuthenticated = false;
 		window.activeAuthToken = null;

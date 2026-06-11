@@ -290,6 +290,31 @@ function initApp() {
 		});
 	}
 
+	// 9.5 PROMO POPUP MODAL HANDLERS
+	const promoModal = document.getElementById('promo-popup-modal');
+	const btnPromoClose = document.getElementById('promo-popup-close-btn');
+	const btnPromoCancel = document.getElementById('promo-popup-cancel-btn');
+	const btnPromoAction = document.getElementById('promo-popup-action-btn');
+
+	const hidePromoModal = () => {
+		if (promoModal) promoModal.classList.add('hide');
+	};
+
+	if (btnPromoClose) btnPromoClose.addEventListener('click', hidePromoModal);
+	if (btnPromoCancel) btnPromoCancel.addEventListener('click', hidePromoModal);
+	if (promoModal) {
+		promoModal.addEventListener('click', (e) => {
+			if (e.target === promoModal) hidePromoModal();
+		});
+	}
+
+	if (btnPromoAction) {
+		btnPromoAction.addEventListener('click', () => {
+			hidePromoModal();
+			window.setActiveMenu('app1', true);
+		});
+	}
+
 	// 9. PROFILE POPOVER EVENT HANDLERS
 	const profilePopover = document.getElementById('profile-popover');
 	const profileTriggerCard = document.getElementById('user-profile-card-trigger');
