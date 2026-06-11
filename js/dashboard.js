@@ -292,6 +292,15 @@ window.loadDashboardData = async function (force = false, profileOnly = false, r
 				const profile = await profileRes.json();
 				await window.updateDashboardProfileUI(profile, profileOnly);
 				profileLoaded = true;
+			} else if (profileRes.status === 403) {
+				const errData = await profileRes.json().catch(() => ({}));
+				if (errData.error === "BANNED") {
+					if (window.showBannedOverlay) {
+						window.showBannedOverlay(errData.message || "Your account has been suspended.");
+					}
+					isDashboardLoading = false;
+					return;
+				}
 			}
 		}
 
