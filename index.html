@@ -655,10 +655,14 @@
 								<p>Access to premium subscription tiers is provided for a single user per account.
 									Programmatic access to our verification endpoints requires a Developer API Key,
 									which must be secured and not shared or leaked to unauthorized third parties.</p>
+								<p>Abuse of free promotional credits by creating multiple accounts is strictly
+									prohibited. Exploiting free trial quotas using temporary emails, multiple
+									registrations, or automated profiles will result in the immediate and permanent
+									suspension of all associated accounts.</p>
 
 								<h3 class="font-keren legal-heading">
 									4. Payment and Refunds</h3>
-								<p>All subscription plans and Developer API Key purchases are securely routed and
+								<p>All subscription plans and Developer API Credits purchases are securely routed and
 									processed in cryptocurrency through NOWPayments. Due to the digital nature of the
 									services and the direct utilization of blockchain networks, all payments are final
 									and non-refundable.</p>
@@ -2428,19 +2432,27 @@
 
 									<h4 class="font-keren documentation-section-heading">Core Verification Engines
 										(Modes) & Chunk Sizes:</h4>
-									<ul class="documentation-code-list" style="margin-left: 20px; margin-bottom: 20px; list-style-type: disc;">
-										<li><strong>Fast Check (Syntax & Availability):</strong> High-speed syntax analysis and lightning-fast response checks. Best for rapid sorting and filtering of massive bulk lists.
+									<ul class="documentation-code-list"
+										style="margin-left: 20px; margin-bottom: 20px; list-style-type: disc;">
+										<li><strong>Fast Check (Syntax & Availability):</strong> High-speed syntax
+											analysis and lightning-fast response checks. Best for rapid sorting and
+											filtering of massive bulk lists.
 											<ul style="margin-left: 20px; margin-top: 5px; list-style-type: circle;">
 												<li><strong>Free Plan:</strong> 250 emails per batch.</li>
 												<li><strong>VIP Plan:</strong> 500 emails per batch.</li>
-												<li><strong>Turbo Mode:</strong> 1,000 emails per batch (Free 5x/day for free users, unlimited for VIP).</li>
+												<li><strong>Turbo Mode:</strong> 1,000 emails per batch (Free 5x/day for
+													free users, unlimited for VIP).</li>
 											</ul>
 										</li>
-										<li style="margin-top: 10px;"><strong>Deep Check (Greylisting & Inbox Verification):</strong> Performs an exhaustive, real-time mailbox availability check and anti-greylisting checks. Slower but achieves absolute 100% verification accuracy.
+										<li style="margin-top: 10px;"><strong>Deep Check (Greylisting & Inbox
+												Verification):</strong> Performs an exhaustive, real-time mailbox
+											availability check and anti-greylisting checks. Slower but achieves absolute
+											100% verification accuracy.
 											<ul style="margin-left: 20px; margin-top: 5px; list-style-type: circle;">
 												<li><strong>Free Plan:</strong> 100 emails per batch.</li>
 												<li><strong>VIP Plan:</strong> 250 emails per batch.</li>
-												<li><strong>Turbo Mode:</strong> 500 emails per batch (Free 5x/day for free users, unlimited for VIP).</li>
+												<li><strong>Turbo Mode:</strong> 500 emails per batch (Free 5x/day for
+													free users, unlimited for VIP).</li>
 											</ul>
 										</li>
 									</ul>
@@ -2611,12 +2623,20 @@
 												temporary connectivity errors, that credit is **instantly refunded**
 												back to your API Key balance automatically!
 											</li>
-											<li><strong>Maximum Payload Ceiling:</strong> To guarantee server memory stability and prevent HTTP timeouts, each endpoint has a specific batch limit per API request:
-												<ul style="margin-left: 20px; margin-top: 5px; list-style-type: circle;">
-													<li><strong>Fast Check (<code>/fastcheck</code>):</strong> Maximum <strong>1,000 emails</strong> per request.</li>
-													<li><strong>Deep Check (<code>/deepcheck</code>):</strong> Maximum <strong>500 emails</strong> per request.</li>
+											<li><strong>Maximum Payload Ceiling:</strong> To guarantee server memory
+												stability and prevent HTTP timeouts, each endpoint has a specific batch
+												limit per API request:
+												<ul
+													style="margin-left: 20px; margin-top: 5px; list-style-type: circle;">
+													<li><strong>Fast Check (<code>/fastcheck</code>):</strong> Maximum
+														<strong>1,000 emails</strong> per request.</li>
+													<li><strong>Deep Check (<code>/deepcheck</code>):</strong> Maximum
+														<strong>500 emails</strong> per request.</li>
 												</ul>
-												Any API request exceeding these limits will be instantly rejected with a <code>400 Bad Request</code>. If you have larger lists (e.g., 100,000 emails), you MUST apply chunking on your end and send requests sequentially.
+												Any API request exceeding these limits will be instantly rejected with a
+												<code>400 Bad Request</code>. If you have larger lists (e.g., 100,000
+												emails), you MUST apply chunking on your end and send requests
+												sequentially.
 											</li>
 											<li><strong>Interchangeable Terms:</strong> Under the hood,
 												<strong>Credits</strong> and <strong>Daily Limit</strong> refer to the
