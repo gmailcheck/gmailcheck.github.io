@@ -280,9 +280,12 @@ function showHistoryDetailsModal(entry) {
         const creditsRow = document.getElementById('history-details-meta-credits-row');
         const creditsVal = document.getElementById('history-details-meta-credits');
         if (creditsRow && creditsVal) {
-            const creditsUsed = (entry.metadata && entry.metadata.creditsUsed) !== undefined 
-                ? (entry.metadata.creditsUsed) 
-                : (entry.creditsUsed !== undefined ? entry.creditsUsed : null);
+            let creditsUsed = null;
+            if (entry.metadata && entry.metadata.creditsUsed !== undefined) {
+                creditsUsed = entry.metadata.creditsUsed;
+            } else if (entry.creditsUsed !== undefined) {
+                creditsUsed = entry.creditsUsed;
+            }
             if (creditsUsed !== null) {
                 creditsVal.textContent = Number(creditsUsed).toLocaleString() + ' credits';
                 creditsRow.style.display = 'flex';
