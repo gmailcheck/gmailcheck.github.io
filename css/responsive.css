@@ -362,3 +362,10 @@ body[data-rds-mode="mobile"] .admin-tab-header .top-tab-users,
 body[data-rds-mode="mobile"] .admin-tab-header>div {
     flex-shrink: 0 !important;
 }
+
+/* Restrict Notepad Container height on Mobile/Tablet to prevent indefinite stretching */
+body[data-rds-mode="mobile"] .notepad-container,
+body[data-rds-mode="tablet"] .notepad-container {
+    height: calc(100dvh - 200px);
+    min-height: 350px !important;
+}
