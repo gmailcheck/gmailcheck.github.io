@@ -185,6 +185,7 @@ body[data-rds-mode="mobile"] #results-container-app3 {
 body[data-rds-mode="mobile"] .tasks-list {
     height: calc(100dvh - 260px);
     overflow-y: auto;
+    font-size: 0.82rem;
 }
 
 body[data-rds-mode="mobile"] #history-details-modal>div {
