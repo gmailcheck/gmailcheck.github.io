@@ -174,11 +174,6 @@ body[data-rds-mode="mobile"] .content {
     box-sizing: border-box;
 }
 
-body[data-rds-mode="mobile"] #history-list-container {
-    height: calc(100dvh - 220px) !important;
-    max-height: none !important;
-}
-
 body[data-rds-mode="mobile"] .results-container,
 body[data-rds-mode="mobile"] #results-container-app2,
 body[data-rds-mode="mobile"] #results-container-app3 {
@@ -347,8 +342,7 @@ body[data-rds-mode="tablet"] .page-content {
    ========================================================================== */
 
 /* 1. Global Override: Mobile/Tablet should NOT restrict height */
-body[data-rds-mode="mobile"] #history-list-container,
-body[data-rds-mode="tablet"] #history-list-container {
+body[data-rds-mode="mobile"] #history-list-container {
     max-height: 300px !important;
 }
 
