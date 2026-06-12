@@ -100,6 +100,96 @@
 		tasksList.innerHTML = '';
 	}
 
+	function makeElementDraggable(el, handleSelector) {
+		let startX = 0, startY = 0;
+		let offsetX = 0, offsetY = 0;
+		let isDragging = false;
+
+		const handle = el.querySelector(handleSelector) || el;
+
+		el.resetDragPosition = function () {
+			offsetX = 0;
+			offsetY = 0;
+			el.style.transform = '';
+			el.style.animation = '';
+			el.style.left = '';
+			el.style.top = '';
+			el.style.bottom = '';
+			el.style.right = '';
+		};
+
+		handle.addEventListener('mousedown', dragStart);
+		handle.addEventListener('touchstart', dragStart, { passive: false });
+
+		function dragStart(e) {
+			if (!el.classList.contains('gc-minimized')) return;
+			if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) {
+				return;
+			}
+
+			isDragging = true;
+			el.style.animation = 'none'; // Prevent CSS animation override on transform
+
+			const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+			const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+			startX = clientX - offsetX;
+			startY = clientY - offsetY;
+
+			document.addEventListener('mousemove', drag);
+			document.addEventListener('mouseup', dragEnd);
+			document.addEventListener('touchmove', drag, { passive: false });
+			document.addEventListener('touchend', dragEnd);
+
+			handle.style.cursor = 'grabbing';
+			if (e.type === 'touchstart') {
+				e.preventDefault();
+			}
+		}
+
+		function drag(e) {
+			if (!isDragging) return;
+
+			const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+			const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+			let nextX = clientX - startX;
+			let nextY = clientY - startY;
+
+			const rect = el.getBoundingClientRect();
+			const vw = window.innerWidth;
+			const vh = window.innerHeight;
+
+			// Calculate bounds based on initial placement
+			const initialLeft = rect.left - offsetX;
+			const initialTop = rect.top - offsetY;
+
+			const minX = -initialLeft;
+			const maxX = vw - rect.width - initialLeft;
+			const minY = -initialTop;
+			const maxY = vh - rect.height - initialTop;
+
+			offsetX = Math.max(minX, Math.min(nextX, maxX));
+			offsetY = Math.max(minY, Math.min(nextY, maxY));
+
+			el.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
+
+			if (e.type === 'touchmove') {
+				e.preventDefault();
+			}
+		}
+
+		function dragEnd() {
+			isDragging = false;
+			document.removeEventListener('mousemove', drag);
+			document.removeEventListener('mouseup', dragEnd);
+			document.removeEventListener('touchmove', drag);
+			document.removeEventListener('touchend', dragEnd);
+
+			handle.style.cursor = 'grab';
+		}
+	}
+
 	function showProgressOverlay() {
 		if (!document.getElementById('progress-overlay-styles')) {
 			const style = document.createElement('style');
@@ -173,6 +263,8 @@
 					max-width: 340px;
 					pointer-events: auto;
 					animation: progressMiniPulseGlow 3s infinite ease-in-out;
+					cursor: grab;
+					user-select: none;
 				}
 
 				/* Mini bar header */
@@ -426,9 +518,14 @@
 			`;
 			document.body.appendChild(overlay);
 
+			makeElementDraggable(overlay, '.gc-mini-bar');
+
 			// Tombol minimize
 			overlay.querySelector('#gc-btn-minimize').addEventListener('click', () => {
 				overlay.classList.add('gc-minimized');
+				if (typeof overlay.resetDragPosition === 'function') {
+					overlay.resetDragPosition();
+				}
 				// Pindahkan stopBtn kembali ke .controls
 				const btnAddDomain = document.getElementById('btn-add-domain-app1');
 				if (btnAddDomain && btnAddDomain.parentNode && stopBtn) {
@@ -439,6 +536,9 @@
 			// Tombol maximize (kembali ke full)
 			overlay.querySelector('#gc-btn-maximize').addEventListener('click', () => {
 				overlay.classList.remove('gc-minimized');
+				if (typeof overlay.resetDragPosition === 'function') {
+					overlay.resetDragPosition();
+				}
 				// Pindahkan stopBtn kembali ke .gc-modal-card
 				const modalCard = overlay.querySelector('.gc-modal-card');
 				if (modalCard && stopBtn) {
@@ -455,6 +555,9 @@
 
 		// Pastikan kembali ke mode full saat overlay ditampilkan ulang
 		overlay.classList.remove('gc-minimized');
+		if (typeof overlay.resetDragPosition === 'function') {
+			overlay.resetDragPosition();
+		}
 
 		// Pindahkan #btn-stop-app1 ke paling bawah di dalam .gc-modal-card
 		const modalCard = overlay.querySelector('.gc-modal-card');
