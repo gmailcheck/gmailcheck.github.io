@@ -20,6 +20,7 @@
 
 	// Stats Elements
 	const statsInput = document.getElementById('stats-input-app1');
+	const statsInputLabel = document.getElementById('stats-input-label-app1');
 	const statsLive = document.getElementById('stats-live-app1');
 	const statsVer = document.getElementById('stats-ver-app1');
 	const statsDisabled = document.getElementById('stats-disabled-app1');
@@ -1067,7 +1068,10 @@
 		startTimer();
 		updateProgressOverlay(0, 0, cleanedEmails.length, `Preparing verification of ${cleanedEmails.length} email(s)...`);
 
-		statsInput.textContent = `${cleanedEmails.length} email(s)`;
+		if (statsInputLabel) {
+			statsInputLabel.innerHTML = '<i class="fa-solid fa-envelope m-r-4"></i> Output:';
+		}
+		statsInput.textContent = `0 email(s)`;
 		updateCounters();
 		renderResultsList();
 
@@ -1387,6 +1391,13 @@
 		if (!isRunning) return;
 		isRunning = false;
 
+		if (statsInputLabel) {
+			statsInputLabel.innerHTML = '<i class="fa-solid fa-envelope m-r-4"></i> Input:';
+		}
+		if (statsInput) {
+			statsInput.textContent = `${getEmailsArray().length} email(s)`;
+		}
+
 		// Abort controller akan otomatis men-trigger catch "AbortError" di loop btnExecute
 		if (abortController) {
 			abortController.abort();
@@ -1408,7 +1419,10 @@
 		results = [];
 		clearTasksList();
 
-		statsInput.textContent = '0 email(s)';
+		if (statsInputLabel) {
+			statsInputLabel.innerHTML = '<i class="fa-solid fa-envelope m-r-4"></i> Input:';
+		}
+		statsInput.textContent = `${getEmailsArray().length} email(s)`;
 		statsLive.textContent = '0';
 		statsVer.textContent = '0';
 		statsDisabled.textContent = '0';
@@ -1448,6 +1462,10 @@
 		statsUnregistered.textContent = unregistered.toLocaleString();
 		statsBad.textContent = bad.toLocaleString();
 		if (statsFailed) statsFailed.textContent = failed.toLocaleString();
+
+		if (isRunning && statsInput) {
+			statsInput.textContent = `${all} email(s)`;
+		}
 
 		// Header filters stats
 		countAll.textContent = `(${all})`;
@@ -1528,7 +1546,7 @@
 			return;
 		}
 
-		const ITEM_HEIGHT_REM = 2.875; // 46px / 16 = 2.875rem
+		const ITEM_HEIGHT_REM = 3.25; // 2.75rem height + 0.5rem margin
 		const OVERSCAN = 15;
 
 		function getCurrentRemValue() {
@@ -1570,14 +1588,14 @@
 				if (!item) continue;
 
 				const itemRow = document.createElement('div');
-				itemRow.style.height = `2.375rem`; // 38px / 16 (Accounting for 8px gap)
-				itemRow.style.padding = '0 0.875rem'; // 14px / 16
+				itemRow.style.height = `2.75rem`; // Balanced height for vertical stack on the right
+				itemRow.style.padding = '0 0.875rem';
 				itemRow.style.display = 'flex';
 				itemRow.style.flexDirection = 'row';
 				itemRow.style.justifyContent = 'space-between';
 				itemRow.style.alignItems = 'center';
 				itemRow.style.boxSizing = 'border-box';
-				itemRow.style.margin = '0 0 0.5rem 0'; // Bottom margin for gap (8px / 16)
+				itemRow.style.margin = '0 0 0.5rem 0'; // Bottom margin for gap
 				itemRow.style.background = 'rgba(255, 255, 255, 0.02)';
 				itemRow.style.border = '1px solid var(--border-color)';
 				itemRow.style.borderRadius = '8px';
@@ -1602,13 +1620,13 @@
 				}
 
 				itemRow.innerHTML = `
-					<div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
-						<span style="color: var(--text-muted);">#${i + 1}</span>
-						<span style="color: var(--text-sharp);  text-overflow: ellipsis; white-space: nowrap;">${escapeHTML(item.email)}</span>
+					<div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; margin-right: 12px;">
+						<span style="color: var(--text-muted); font-size: 0.85rem; flex-shrink: 0;">#${i + 1}</span>
+						<span style="color: var(--text-sharp); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-size: 0.9rem;">${escapeHTML(item.email)}</span>
 					</div>
-					<div style="display: flex; align-items: center; gap: 8px;">
-						${item.details ? `<span style="color: var(--text-muted);" title="${escapeHTML(item.details)}">${escapeHTML(item.details)}</span>` : ''}
-						<span style=" color: ${color}; display: flex; align-items: center; gap: 4px; ">${icon} ${escapeHTML(item.status.toUpperCase())}</span>
+					<div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; flex-shrink: 0; line-height: 1.25;">
+						<span style="color: ${color}; display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 600;">${icon} ${escapeHTML(item.status.toUpperCase())}</span>
+						${item.details ? `<span style="color: var(--text-muted); font-size: 0.72rem;" title="${escapeHTML(item.details)}">${escapeHTML(item.details)}</span>` : ''}
 					</div>
 				`;
 				tasksList.appendChild(itemRow);
