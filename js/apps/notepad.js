@@ -183,7 +183,7 @@ async function selectNote(id) {
     // Reset status to saved
     const status = document.getElementById('notepad-save-status');
     if (status) {
-        status.textContent = '✓ Saved';
+        status.textContent = 'Saved';
         status.style.color = 'var(--text-muted)';
     }
 
@@ -224,7 +224,7 @@ async function clearNotepad() {
     }
     if (lastSavedDisplay) lastSavedDisplay.textContent = 'Last saved: Never';
     if (status) {
-        status.textContent = '● New Note';
+        status.textContent = 'Blank';
         status.style.color = '#af86fc';
     }
 
@@ -240,7 +240,7 @@ async function clearNotepad() {
 function markAsUnsaved() {
     const status = document.getElementById('notepad-save-status');
     if (status) {
-        status.textContent = '● Unsaved Changes';
+        status.textContent = 'Unsaved';
         status.style.color = '#ffa500';
     }
 }
@@ -273,10 +273,10 @@ async function saveActiveNote() {
 
     const status = document.getElementById('notepad-save-status');
     if (status) {
-        status.textContent = '✓ Saved';
+        status.textContent = 'Saved';
         status.style.color = '#00ff88';
         setTimeout(() => {
-            if (status && status.textContent === '✓ Saved') {
+            if (status && status.textContent === 'Saved') {
                 status.style.color = 'var(--text-muted)';
             }
         }, 3000);
