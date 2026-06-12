@@ -594,9 +594,9 @@
 			} else if (server === 'deepServer') {
 				descText = '250 emails / batch';
 			} else if (server === 'fastTurboServer') {
-				descText = '1000 emails / batch<br>free 5x/day for free user.';
+				descText = '1000 emails / batch' + (!isProUltra ? '<br>free 5x/day for free user.' : '');
 			} else if (server === 'deepTurboServer') {
-				descText = '500 emails / batch<br>free 5x/day for free user.';
+				descText = '500 emails / batch' + (!isProUltra ? '<br>free 5x/day for free user.' : '');
 			}
 			descEl.innerHTML = descText;
 		}
@@ -1721,7 +1721,7 @@
 			const zip = new JSZip();
 
 			// Group emails by active status
-			const statuses = ['live', 'good', 'verify', 'disabled', 'unregistered', 'bad', 'failed'];
+			const statuses = ['live', 'good', 'verify', 'disabled', 'unregistered', 'bad'];
 			statuses.forEach(status => {
 				const group = results.filter(x => x.status === status);
 				if (group.length > 0) {
