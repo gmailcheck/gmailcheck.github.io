@@ -622,6 +622,33 @@
 		document.head.appendChild(script);
 	}
 
+
+	function rederServerOptions() {
+		const profile = window.dashboardProfile || {};
+		const isProUltra = profile.role === 'admin' || (profile.subscription_plan && profile.subscription_plan !== 'free' && profile.subscription_plan !== 'none' && profile.subscription_expiry > Date.now());
+		const turboLimit = profile.turbo_limit !== undefined ? profile.turbo_limit : 5;
+		const turboUsage = profile.turbo_usage !== undefined ? profile.turbo_usage : 0;
+		const turboLimitReached = turboLimit !== null && turboUsage >= turboLimit;
+		const fastviplbl = !isProUltra ? '💎 Fast (VIP) 🔒' : '💎 Fast (VIP)';
+		const deepviplbl = !isProUltra ? '💎 Deep (VIP) 🔒' : '💎 Deep (VIP)';
+		const fastturbolbl = turboLimitReached ? '⚡ Fast (Turbo) 🔒' : '⚡ Fast (Turbo)';
+		const deepturbosbl = turboLimitReached ? '⚡ Deep (Turbo) 🔒' : '⚡ Deep (Turbo)';
+
+		if (selectServer) {
+			const currentValue = selectServer.value || 'fastFreeServer';
+			selectServer.innerHTML = `
+				<option value="fastFreeServer">👻 Fast (Free)</option>
+				<option value="deepFreeServer">👻 Deep (Free)</option>
+				<option value="fastServer">${fastviplbl}</option>
+				<option value="deepServer">${deepviplbl}</option>
+				<option value="fastTurboServer">${fastturbolbl}</option>
+				<option value="deepTurboServer">${deepturbosbl}</option>
+			`;
+			selectServer.value = currentValue;
+		}
+	}
+	window.rederServerOptions = rederServerOptions;
+
 	// Dynamic layout sync for Server Selection
 	function handleServerChange() {
 		const server = selectServer.value;
@@ -705,6 +732,7 @@
 			descEl.innerHTML = descText;
 		}
 	}
+	rederServerOptions();
 	selectServer.addEventListener('change', handleServerChange);
 	// Initial trigger
 	handleServerChange();
@@ -1118,7 +1146,8 @@
 			if (!isPaid) {
 				const turboLimit = profile.turbo_limit !== undefined ? profile.turbo_limit : 5;
 				const turboUsage = profile.turbo_usage !== undefined ? profile.turbo_usage : 0;
-				if (turboLimit !== null && turboUsage >= turboLimit) {
+				const turboLimitReached = turboLimit !== null && turboUsage >= turboLimit;
+				if (turboLimitReached) {
 					window.showAppNotification('danger', 'Daily Turbo has been used 5 times. Upgrade plan for unlimited Turbo checks.');
 					return; // STOP Eksekusi
 				}
@@ -1962,4 +1991,5 @@
 		// Show modal
 		modal.classList.remove('hide');
 	}
+
 })();
