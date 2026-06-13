@@ -22,3 +22,7 @@
 .container:not(.anonim) .home-demo-card {
     display: none !important;
 }
+
+.container:not(.anonim) .legal-btn-back {
+    display: none !important;
+}
