@@ -24,6 +24,8 @@
     }
 
     async function handleDemoCheck() {
+		window.setActiveMenu('login', true);
+		return;
         if (isChecking) return;
 
         const inputArea = document.getElementById("demo-emails-input");
