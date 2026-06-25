@@ -16,14 +16,14 @@ const _ENDPOINTS = {
     // ── Auth / Profile Service (gc-server) ──────────────────────────────────
     GC_SERVER_BASE: authAPI,
     MAINTENANCE: authAPI + '/maintenance',
-    EVENT_CONFIG: + '/admin/event-config',
+    EVENT_CONFIG: authAPI + '/admin/event-config',
     PROFILE: authAPI + '/profile',
     PRODUCTS: authAPI + '/products',
     CREATE_INVOICE: authAPI + '/create-invoice',
     CANCEL_INVOICE: authAPI + '/cancel-invoice',
-    CLAIM_DAILY: + '/claim-daily-credits',
+    CLAIM_DAILY: authAPI + '/claim-daily-credits',
     TURBO_INCREMENT: authAPI + '/user/turbo-check/increment',
-    TURBO_REFUND: + '/user/turbo-check/refund',
+    TURBO_REFUND: authAPI + '/user/turbo-check/refund',
 
     // ── Gmail Checker Service (gmail-checker) ────────────────────────────────
     GC_CHECKER_BASE: checkerAPI,
